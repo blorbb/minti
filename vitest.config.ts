@@ -4,7 +4,7 @@ export default defineConfig({
 	define: {
 		"import.meta.vitest": "undefined",
 	},
-	test: {
-		includeSource: ["src/**/*.{js,ts}"],
-	},
+	// test: {
+	// 	includeSource: ["src/**/*.{js,ts}"],
+	// },
 });

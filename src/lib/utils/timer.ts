@@ -1,13 +1,10 @@
 export class Timer {
+	//#region [definitions] constants
 	public static readonly MS_IN_SEC = 1000;
 	public static readonly MS_IN_HOUR = 60 * 60 * 1000;
 	public static readonly MS_IN_MIN = 60 * 1000;
 	public static readonly SECS_IN_MIN = 60;
 	public static readonly MINS_IN_HOUR = 60;
-	/**
-	 * TODO: change to tracking Date() instead of setInterval
-	 */
-	public static readonly STEP_INTERVAL = 10;
 
 	public static readonly INDEX_TO_UNITS: Record<number, TimeAbbreviations> = {
 		0: "ms",
@@ -21,69 +18,135 @@ export class Timer {
 		m: 2,
 		h: 3,
 	};
+	//#endregion
 
-	private interval?: NodeJS.Timer;
-
-	private changeCallback?: (time: number) => void;
-	private endCallback?: (time: number) => void;
-	/** avoid calling endCallback when timer stays negative */
-	private calledEnd = false;
-
+	#startTimestamp?: number;
+	#endTimestamp?: number;
 	/**
-	 * DO NOT USE outside of set/get `this.time`
+	 * number of ms that have passed in the timer, accounting
+	 * for pauses. Only updated upon pause, use `getTimeElapsed()`
+	 * to get the current time elapsed.
 	 */
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore `#time` is set by `time`, which is definitely set in constructor
-	#time: number;
+	#accumulatedTimeElapsed = 0;
+	/**
+	 * time since the timer started or was unpaused
+	 */
+	#lastResumeTimestamp?: number;
+	#duration: number;
 
-	set time(value: number) {
-		if (this.changeCallback) this.changeCallback(value);
-		if (this.endCallback && value < 0 && !this.calledEnd) {
-			this.calledEnd = true;
-			this.endCallback(value);
-		}
-		this.#time = value;
+	constructor(duration: number) {
+		this.#duration = duration;
 	}
 
-	get time() {
-		return this.#time;
-	}
-
-	constructor(public readonly initialTime: number) {
-		this.time = initialTime;
-	}
-
-	public onTimeChange(callback: NonNullable<typeof this.changeCallback>) {
-		this.changeCallback = callback;
-		this.changeCallback(this.time);
-	}
-
-	public onTimerEnd(callback: NonNullable<typeof this.changeCallback>) {
+	// TODO next
+	private endCallback?: (time: number) => void;
+	public onTimerEnd(callback: NonNullable<typeof this.endCallback>) {
 		this.endCallback = callback;
 	}
 
+	//#region interaction methods
 	public start = () => {
-		this.time = this.initialTime;
+		if (this.isStarted()) {
+			return this;
+		}
+		this.clear();
+		this.#startTimestamp = Date.now();
 		this.resume();
+		return this;
 	};
 
 	public resume = () => {
-		if (this.interval) return;
-		// setInterval has minimum of 4ms
-		this.interval = setInterval(() => {
-			this.time -= Timer.STEP_INTERVAL;
-		}, Timer.STEP_INTERVAL);
+		if (!this.isPaused() || this.isStopped()) {
+			return this;
+		}
+		this.#lastResumeTimestamp = Date.now();
+		return this;
 	};
 
 	public pause = () => {
-		clearInterval(this.interval);
-		this.interval = undefined;
+		if (this.#lastResumeTimestamp === undefined || !this.isStarted()) {
+			return this;
+		}
+		this.#accumulatedTimeElapsed += Date.now() - this.#lastResumeTimestamp;
+		this.#lastResumeTimestamp = undefined;
+		return this;
 	};
 
-	public reset = () => {
-		this.time = this.initialTime;
-		this.pause();
+	public reset = (duration = this.#duration) => {
+		this.clear();
+		this.#duration = duration;
+		return this;
 	};
+
+	public stop = () => {
+		this.pause();
+		this.#endTimestamp = Date.now();
+	};
+
+	private clear = () => {
+		this.#startTimestamp = undefined;
+		this.#endTimestamp = undefined;
+		this.#lastResumeTimestamp = undefined;
+		this.#accumulatedTimeElapsed = 0;
+		return this;
+	};
+	//#endregion
+
+	//#region status methods
+	/**
+	 * Timer started, including being paused or having ended.
+	 * Use `isRunning()` to check whether the timer is still running.
+	 * @returns whether the timer is started
+	 */
+	public isStarted() {
+		return this.#startTimestamp !== undefined;
+	}
+
+	/**
+	 * Time has started and is paused, not including being stopped.
+	 * Use `isStopped()` to check whether the timer has stopped.
+	 * @returns whether the timer is paused
+	 */
+	public isPaused() {
+		return (
+			this.isStarted() &&
+			this.#lastResumeTimestamp === undefined &&
+			!this.isStopped()
+		);
+	}
+
+	public isRunning() {
+		return this.isStarted() && !this.isStopped() && !this.isPaused();
+	}
+
+	/**
+	 * Timer has stopped/ended, not including pauses.
+	 * Use `isPaused()` to check whether the timer has paused.
+	 * @returns whether the timer is stopped
+	 */
+	public isStopped() {
+		return this.#endTimestamp !== undefined;
+	}
+
+	public getTimeElapsed() {
+		if (!this.isStarted()) {
+			return 0;
+		} else if (this.isPaused()) {
+			return this.#accumulatedTimeElapsed;
+		} else if (this.isStopped()) {
+			// might change
+			return this.#accumulatedTimeElapsed;
+		}
+		// currently running
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const timeSinceResume = Date.now() - this.#lastResumeTimestamp!;
+		return this.#accumulatedTimeElapsed + timeSinceResume;
+	}
+
+	public getTimeRemaining() {
+		return this.#duration - this.getTimeElapsed();
+	}
+	//#endregion
 
 	//#region [helper] static methods
 
@@ -249,84 +312,3 @@ export type TimeWithUnits = Record<TimeAbbreviations, number>;
 export type TimeWithUnitsAsStrings = Record<TimeAbbreviations, string> & {
 	negative: boolean;
 };
-
-if (import.meta.vitest) {
-	const { it, expect, vi } = import.meta.vitest;
-	it.each([
-		[100, 0, 0, 0, 100],
-		[58000, 0, 0, 58, 0],
-		[60000, 0, 1, 0, 0],
-		[137000, 0, 2, 17, 0],
-		[3600000, 1, 0, 0, 0],
-		[8340000, 2, 19, 0, 0],
-		[-10, -0, -0, -0, -10],
-	])(
-		"parses %i ms to %i hour(s), %i minute(s), %i second(s), %i ms",
-		(time, h, m, s, ms) => {
-			expect(Timer.parseToUnits(time)).toEqual({ h, m, s, ms });
-		},
-	);
-
-	it.each([
-		[99, "0", "00", "00", "099", false],
-		[58020, "0", "00", "58", "020", false],
-		[60000, "0", "01", "00", "000", false],
-		[137000, "0", "02", "17", "000", false],
-		[3602000, "1", "00", "02", "000", false],
-		[8340000, "2", "19", "00", "000", false],
-		[-10, "0", "00", "00", "010", true],
-	])(
-		"parses %i ms to a string of %s:%s:%s.%s",
-		(time, h, m, s, ms, negative) => {
-			expect(Timer.parseToStrings(time)).toEqual({ h, m, s, ms, negative });
-		},
-	);
-
-	it.each([
-		[{ h: 1, m: 2, s: 54, ms: 3 }, "1", "02", "54", "003", false],
-		[{ h: 0, m: -2, s: -1, ms: 0 }, "0", "02", "01", "000", true],
-	])(
-		"converts timeWithUnits to strings correctly",
-		(timeWithUnits, h, m, s, ms, negative) => {
-			expect(Timer.parseToStrings(timeWithUnits)).toEqual({
-				h,
-				m,
-				s,
-				ms,
-				negative,
-			});
-		},
-	);
-
-	it("counts down time correctly", () => {
-		const timer = new Timer(2000);
-		vi.useFakeTimers();
-		timer.start();
-		vi.advanceTimersByTime(2000);
-		expect(timer.time).toEqual(0);
-		vi.useRealTimers();
-	});
-
-	it.each<[number, TimeAbbreviations, TimeAbbreviations, string]>([
-		[137020, "ms", "m", "2:17.020"],
-		[137020, "m", "s", "2:18"],
-		[-1000, "s", "s", "-1"],
-		[-800, "m", "s", "-0:00"],
-		[-137020, "s", "m", "-2:17"],
-	])(
-		"converts time to a clock time",
-		(time, upperRange, lowerRange, clockString) => {
-			expect(Timer.parseToClock(time, [upperRange, lowerRange])).toEqual(
-				clockString,
-			);
-		},
-	);
-
-	it.each([
-		[2, 1, "01"],
-		[2, 32, "32"],
-		[3, 1234, "1234"],
-	])("pads to %i places: %i to %s", (length, num, str) => {
-		expect(Timer.padMin(length, num)).toEqual(str);
-	});
-}
