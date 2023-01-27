@@ -95,6 +95,7 @@ export class Timer {
 	/**
 	 * Timer started, including being paused or having ended.
 	 * Use `isRunning()` to check whether the timer is still running.
+	 *
 	 * @returns whether the timer is started
 	 */
 	public isStarted() {
@@ -104,6 +105,7 @@ export class Timer {
 	/**
 	 * Time has started and is paused, not including being stopped.
 	 * Use `isStopped()` to check whether the timer has stopped.
+	 *
 	 * @returns whether the timer is paused
 	 */
 	public isPaused() {
@@ -116,6 +118,7 @@ export class Timer {
 
 	/**
 	 * Timer is started and not paused or ended
+	 *
 	 * @returns whether the timer is ticking
 	 */
 	public isRunning() {
@@ -125,6 +128,7 @@ export class Timer {
 	/**
 	 * Timer has stopped/ended, not including pauses.
 	 * Use `isPaused()` to check whether the timer has paused.
+	 *
 	 * @returns whether the timer is stopped
 	 */
 	public isStopped() {
@@ -219,6 +223,16 @@ export class Timer {
 
 	//#region [helper] static methods
 
+	/**
+	 * Converts a time in ms to hours, minutes, seconds and milliseconds.
+	 *
+	 * @param time time in ms
+	 * @returns time converted to hours, minutes, seconds and milliseconds.
+	 * Access the times easily with
+	 * ```ts
+	 * { h, m, s, ms } = Timer.parseToUnits(time)
+	 * ```
+	 */
 	public static parseToUnits(time: number): TimeWithUnits {
 		const h = Math.trunc(time / Timer.MS_IN_HOUR);
 		const m = Math.trunc(time / Timer.MS_IN_MIN) % Timer.MINS_IN_HOUR;
@@ -275,6 +289,52 @@ export class Timer {
 		}
 	}
 
+	// TODO: add automatic, only shows necessary digits
+	/**
+	 * Converts time in ms to a string with a specified range of units
+	 * to convert to.
+	 *
+	 * @param time time in ms
+	 * @param unitRange range of units to use. E.g. to convert to units from
+	 * minutes to milliseconds, use `["ms", "m"]`.
+	 * @returns time as a string, converted to the units specified, separated
+	 * by `:` (or `.` for milliseconds).
+	 */
+	public static parseToClock(time: number, unitRange: UnitRange = ["ms", "h"]) {
+		const unitTimes = Timer.reduceUnitsToRange(time, unitRange);
+
+		Timer.standardizeUnitRangeOrder(unitRange);
+
+		const largestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[1]];
+		const smallestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[0]];
+
+		// const timeStrings = Timer.parseAsStrings(timeUnits);
+		// add negative sign if required
+		let returnString = time < 0 ? "-" : "";
+
+		// add the necessary padding and separators
+		for (let i = largestUnitIndex; i >= smallestUnitIndex; i--) {
+			const currentUnit = Timer.INDEX_TO_UNITS[i];
+
+			let separator = "";
+			// add separators (:)
+			// do not add separators on first iteration
+			if (i === largestUnitIndex) separator = "";
+			else if (currentUnit !== "ms") separator = ":";
+			else separator = ".";
+
+			// add padding
+			let padding = 0;
+			if (i === largestUnitIndex) padding = 0;
+			else if (currentUnit !== "ms") padding = 2;
+			else padding = 3;
+			const paddedTime = Timer.padMin(padding, unitTimes[currentUnit]);
+
+			returnString += separator + paddedTime;
+		}
+		return returnString;
+	}
+
 	/**
 	 * converts a time to the specified range of units available
 	 *
@@ -282,7 +342,7 @@ export class Timer {
 	 * @param unitRange range of units to use
 	 * @returns object of times converted into units
 	 */
-	public static reduceUnitsToRange(time: number, unitRange: UnitRange) {
+	private static reduceUnitsToRange(time: number, unitRange: UnitRange) {
 		const truncatedTimes = Timer.parseToUnits(time);
 
 		Timer.standardizeUnitRangeOrder(unitRange);
@@ -325,43 +385,16 @@ export class Timer {
 		return truncatedTimes;
 	}
 
-	// TODO: add automatic, only shows necessary digits
-	public static parseToClock(time: number, unitRange: UnitRange = ["ms", "h"]) {
-		const unitTimes = Timer.reduceUnitsToRange(time, unitRange);
-
-		Timer.standardizeUnitRangeOrder(unitRange);
-
-		const largestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[1]];
-		const smallestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[0]];
-
-		// const timeStrings = Timer.parseAsStrings(timeUnits);
-		// add negative sign if required
-		let returnString = time < 0 ? "-" : "";
-
-		// add the necessary padding and separators
-		for (let i = largestUnitIndex; i >= smallestUnitIndex; i--) {
-			const currentUnit = Timer.INDEX_TO_UNITS[i];
-
-			let separator = "";
-			// add separators (:)
-			// do not add separators on first iteration
-			if (i === largestUnitIndex) separator = "";
-			else if (currentUnit !== "ms") separator = ":";
-			else separator = ".";
-
-			// add padding
-			let padding = 0;
-			if (i === largestUnitIndex) padding = 0;
-			else if (currentUnit !== "ms") padding = 2;
-			else padding = 3;
-			const paddedTime = Timer.padMin(padding, unitTimes[currentUnit]);
-
-			returnString += separator + paddedTime;
-		}
-		return returnString;
-	}
-
-	public static padMin(length: number, num: number) {
+	/**
+	 * Pads a number on the left with 0's. Accepts numbers that
+	 * already have more digits than specified in `length`, which
+	 * just returns the number as a string.
+	 *
+	 * @param length minimum number of digits
+	 * @param num number to pad. Number will be turned positive.
+	 * @returns padded number. WILL ALWAYS BE POSITIVE.
+	 */
+	private static padMin(length: number, num: number) {
 		// always positive
 		const str = Math.abs(num).toString();
 
