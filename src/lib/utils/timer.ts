@@ -38,12 +38,6 @@ export class Timer {
 		this.#duration = duration;
 	}
 
-	// TODO next
-	private endCallback?: (time: number) => void;
-	public onTimerEnd(callback: NonNullable<typeof this.endCallback>) {
-		this.endCallback = callback;
-	}
-
 	//#region interaction methods
 	public start = () => {
 		if (this.isStarted()) {
@@ -60,6 +54,7 @@ export class Timer {
 			return this;
 		}
 		this.#lastResumeTimestamp = Date.now();
+		this.startFinishTimer();
 		return this;
 	};
 
@@ -69,6 +64,7 @@ export class Timer {
 		}
 		this.#accumulatedTimeElapsed += Date.now() - this.#lastResumeTimestamp;
 		this.#lastResumeTimestamp = undefined;
+		this.stopFinishTimer();
 		return this;
 	};
 
@@ -81,6 +77,7 @@ export class Timer {
 	public stop = () => {
 		this.pause();
 		this.#endTimestamp = Date.now();
+		this.stopFinishTimer();
 	};
 
 	private clear = () => {
@@ -88,6 +85,8 @@ export class Timer {
 		this.#endTimestamp = undefined;
 		this.#lastResumeTimestamp = undefined;
 		this.#accumulatedTimeElapsed = 0;
+		this.#finished = false;
+		this.stopFinishTimer();
 		return this;
 	};
 	//#endregion
@@ -115,6 +114,10 @@ export class Timer {
 		);
 	}
 
+	/**
+	 * Timer is started and not paused or ended
+	 * @returns whether the timer is ticking
+	 */
 	public isRunning() {
 		return this.isStarted() && !this.isStopped() && !this.isPaused();
 	}
@@ -128,6 +131,11 @@ export class Timer {
 		return this.#endTimestamp !== undefined;
 	}
 
+	/**
+	 * Amount of time that has elapsed while running.
+	 * Does not include pauses.
+	 * @returns total elapsed time of the timer in ms
+	 */
 	public getTimeElapsed() {
 		if (!this.isStarted()) {
 			return 0;
@@ -143,10 +151,71 @@ export class Timer {
 		return this.#accumulatedTimeElapsed + timeSinceResume;
 	}
 
+	/**
+	 * @returns time in ms remaining for the timer to reach 0ms
+	 */
 	public getTimeRemaining() {
 		return this.#duration - this.getTimeElapsed();
 	}
 	//#endregion
+
+	/**
+	 * Timeout used to wait until the timer finishes to send
+	 * the `onFinish` event. Only use through `startFinishTimer()`
+	 * and `endFinishTimer()`.
+	 */
+	private completionTimeout?: NodeJS.Timeout;
+	/** Whether the timer has passed 0. Set `true` using `setFinished()` */
+	#finished = false;
+
+	/**
+	 * Starts the `completionTimeout` timer waiting for the timer to
+	 * reach 0. Activates the `onFinish` callback function. The timeout
+	 * needs to be stopped if the timer is paused, using
+	 * `stopFinishTimer()`.
+	 */
+	private startFinishTimer() {
+		if (this.#finished) return;
+		if (this.completionTimeout) this.stopFinishTimer();
+		// check if already finished
+		const timeRemaining = this.getTimeRemaining();
+		if (timeRemaining <= 0) this.setFinished();
+		// start timer to check again
+		else {
+			this.completionTimeout = setTimeout(() => {
+				this.startFinishTimer();
+			}, timeRemaining);
+		}
+	}
+
+	/**
+	 * Stops the `completionTimeout` timer, so that it can restart
+	 * once the timer resumes again.
+	 */
+	private stopFinishTimer() {
+		if (!this.completionTimeout || this.#finished) return;
+		clearTimeout(this.completionTimeout);
+		this.completionTimeout = undefined;
+	}
+
+	/**
+	 * Sets `#finished` to `true` and activates the callback in
+	 * `onFinish(callback)`.
+	 */
+	private setFinished() {
+		this.#finished = true;
+		if (this.onFinishCallback) this.onFinishCallback();
+	}
+
+	/** Callback defined by `onFinish(callback) */
+	private onFinishCallback?: () => void;
+	/**
+	 * Only called when the timer reaches 0. Not called when the timer
+	 * is manually stopped with `timer.stop()`.
+	 */
+	public onFinish(callback: () => void) {
+		this.onFinishCallback = callback;
+	}
 
 	//#region [helper] static methods
 
