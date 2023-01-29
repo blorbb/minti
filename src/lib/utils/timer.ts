@@ -297,10 +297,16 @@ export class Timer {
 	 * @param time time in ms
 	 * @param unitRange range of units to use. E.g. to convert to units from
 	 * minutes to milliseconds, use `["ms", "m"]`.
+	 * @param auto whether to automatically remove 0's. `unitRange` becomes
+	 * the maximum allowed range of units.
 	 * @returns time as a string, converted to the units specified, separated
 	 * by `:` (or `.` for milliseconds).
 	 */
-	public static parseToClock(time: number, unitRange: UnitRange = ["ms", "h"]) {
+	public static parseToClock(
+		time: number,
+		unitRange: UnitRange = ["ms", "h"],
+		auto = false,
+	) {
 		const unitTimes = Timer.reduceUnitsToRange(time, unitRange);
 
 		Timer.standardizeUnitRangeOrder(unitRange);
@@ -313,24 +319,40 @@ export class Timer {
 		let returnString = time < 0 ? "-" : "";
 
 		// add the necessary padding and separators
+		/** Whether the current unit is the first to be shown */
+		let firstIteration = true;
 		for (let i = largestUnitIndex; i >= smallestUnitIndex; i--) {
 			const currentUnit = Timer.INDEX_TO_UNITS[i];
+			if (
+				auto &&
+				unitTimes[currentUnit] === 0 &&
+				firstIteration &&
+				currentUnit !== "s"
+			) {
+				// remove all 0's from the left side
+				// still keep 0's if they are between units
+				// (from the firstIteration check)
+				// always keep seconds, never just have ms alone
+				// so that the last second will be `0.123`
+				continue;
+			}
 
 			let separator = "";
 			// add separators (:)
 			// do not add separators on first iteration
-			if (i === largestUnitIndex) separator = "";
+			if (firstIteration) separator = "";
 			else if (currentUnit !== "ms") separator = ":";
 			else separator = ".";
 
 			// add padding
 			let padding = 0;
-			if (i === largestUnitIndex) padding = 0;
+			if (firstIteration) padding = 0;
 			else if (currentUnit !== "ms") padding = 2;
 			else padding = 3;
 			const paddedTime = Timer.padMin(padding, unitTimes[currentUnit]);
 
 			returnString += separator + paddedTime;
+			firstIteration = false;
 		}
 		return returnString;
 	}
