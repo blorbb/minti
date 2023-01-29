@@ -1,6 +1,7 @@
 <script lang="ts">
 	import "../app.scss";
 	import "normalize.css";
+	import "iconify-icon";
 </script>
 
 <svelte:head>
