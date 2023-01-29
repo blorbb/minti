@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Timer } from "$lib/utils/timer";
-	import { onDestroy, onMount } from "svelte";
-	import { tick } from "svelte";
+	import { createEventDispatcher, onDestroy, tick } from "svelte";
+	import { scale } from "svelte/transition";
 
 	const timer = new Timer(0);
 
@@ -32,9 +32,10 @@
 	function startTimerUpdates() {
 		interval = setInterval(() => {
 			const timeRemaining = timer.getTimeRemaining();
-			clockTime = Timer.parseToClock(timeRemaining);
+			clockTime = Timer.parseToClock(timeRemaining, ["s", "h"], true);
 			// remove the last ms, accuracy up to 10ms
-			clockTime = clockTime.slice(0, clockTime.length - 1);
+			// uncomment if using range ["ms", *]
+			// clockTime = clockTime.slice(0, clockTime.length - 1);
 		}, INTERVAL_TIME);
 	}
 
@@ -54,9 +55,7 @@
 		startTimerUpdates();
 	}
 
-	onMount(() => {
-		// input.value = previousValue.toString();
-	});
+	const dispatch = createEventDispatcher();
 
 	onDestroy(() => {
 		stopTimerUpdates();
@@ -68,7 +67,7 @@
 		timer.stop();
 		stopTimerUpdates();
 		updateStatuses();
-		clockTime = "0:00:00.00";
+		clockTime = "0";
 
 		// flash the text
 		countdownElem.classList.add(FINISH_CLASS_NAME);
@@ -77,9 +76,22 @@
 			await new Promise((resolve) => setTimeout(resolve, FLASH_DURATION));
 		}
 	});
+
+	// TODO turn this into a store
+	const transitionTime = Number.parseInt(
+		getComputedStyle(document.documentElement)
+			.getPropertyValue("--t-transition")
+			.trim()
+			.slice(0, 3),
+	);
 </script>
 
-<div class="c-timer">
+<div
+	class="c-timer"
+	transition:scale={{
+		duration: transitionTime,
+	}}
+>
 	<div class="countdown" bind:this={countdownElem}>
 		{#if !started}
 			<input
@@ -93,46 +105,66 @@
 		{/if}
 	</div>
 	<div class="controls">
-		{#if paused}
-			<button
-				class="resume"
-				on:click={() => {
-					timer.resume();
-					updateStatuses();
-				}}
-			>
-				Resume
-			</button>
-		{/if}
-		{#if running}
-			<button
-				class="pause"
-				on:click={() => {
-					timer.pause();
-					updateStatuses();
-				}}
-			>
-				Pause
-			</button>
-		{/if}
 		{#if !started}
 			<button class="start" on:click={submitTime}> Start </button>
 		{:else}
-			<button
-				class="reset"
-				on:click={async () => {
-					timer.reset();
-					stopTimerUpdates();
-					updateStatuses();
-					await tick();
-					countdownElem.classList.remove(FINISH_CLASS_NAME);
-					input.value = previousValue.toString();
-				}}
-			>
-				Reset
-			</button>
+			<div class="control-left">
+				{#if paused}
+					<button
+						class="resume"
+						on:click={() => {
+							timer.resume();
+							updateStatuses();
+						}}
+					>
+						Resume
+					</button>
+				{:else if running}
+					<button
+						class="pause"
+						on:click={() => {
+							timer.pause();
+							updateStatuses();
+						}}
+					>
+						Pause
+					</button>
+				{:else if finished}
+					<button
+						class="remove-timer"
+						on:click={() => {
+							dispatch("remove");
+						}}
+					>
+						Remove
+					</button>
+				{/if}
+			</div>
+			<div class="control-right">
+				<button
+					class="reset"
+					on:click={async () => {
+						timer.reset();
+						stopTimerUpdates();
+						updateStatuses();
+						await tick();
+						countdownElem.classList.remove(FINISH_CLASS_NAME);
+						input.value = previousValue.toString();
+					}}
+				>
+					Reset
+				</button>
+			</div>
 		{/if}
 	</div>
+	<button
+		class="remove-timer remove-timer-mini"
+		on:click={() => {
+			dispatch("remove");
+		}}
+	>
+		-
+	</button>
 </div>
 
 <style lang="scss">
@@ -145,14 +177,12 @@
 
 		background-color: var(--c-container);
 		color: var(--c-secondary-container-on);
-		// https://stackoverflow.com/questions/15064940
-		// level 1 and level 2 shadows
-		filter: none;
 
 		height: 8rem;
 		border-radius: 0.5rem;
 
-		// will-change: filter;
+		filter: none;
+
 		transition-property: filter, background-color;
 		transition-duration: var(--t-transition);
 		transition-timing-function: ease-in-out;
@@ -191,11 +221,17 @@
 	}
 
 	.controls {
-		display: flex;
-		justify-content: center;
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
 		gap: 3rem;
 
-		width: 50%;
+		> button.start {
+			grid-column: span 2;
+		}
+
+		> .control-left {
+			text-align: right;
+		}
 	}
 
 	button {
@@ -211,6 +247,26 @@
 
 		&:is(:hover, :focus-visible) {
 			filter: var(--shadow-drop-3);
+		}
+	}
+
+	.remove-timer {
+		background-color: var(--c-error);
+		color: var(--c-error-on);
+
+		&.remove-timer-mini {
+			--l-size: 2rem;
+
+			position: absolute;
+			top: 1rem;
+			right: 1rem;
+
+			width: var(--l-size);
+			height: var(--l-size);
+			padding: 0;
+			border-radius: 50%;
+
+			font-weight: 900;
 		}
 	}
 </style>

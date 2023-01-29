@@ -136,5 +136,10 @@ button:focus-visible,
 input:focus-visible {
 	outline: var(--c-outline) 0.25rem solid;
 	outline-offset: 0.25rem;
+}
+
+button,
+input {
+	outline: var(--c-outline) 0 solid;
 	transition: outline-width var(--t-transition);
 }
