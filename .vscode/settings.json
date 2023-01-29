@@ -1,5 +1,3 @@
 {
-    "conventionalCommits.scopes": [
-        "ui"
-    ]
+	"conventionalCommits.scopes": ["ui", "logic"]
 }
