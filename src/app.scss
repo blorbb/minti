@@ -1,30 +1,140 @@
 :root {
+	--c-bg: #1b1c18;
+
+	--p-hsl-text: 60 20% 90%;
+	--c-text: hsla(var(--p-hsl-text) / 0.88);
+
+	// material design colors
+	// primary #426916, everything else auto
+	// from https://m3.material.io/theme-builder#/custom
+	// use -on for text on top of primary or primary-container
+	--c-primary: #a6d475;
+	--c-primary-on: #1d3700;
+	--c-primary-container: #2c5000;
+	--c-primary-container-on: #c1f18e;
+
+	--c-secondary: #bfcbad;
+	--c-secondary-on: #2a331f;
+	--c-secondary-container: #404a34;
+	--c-seconary-container-on: #dbe7c8;
+
+	--c-tertiary: #a0cfcc;
+	--c-tertiary-on: #003735;
+	--c-tertiary-container: #1f4e4c;
+	--c-tertiary-container-on: #bbece8;
+
+	--c-error: #ffb4ab;
+	--c-error-on: #690005;
+	--c-error-container: #93000a;
+	--c-error-container-on: #ffdad6;
+
+	--p-hsl-primary: 89 52% 65%;
+	--c-surface-1: hsla(var(--p-hsl-primary) / 0.05);
+	--c-surface-2: hsla(var(--p-hsl-primary) / 0.08);
+	--c-surface-3: hsla(var(--p-hsl-primary) / 0.11);
+	--c-surface-4: hsla(var(--p-hsl-primary) / 0.12);
+	--c-surface-5: hsla(var(--p-hsl-primary) / 0.14);
+
+	--c-outline: #8e9285;
+	--c-surface-variant: #44483d;
+	--c-surface-variant-on: #c4c8ba;
+
+	--c-container: #292929;
+	--c-container-up: #2d2d2d;
+
+	--t-transition: 200ms;
+
+	// box shadows based on https://medium.com/@Florian/freebie-google-material-design-shadow-helper-2a0501295a2d
+	// separated so that they can be used as inset
+	--p-shadow-1-1: 0 1px 3px rgba(0 0 0 / 0.12);
+	--p-shadow-1-2: 0 1px 2px rgba(0 0 0 / 0.24);
+	--p-shadow-2-1: 0 3px 6px rgba(0 0 0 / 0.16);
+	--p-shadow-2-2: 0 3px 6px rgba(0 0 0 / 0.23);
+	--p-shadow-3-1: 0 10px 20px rgba(0 0 0 / 0.19);
+	--p-shadow-3-2: 0 6px 6px rgba(0 0 0 / 0.23);
+	--p-shadow-4-1: 0 14px 28px rgba(0 0 0 / 0.25);
+	--p-shadow-4-2: 0 10px 10px rgba(0 0 0 / 0.22);
+	--p-shadow-5-1: 0 19px 38px rgba(0 0 0 / 0.3);
+	--p-shadow-5-2: 0 15px 12px rgba(0 0 0 / 0.22);
+
+	--shadow-1: var(--p-shadow-1-1), var(--p-shadow-1-2);
+	--shadow-2: var(--p-shadow-2-1), var(--p-shadow-2-2);
+	--shadow-3: var(--p-shadow-3-1), var(--p-shadow-3-2);
+	--shadow-4: var(--p-shadow-4-1), var(--p-shadow-4-2);
+	--shadow-5: var(--p-shadow-5-1), var(--p-shadow-5-2);
+
+	// for use in filter: var(--shadow-drop-*);
+	// filter blur radius is twice the box-shadow blur radius
+	--shadow-drop-1: drop-shadow(0 1px 1.5px rgba(0 0 0 / 0.12))
+		drop-shadow(0 1px 1px rgba(0 0 0 / 0.24));
+	--shadow-drop-2: drop-shadow(0 3px 3px rgba(0 0 0 / 0.16))
+		drop-shadow(0 3px 3px rgba(0 0 0 / 0.23));
+	--shadow-drop-3: drop-shadow(0 10px 10px rgba(0 0 0 / 0.19))
+		drop-shadow(0 6px 3px rgba(0 0 0 / 0.23));
+	--shadow-drop-4: drop-shadow(0 14px 14px rgba(0 0 0 / 0.25))
+		drop-shadow(0 10px 5px rgba(0 0 0 / 0.22));
+	--shadow-drop-5: drop-shadow(0 19px 19px rgba(0 0 0 / 0.3))
+		drop-shadow(0 15px 6px rgba(0 0 0 / 0.22));
+
+	--shadow-1-inset: inset var(--p-shadow-1-1), inset var(--p-shadow-1-2);
+	--shadow-2-inset: inset var(--p-shadow-2-1), inset var(--p-shadow-2-2);
+	--shadow-3-inset: inset var(--p-shadow-3-1), inset var(--p-shadow-3-2);
+	--shadow-4-inset: inset var(--p-shadow-4-1), inset var(--p-shadow-4-2);
+	--shadow-5-inset: inset var(--p-shadow-5-1), inset var(--p-shadow-5-2);
+
+	// disambiguation without 0
+	--default-font-feature-settings: "ss04";
+}
+
+// variables
+:root {
+	box-sizing: border-box;
+
+	background-color: var(--c-bg);
+	color: var(--c-text);
+
+	line-height: 1.5;
+
 	// font things
 	font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
 	font-size: 16px;
-	line-height: 1.5rem;
-	// disambiguation without 0
-	font-feature-settings: "ss04";
+	line-height: 1.5;
+	font-feature-settings: var(--default-font-feature-settings);
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
+}
 
-	// colors
-	background-color: var(--c-bg);
-	color: var(--c-text);
-
-	// variables
-	--c-bg: #171717;
-
-	--p-hsl-text: 0 0% 100%;
-	--c-text: hsla(var(--p-hsl-text) / 0.88);
+*,
+*::before,
+*::after {
+	box-sizing: inherit;
 }
 
 @supports (font-variation-settings: normal) {
 	:root {
 		font-family: "Inter var", Avenir, Helvetica, Arial, sans-serif;
 	}
+}
+
+button {
+	border: none;
+	cursor: pointer;
+}
+
+input {
+	font: inherit;
+	color: inherit;
+	line-height: inherit;
+}
+
+// set outlines
+button:focus-visible,
+input:focus-visible {
+	outline: var(--c-outline) 0.25rem solid;
+	outline-offset: 0.25rem;
+	transition: outline-width var(--t-transition);
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "../app.scss";
+	import "normalize.css";
 </script>
 
 <svelte:head>
