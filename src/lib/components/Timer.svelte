@@ -178,7 +178,7 @@
 		background-color: var(--c-container);
 		color: var(--c-secondary-container-on);
 
-		height: 8rem;
+		height: 100%;
 		border-radius: 0.5rem;
 
 		filter: none;

@@ -3,6 +3,13 @@
 	import { flip } from "svelte/animate";
 
 	let timers: string[] = [];
+	// make sure there is always one
+	// TODO make it wait for --t-transition automatically
+	$: if (timers.length === 0) {
+		new Promise((resolve) => setTimeout(resolve, 200)).then(() => {
+			timers = [crypto.randomUUID()];
+		});
+	}
 </script>
 
 <div class="timer-container">
@@ -35,6 +42,13 @@
 		flex-direction: column;
 		padding: 1rem;
 		gap: 1rem;
+		height: 100%;
+
+		.timer {
+			flex-grow: 1;
+			flex-shrink: 0;
+			flex-basis: 8rem;
+		}
 	}
 
 	.add-timer {
