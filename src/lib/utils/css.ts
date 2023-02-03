@@ -5,11 +5,31 @@
  */
 const CSS_UNIT_REGEX = /(?<value>-?[0-9.]+)(?<unit>[a-zA-Z]*)/;
 
-type CSSTypes = "string" | "time" | "length";
+export type CSSTypes = "string" | "time" | "length";
 
-function getProp(prop: string, type?: "string"): string | null;
-function getProp(prop: string, type: "time" | "length"): number | null;
-function getProp(
+/**
+ * Retrieves a CSS custom property set on the `:root` element.
+ *
+ * @param prop Name of the CSS property. Starts with `--`.
+ * @param type
+ * The type of the value to get. Automatically parses + converts units.
+ *
+ * Defaults to `"string"`, which just gives the value of the property,
+ * trimmed and lowercase. If the value is empty, `""` will be returned.
+ * Use `getProp(...) || "default"` to set a default.
+ *
+ * If a `type` other than `"string"` is given, the function will return
+ * a number. If unable to parse the value, `null` is returned. Use
+ * `getProp(...)  ?? default` to set a default.
+ * - `type` = `"time"`, returns a number in `ms`
+ * - `type` = `"length"`, returns a number in `px` (NOT IMPLEMENTED YET)
+ */
+export function getCSSProp(prop: string, type?: "string"): string;
+export function getCSSProp(
+	prop: string,
+	type: Exclude<CSSTypes, "string">,
+): number | null;
+export function getCSSProp(
 	prop: string,
 	type: CSSTypes = "string",
 ): string | number | null {
@@ -51,8 +71,3 @@ function getProp(
 		}
 	}
 }
-
-export const CSSProps = {
-	get: getProp,
-	// might add more later, e.g. refresh
-};

@@ -2,7 +2,7 @@
 	import { timerControllerList } from "$lib/utils/stores";
 	import Timer from "./Timer.svelte";
 	import { flip } from "svelte/animate";
-	import { CSSProps } from "$lib/utils/css";
+	import { getCSSProp } from "$lib/utils/css";
 </script>
 
 <div class="timer-list">
@@ -10,7 +10,7 @@
 		<div
 			class="timer"
 			animate:flip={{
-				duration: CSSProps.get("--t-transition", "time") ?? 100,
+				duration: getCSSProp("--t-transition", "time") ?? 100,
 			}}
 		>
 			<Timer {tc} on:remove={() => timerControllerList.removeTimer(tc)} />

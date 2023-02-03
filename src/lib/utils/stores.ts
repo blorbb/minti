@@ -1,6 +1,6 @@
 import { get, type Readable, writable } from "svelte/store";
 import { sleep } from "./async";
-import { CSSProps } from "./css";
+import { getCSSProp } from "./css";
 import { TimerController } from "./timer_controller";
 
 //#region timer list
@@ -17,7 +17,7 @@ function initTimerControllerList(): TimerControllerListStore {
 		// make sure there's always one timer
 		if (get(store).length === 0) {
 			// wait for it to disappear first
-			await sleep(CSSProps.get("--t-transition", "time") ?? 100);
+			await sleep(getCSSProp("--t-transition", "time") ?? 100);
 			store.set([new TimerController()]);
 		}
 	}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CSSProps } from "$lib/utils/css";
+	import { getCSSProp } from "$lib/utils/css";
 	import { TimerController } from "$lib/utils/timer_controller";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
@@ -82,7 +82,7 @@
 <div
 	class="c-timer"
 	transition:scale={{
-		duration: CSSProps.get("--t-transition", "time") ?? 100,
+		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
 >
 	<div class="countdown" bind:this={countdownElem}>
