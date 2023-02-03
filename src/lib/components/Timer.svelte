@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { Timer } from "$lib/utils/timer";
+	import { CSSProps } from "$lib/utils/css";
+	import { TimerController } from "$lib/utils/timer_controller";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
 
-	const timer = new Timer(0);
+	export let tc: TimerController;
 
 	const INTERVAL_TIME = 5;
 	const FINISH_CLASS_NAME = "finished";
@@ -19,10 +20,10 @@
 	let running = false;
 
 	function updateStatuses() {
-		finished = timer.isStopped();
-		started = timer.isStarted();
-		paused = timer.isPaused();
-		running = timer.isRunning();
+		finished = tc.isStopped();
+		started = tc.isStarted();
+		paused = tc.isPaused();
+		running = tc.isRunning();
 	}
 
 	//#region timer updates
@@ -31,8 +32,8 @@
 
 	function startTimerUpdates() {
 		interval = setInterval(() => {
-			const timeRemaining = timer.getTimeRemaining();
-			clockTime = Timer.parseToClock(timeRemaining, ["s", "h"], true);
+			const timeRemaining = tc.getTimeRemaining();
+			clockTime = TimerController.parseToClock(timeRemaining, ["s", "h"], true);
 			// remove the last ms, accuracy up to 10ms
 			// uncomment if using range ["ms", *]
 			// clockTime = clockTime.slice(0, clockTime.length - 1);
@@ -49,8 +50,8 @@
 		const time = +input.value;
 		if (time <= 0 || isNaN(time)) return;
 		previousValue = time;
-		timer.reset(time);
-		timer.start();
+		tc.reset(time);
+		tc.start();
 		updateStatuses();
 		startTimerUpdates();
 	}
@@ -63,8 +64,8 @@
 	//#endregion
 
 	let countdownElem: HTMLElement;
-	timer.onFinish(async () => {
-		timer.stop();
+	tc.onFinish(async () => {
+		tc.stop();
 		stopTimerUpdates();
 		updateStatuses();
 		clockTime = "0";
@@ -76,20 +77,12 @@
 			await new Promise((resolve) => setTimeout(resolve, FLASH_DURATION));
 		}
 	});
-
-	// TODO turn this into a store
-	const transitionTime = Number.parseInt(
-		getComputedStyle(document.documentElement)
-			.getPropertyValue("--t-transition")
-			.trim()
-			.slice(0, 3),
-	);
 </script>
 
 <div
 	class="c-timer"
 	transition:scale={{
-		duration: transitionTime,
+		duration: CSSProps.get("--t-transition", "time") ?? 100,
 	}}
 >
 	<div class="countdown" bind:this={countdownElem}>
@@ -113,7 +106,7 @@
 					<button
 						class="resume"
 						on:click={() => {
-							timer.resume();
+							tc.resume();
 							updateStatuses();
 						}}
 					>
@@ -123,7 +116,7 @@
 					<button
 						class="pause"
 						on:click={() => {
-							timer.pause();
+							tc.pause();
 							updateStatuses();
 						}}
 					>
@@ -144,7 +137,7 @@
 				<button
 					class="reset"
 					on:click={async () => {
-						timer.reset();
+						tc.reset();
 						stopTimerUpdates();
 						updateStatuses();
 						await tick();

@@ -1,4 +1,4 @@
-export class Timer {
+export class TimerController {
 	//#region [definitions] constants
 	public static readonly MS_IN_SEC = 1000;
 	public static readonly MS_IN_HOUR = 60 * 60 * 1000;
@@ -34,7 +34,7 @@ export class Timer {
 	#lastResumeTimestamp?: number;
 	#duration: number;
 
-	constructor(duration: number) {
+	constructor(duration = 0) {
 		this.#duration = duration;
 	}
 
@@ -234,10 +234,14 @@ export class Timer {
 	 * ```
 	 */
 	public static parseToUnits(time: number): TimeWithUnits {
-		const h = Math.trunc(time / Timer.MS_IN_HOUR);
-		const m = Math.trunc(time / Timer.MS_IN_MIN) % Timer.MINS_IN_HOUR;
-		const s = Math.trunc(time / Timer.MS_IN_SEC) % Timer.SECS_IN_MIN;
-		const ms = time % Timer.MS_IN_SEC;
+		const h = Math.trunc(time / TimerController.MS_IN_HOUR);
+		const m =
+			Math.trunc(time / TimerController.MS_IN_MIN) %
+			TimerController.MINS_IN_HOUR;
+		const s =
+			Math.trunc(time / TimerController.MS_IN_SEC) %
+			TimerController.SECS_IN_MIN;
+		const ms = time % TimerController.MS_IN_SEC;
 		return { h, m, s, ms };
 	}
 
@@ -262,7 +266,7 @@ export class Timer {
 		let negative: boolean;
 
 		if (typeof time === "number") {
-			timeWithUnits = Timer.parseToUnits(time);
+			timeWithUnits = TimerController.parseToUnits(time);
 			negative = time < 0;
 		} else {
 			timeWithUnits = time;
@@ -272,9 +276,9 @@ export class Timer {
 
 		return {
 			h: Math.abs(h).toString(),
-			m: Timer.padMin(2, m),
-			s: Timer.padMin(2, s),
-			ms: Timer.padMin(3, ms),
+			m: TimerController.padMin(2, m),
+			s: TimerController.padMin(2, s),
+			ms: TimerController.padMin(3, ms),
 			negative,
 		};
 	}
@@ -284,7 +288,10 @@ export class Timer {
 	 * @param range
 	 */
 	private static standardizeUnitRangeOrder(range: UnitRange) {
-		if (Timer.UNITS_TO_INDEX[range[0]] > Timer.UNITS_TO_INDEX[range[1]]) {
+		if (
+			TimerController.UNITS_TO_INDEX[range[0]] >
+			TimerController.UNITS_TO_INDEX[range[1]]
+		) {
 			range.reverse();
 		}
 	}
@@ -307,12 +314,12 @@ export class Timer {
 		unitRange: UnitRange = ["ms", "h"],
 		auto = false,
 	) {
-		const unitTimes = Timer.reduceUnitsToRange(time, unitRange);
+		const unitTimes = TimerController.reduceUnitsToRange(time, unitRange);
 
-		Timer.standardizeUnitRangeOrder(unitRange);
+		TimerController.standardizeUnitRangeOrder(unitRange);
 
-		const largestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[1]];
-		const smallestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[0]];
+		const largestUnitIndex = TimerController.UNITS_TO_INDEX[unitRange[1]];
+		const smallestUnitIndex = TimerController.UNITS_TO_INDEX[unitRange[0]];
 
 		// const timeStrings = Timer.parseAsStrings(timeUnits);
 		// add negative sign if required
@@ -322,7 +329,7 @@ export class Timer {
 		/** Whether the current unit is the first to be shown */
 		let firstIteration = true;
 		for (let i = largestUnitIndex; i >= smallestUnitIndex; i--) {
-			const currentUnit = Timer.INDEX_TO_UNITS[i];
+			const currentUnit = TimerController.INDEX_TO_UNITS[i];
 			if (
 				auto &&
 				unitTimes[currentUnit] === 0 &&
@@ -349,7 +356,10 @@ export class Timer {
 			if (firstIteration) padding = 0;
 			else if (currentUnit !== "ms") padding = 2;
 			else padding = 3;
-			const paddedTime = Timer.padMin(padding, unitTimes[currentUnit]);
+			const paddedTime = TimerController.padMin(
+				padding,
+				unitTimes[currentUnit],
+			);
 
 			returnString += separator + paddedTime;
 			firstIteration = false;
@@ -365,23 +375,23 @@ export class Timer {
 	 * @returns object of times converted into units
 	 */
 	private static reduceUnitsToRange(time: number, unitRange: UnitRange) {
-		const truncatedTimes = Timer.parseToUnits(time);
+		const truncatedTimes = TimerController.parseToUnits(time);
 
-		Timer.standardizeUnitRangeOrder(unitRange);
-		const smallestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[0]];
-		const largestUnitIndex = Timer.UNITS_TO_INDEX[unitRange[1]];
+		TimerController.standardizeUnitRangeOrder(unitRange);
+		const smallestUnitIndex = TimerController.UNITS_TO_INDEX[unitRange[0]];
+		const largestUnitIndex = TimerController.UNITS_TO_INDEX[unitRange[1]];
 
 		// reduce large->small
-		if (Timer.UNITS_TO_INDEX.h > largestUnitIndex) {
-			truncatedTimes.m += truncatedTimes.h * Timer.MINS_IN_HOUR;
+		if (TimerController.UNITS_TO_INDEX.h > largestUnitIndex) {
+			truncatedTimes.m += truncatedTimes.h * TimerController.MINS_IN_HOUR;
 			truncatedTimes.h = 0;
 		}
-		if (Timer.UNITS_TO_INDEX.m > largestUnitIndex) {
-			truncatedTimes.s += truncatedTimes.m * Timer.SECS_IN_MIN;
+		if (TimerController.UNITS_TO_INDEX.m > largestUnitIndex) {
+			truncatedTimes.s += truncatedTimes.m * TimerController.SECS_IN_MIN;
 			truncatedTimes.m = 0;
 		}
-		if (Timer.UNITS_TO_INDEX.s > largestUnitIndex) {
-			truncatedTimes.ms += truncatedTimes.s * Timer.MS_IN_SEC;
+		if (TimerController.UNITS_TO_INDEX.s > largestUnitIndex) {
+			truncatedTimes.ms += truncatedTimes.s * TimerController.MS_IN_SEC;
 			truncatedTimes.s = 0;
 		}
 
@@ -391,15 +401,15 @@ export class Timer {
 		// rounds the values UP, so that timer ends as soon as seconds/mins/hrs = 0
 		// can't put the truncatedTimes.* === 0 inside the first if statement
 		// as it may be -0, we want to set it to 0 for cleanliness
-		if (Timer.UNITS_TO_INDEX.ms < smallestUnitIndex) {
+		if (TimerController.UNITS_TO_INDEX.ms < smallestUnitIndex) {
 			if (truncatedTimes.ms !== 0 && positive) truncatedTimes.s += 1;
 			truncatedTimes.ms = 0;
 		}
-		if (Timer.UNITS_TO_INDEX.s < smallestUnitIndex) {
+		if (TimerController.UNITS_TO_INDEX.s < smallestUnitIndex) {
 			if (truncatedTimes.s !== 0 && positive) truncatedTimes.m += 1;
 			truncatedTimes.s = 0;
 		}
-		if (Timer.UNITS_TO_INDEX.m < smallestUnitIndex) {
+		if (TimerController.UNITS_TO_INDEX.m < smallestUnitIndex) {
 			if (truncatedTimes.m !== 0 && positive) truncatedTimes.h += 1;
 			truncatedTimes.m = 0;
 		}

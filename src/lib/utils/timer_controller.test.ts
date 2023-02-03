@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Timer } from "./timer";
+import { TimerController } from "./timer_controller";
 
 describe("Parses time", () => {
 	describe("From milliseconds to h/m/s/ms", () => {
@@ -12,7 +12,7 @@ describe("Parses time", () => {
 			[3600000, 1, 0, 0, 0],
 			[8340000, 2, 19, 0, 0],
 		])("parses %ims to %ih, %im, %is, %ims", (time, h, m, s, ms) => {
-			expect(Timer.parseToUnits(time)).toEqual({ h, m, s, ms });
+			expect(TimerController.parseToUnits(time)).toEqual({ h, m, s, ms });
 		});
 
 		it.each([
@@ -25,7 +25,7 @@ describe("Parses time", () => {
 		])(
 			"parses a negative time of %ims to %ih, %im, %is, %ims",
 			(time, h, m, s, ms) => {
-				expect(Timer.parseToUnits(time)).toEqual({ h, m, s, ms });
+				expect(TimerController.parseToUnits(time)).toEqual({ h, m, s, ms });
 			},
 		);
 	});
@@ -33,57 +33,77 @@ describe("Parses time", () => {
 	describe("From milliseconds to a clock time", () => {
 		describe("Handles trims and padding", () => {
 			it("Produces correct time range", () => {
-				expect(Timer.parseToClock(137020, ["ms", "m"])).toEqual("2:17.020");
+				expect(TimerController.parseToClock(137020, ["ms", "m"])).toEqual(
+					"2:17.020",
+				);
 			});
 
 			it("Can swap the given time range", () => {
-				expect(Timer.parseToClock(137020, ["m", "ms"])).toEqual("2:17.020");
+				expect(TimerController.parseToClock(137020, ["m", "ms"])).toEqual(
+					"2:17.020",
+				);
 			});
 
 			it("Can convert large units into the given range", () => {
-				expect(Timer.parseToClock(5315938, ["ms", "m"])).toEqual("88:35.938");
+				expect(TimerController.parseToClock(5315938, ["ms", "m"])).toEqual(
+					"88:35.938",
+				);
 			});
 
 			it("Can allow units to have a longer string when LHS is trimmed", () => {
-				expect(Timer.parseToClock(325225, ["ms", "s"])).toEqual("325.225");
+				expect(TimerController.parseToClock(325225, ["ms", "s"])).toEqual(
+					"325.225",
+				);
 			});
 
 			it("Adds necessary 0 padding", () => {
-				expect(Timer.parseToClock(123456, ["ms", "h"])).toEqual("0:02:03.456");
+				expect(TimerController.parseToClock(123456, ["ms", "h"])).toEqual(
+					"0:02:03.456",
+				);
 			});
 
 			it("Provides a default time range", () => {
-				expect(Timer.parseToClock(2040)).toEqual("0:00:02.040");
+				expect(TimerController.parseToClock(2040)).toEqual("0:00:02.040");
 			});
 
 			it("Adds 1 to rightmost unit when positive", () => {
-				expect(Timer.parseToClock(137020, ["s", "m"])).toEqual("2:18");
+				expect(TimerController.parseToClock(137020, ["s", "m"])).toEqual(
+					"2:18",
+				);
 			});
 
 			it("Does not add 1 when RHS unit is 0", () => {
-				expect(Timer.parseToClock(137000, ["s", "m"])).toEqual("2:17");
+				expect(TimerController.parseToClock(137000, ["s", "m"])).toEqual(
+					"2:17",
+				);
 			});
 
 			it("Supports single units, not adding separators", () => {
-				expect(Timer.parseToClock(3242521, ["s", "s"])).toEqual("3243");
+				expect(TimerController.parseToClock(3242521, ["s", "s"])).toEqual(
+					"3243",
+				);
 			});
 		});
 
 		describe("Handles negative times", () => {
 			it("Adds minus sign when negative", () => {
-				expect(Timer.parseToClock(-19394)).toEqual("-0:00:19.394");
+				expect(TimerController.parseToClock(-19394)).toEqual("-0:00:19.394");
 			});
 
 			it("Shifts minus sign when LHS is trimmed", () => {
-				expect(Timer.parseToClock(-38471, ["ms", "m"])).toEqual("-0:38.471");
+				expect(TimerController.parseToClock(-38471, ["ms", "m"])).toEqual(
+					"-0:38.471",
+				);
 			});
 
 			it("When trimmed time is 0, still recognises as negative", () => {
-				expect(Timer.parseToClock(-230, ["s", "m"])).toEqual("-0:00");
+				expect(TimerController.parseToClock(-230, ["s", "m"])).toEqual("-0:00");
 			});
 
 			it("Does not add 1 to time when negative", () => {
-				expect(Timer.parseToClock(-23423, ["s", "m"])).toEqual("-0:23");
+				expect(TimerController.parseToClock(-23423, ["s", "m"])).toEqual(
+					"-0:23",
+				);
 			});
 		});
 	});
@@ -114,8 +134,8 @@ describe("Can run", () => {
 		 * 6. after reset
 		 */
 		function results(
-			timer: Timer,
-			funcName: keyof Timer,
+			timer: TimerController,
+			funcName: keyof TimerController,
 			values: [B, B, B, B, B, B],
 		) {
 			// @ts-ignore
@@ -138,22 +158,22 @@ describe("Can run", () => {
 		}
 
 		it("is started", () => {
-			const timer = new Timer(1000);
+			const timer = new TimerController(1000);
 			results(timer, "isStarted", [false, true, true, true, true, false]);
 		});
 
 		it("is paused", () => {
-			const timer = new Timer(1000);
+			const timer = new TimerController(1000);
 			results(timer, "isPaused", [false, false, true, false, false, false]);
 		});
 
 		it("is running", () => {
-			const timer = new Timer(1000);
+			const timer = new TimerController(1000);
 			results(timer, "isRunning", [false, true, false, true, false, false]);
 		});
 
 		it("is stopped", () => {
-			const timer = new Timer(1000);
+			const timer = new TimerController(1000);
 			results(timer, "isStopped", [false, false, false, false, true, false]);
 		});
 	});

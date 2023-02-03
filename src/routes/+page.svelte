@@ -1,56 +1,13 @@
 <script lang="ts">
-	import Timer from "$lib/components/Timer.svelte";
-	import { flip } from "svelte/animate";
-
-	let timers: string[] = [];
-	// make sure there is always one
-	// TODO make it wait for --t-transition automatically
-	$: if (timers.length === 0) {
-		new Promise((resolve) => setTimeout(resolve, 200)).then(() => {
-			timers = [crypto.randomUUID()];
-		});
-	}
+	import TimerList from "$lib/components/TimerList.svelte";
+	import { timerControllerList } from "$lib/utils/stores";
 </script>
 
-<div class="timer-container">
-	{#each timers as timerID (timerID)}
-		<div
-			class="timer"
-			animate:flip={{
-				duration: 200,
-			}}
-		>
-			<Timer
-				on:remove={() => {
-					timers = timers.filter((id) => id !== timerID);
-				}}
-			/>
-		</div>
-	{/each}
-</div>
+<TimerList />
 
-<button
-	class="add-timer"
-	on:click={() => (timers = [...timers, crypto.randomUUID()])}
->
-	+
-</button>
+<button class="add-timer" on:click={timerControllerList.addTimer}> + </button>
 
 <style lang="scss">
-	.timer-container {
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		gap: 1rem;
-		height: 100%;
-
-		.timer {
-			flex-grow: 1;
-			flex-shrink: 0;
-			flex-basis: 8rem;
-		}
-	}
-
 	.add-timer {
 		--l-size: 3rem;
 
