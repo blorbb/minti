@@ -1,22 +1,30 @@
 export class TimerController {
 	//#region [definitions] constants
-	public static readonly MS_IN_SEC = 1000;
-	public static readonly MS_IN_HOUR = 60 * 60 * 1000;
-	public static readonly MS_IN_MIN = 60 * 1000;
 	public static readonly SECS_IN_MIN = 60;
 	public static readonly MINS_IN_HOUR = 60;
+	public static readonly HOURS_IN_DAY = 24;
+
+	public static readonly MS_IN_SEC = 1000;
+	public static readonly MS_IN_MIN =
+		TimerController.SECS_IN_MIN * TimerController.MS_IN_SEC;
+	public static readonly MS_IN_HOUR =
+		TimerController.MINS_IN_HOUR * TimerController.MS_IN_MIN;
+	public static readonly MS_IN_DAY =
+		TimerController.HOURS_IN_DAY * TimerController.MS_IN_HOUR;
 
 	public static readonly INDEX_TO_UNITS: Record<number, TimeAbbreviations> = {
 		0: "ms",
 		1: "s",
 		2: "m",
 		3: "h",
+		4: "d",
 	};
 	public static readonly UNITS_TO_INDEX: Record<TimeAbbreviations, number> = {
 		ms: 0,
 		s: 1,
 		m: 2,
 		h: 3,
+		d: 4,
 	};
 	//#endregion
 
@@ -235,7 +243,10 @@ export class TimerController {
 	 * ```
 	 */
 	public static parseToUnits(time: number): TimeWithUnits {
-		const h = Math.trunc(time / TimerController.MS_IN_HOUR);
+		const d = Math.trunc(time / TimerController.MS_IN_DAY);
+		const h =
+			Math.trunc(time / TimerController.MS_IN_HOUR) %
+			TimerController.HOURS_IN_DAY;
 		const m =
 			Math.trunc(time / TimerController.MS_IN_MIN) %
 			TimerController.MINS_IN_HOUR;
@@ -243,7 +254,7 @@ export class TimerController {
 			Math.trunc(time / TimerController.MS_IN_SEC) %
 			TimerController.SECS_IN_MIN;
 		const ms = time % TimerController.MS_IN_SEC;
-		return { h, m, s, ms };
+		return { d, h, m, s, ms };
 	}
 
 	/**
@@ -312,7 +323,7 @@ export class TimerController {
 	 */
 	public static parseToClock(
 		time: number,
-		unitRange: UnitRange = ["ms", "h"],
+		unitRange: UnitRange = ["ms", "d"],
 		auto = false,
 	) {
 		const unitTimes = TimerController.reduceUnitsToRange(time, unitRange);
@@ -383,6 +394,10 @@ export class TimerController {
 		const largestUnitIndex = TimerController.UNITS_TO_INDEX[unitRange[1]];
 
 		// reduce large->small
+		if (TimerController.UNITS_TO_INDEX.d > largestUnitIndex) {
+			truncatedTimes.h += truncatedTimes.d * TimerController.HOURS_IN_DAY;
+			truncatedTimes.d = 0;
+		}
 		if (TimerController.UNITS_TO_INDEX.h > largestUnitIndex) {
 			truncatedTimes.m += truncatedTimes.h * TimerController.MINS_IN_HOUR;
 			truncatedTimes.h = 0;
@@ -396,23 +411,27 @@ export class TimerController {
 			truncatedTimes.s = 0;
 		}
 
-		const positive = time >= 0;
+		const notNegative = time >= 0;
 
 		// reduce small->large
 		// rounds the values UP, so that timer ends as soon as seconds/mins/hrs = 0
 		// can't put the truncatedTimes.* === 0 inside the first if statement
 		// as it may be -0, we want to set it to 0 for cleanliness
 		if (TimerController.UNITS_TO_INDEX.ms < smallestUnitIndex) {
-			if (truncatedTimes.ms !== 0 && positive) truncatedTimes.s += 1;
+			if (truncatedTimes.ms !== 0 && notNegative) truncatedTimes.s += 1;
 			truncatedTimes.ms = 0;
 		}
 		if (TimerController.UNITS_TO_INDEX.s < smallestUnitIndex) {
-			if (truncatedTimes.s !== 0 && positive) truncatedTimes.m += 1;
+			if (truncatedTimes.s !== 0 && notNegative) truncatedTimes.m += 1;
 			truncatedTimes.s = 0;
 		}
 		if (TimerController.UNITS_TO_INDEX.m < smallestUnitIndex) {
-			if (truncatedTimes.m !== 0 && positive) truncatedTimes.h += 1;
+			if (truncatedTimes.m !== 0 && notNegative) truncatedTimes.h += 1;
 			truncatedTimes.m = 0;
+		}
+		if (TimerController.UNITS_TO_INDEX.h < smallestUnitIndex) {
+			if (truncatedTimes.h !== 0 && notNegative) truncatedTimes.d += 1;
+			truncatedTimes.h = 0;
 		}
 
 		return truncatedTimes;
@@ -440,7 +459,7 @@ export class TimerController {
 	//#endregion
 }
 
-export type TimeAbbreviations = "h" | "m" | "s" | "ms";
+export type TimeAbbreviations = "d" | "h" | "m" | "s" | "ms";
 export type UnitRange = [TimeAbbreviations, TimeAbbreviations];
 
 export type TimeWithUnits = Record<TimeAbbreviations, number>;
