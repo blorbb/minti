@@ -78,6 +78,7 @@ export class TimerController {
 		this.pause();
 		this.#endTimestamp = Date.now();
 		this.stopFinishTimer();
+		return this;
 	};
 
 	private clear = () => {
