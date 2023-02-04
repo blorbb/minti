@@ -83,6 +83,14 @@ describe("Parses time", () => {
 					"3243",
 				);
 			});
+
+			test("Can trim down to ms", () => {
+				expect(TimerController.parseToClock(100_000_000, ["ms", "ms"])).toEqual("100000000")
+			})
+
+			test("Can trim to hours only", () => {
+				expect(TimerController.parseToClock(100_000_000, ["h", "h"])).toEqual("28")
+			})
 		});
 
 		describe("Handles negative times", () => {
