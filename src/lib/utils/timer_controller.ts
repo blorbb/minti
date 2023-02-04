@@ -258,44 +258,6 @@ export class TimerController {
 	}
 
 	/**
-	 *
-	 * @param time time in ms
-	 * @returns each unit as string, and negative boolean
-	 * - hours: no padding
-	 * - minutes: 2 digits
-	 * - seconds: 2 digits
-	 * - milliseconds: 3 digits
-	 * - negative: boolean, true if negative
-	 *
-	 * @deprecated doesn't seem useful, `Timer.parseToClock` is better
-	 */
-	public static parseToStrings(time: number): TimeWithUnitsAsStrings;
-	public static parseToStrings(
-		timeWithUnits: TimeWithUnits,
-	): TimeWithUnitsAsStrings;
-	public static parseToStrings(time: number | TimeWithUnits) {
-		let timeWithUnits: TimeWithUnits;
-		let negative: boolean;
-
-		if (typeof time === "number") {
-			timeWithUnits = TimerController.parseToUnits(time);
-			negative = time < 0;
-		} else {
-			timeWithUnits = time;
-			negative = Object.values(time).some((value) => value < 0);
-		}
-		const { h, m, s, ms } = timeWithUnits;
-
-		return {
-			h: Math.abs(h).toString(),
-			m: TimerController.padMin(2, m),
-			s: TimerController.padMin(2, s),
-			ms: TimerController.padMin(3, ms),
-			negative,
-		};
-	}
-
-	/**
 	 * reorders a UnitRange from smallest to largest unit **in place**
 	 * @param range
 	 */
