@@ -11,7 +11,7 @@ describe("Parses time", () => {
 			[137000, 0, 2, 17, 0],
 			[3600000, 1, 0, 0, 0],
 			[8340000, 2, 19, 0, 0],
-		])("parses %ims to %ih, %im, %is, %ims", (time, h, m, s, ms) => {
+		])("Parses %ims to %ih, %im, %is, %ims", (time, h, m, s, ms) => {
 			expect(TimerController.parseToUnits(time)).toEqual({ h, m, s, ms });
 		});
 
@@ -23,7 +23,7 @@ describe("Parses time", () => {
 			[-3600000, -1, -0, -0, -0],
 			[-8340000, -2, -19, -0, -0],
 		])(
-			"parses a negative time of %ims to %ih, %im, %is, %ims",
+			"Parses a negative time of %ims to %ih, %im, %is, %ims",
 			(time, h, m, s, ms) => {
 				expect(TimerController.parseToUnits(time)).toEqual({ h, m, s, ms });
 			},
@@ -157,34 +157,34 @@ describe("Can run", () => {
 			expect(timer[funcName]()).toEqual(values[5]);
 		}
 
-		test("is started", () => {
+		test("Is started", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isStarted", [false, true, true, true, true, false]);
 		});
 
-		test("is paused", () => {
+		test("Is paused", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isPaused", [false, false, true, false, false, false]);
 		});
 
-		test("is running", () => {
+		test("Is running", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isRunning", [false, true, false, true, false, false]);
 		});
 
-		test("is stopped", () => {
+		test("Is stopped", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isStopped", [false, false, false, false, true, false]);
 		});
 	});
 
-	describe("interaction methods", () => {
-		test("returns this", () => {
+	describe("Interaction methods", () => {
+		test("Returns this", () => {
 			const timer = new TimerController(5000);
 			expect(timer.start().pause().resume().stop().reset().start()).toBe(timer);
 		});
 
-		test("calling twice does nothing", () => {
+		test("Calling twice does nothing", () => {
 			// test that running each method twice still produces the expected results
 			function step() {
 				vi.advanceTimersByTime(1);
@@ -206,7 +206,7 @@ describe("Can run", () => {
 			expect(timer.getTimeElapsed()).toEqual(4);
 		});
 
-		test("pause and resume do not do anything when timer hasn't started", () => {
+		test("Pause and resume do not do anything when timer hasn't started", () => {
 			const timer = new TimerController(10);
 			timer.resume();
 			timer.pause();
@@ -216,7 +216,7 @@ describe("Can run", () => {
 			expect(timer.isRunning()).toEqual(false);
 		});
 
-		test("reset completely resets the timer, with same default duration", () => {
+		test("Reset completely resets the timer, with same default duration", () => {
 			const timer1 = new TimerController(30);
 			timer1.start();
 			vi.advanceTimersByTime(40);
@@ -232,7 +232,7 @@ describe("Can run", () => {
 	});
 
 	describe("getTimeElapsed/getTimeRemaining", () => {
-		test("calculates time passed correctly", () => {
+		test("Calculates time passed correctly", () => {
 			const timer = new TimerController(5000);
 			timer.start();
 			vi.advanceTimersByTime(2345);
@@ -240,14 +240,14 @@ describe("Can run", () => {
 			expect(timer.getTimeRemaining()).toEqual(5000 - 2345);
 		});
 
-		test("do not advance when not started", () => {
+		test("Do not advance when not started", () => {
 			const timer = new TimerController(9999);
 			vi.advanceTimersByTime(4532);
 			expect(timer.getTimeElapsed()).toEqual(0);
 			expect(timer.getTimeRemaining()).toEqual(9999);
 		});
 
-		test("is 0 when finished", () => {
+		test("Is 0 when finished", () => {
 			const timer = new TimerController(1000);
 			timer.start();
 			timer.onFinish(() => {
@@ -256,14 +256,14 @@ describe("Can run", () => {
 			vi.advanceTimersByTime(5000);
 		});
 
-		test("can calculate negative times", () => {
+		test("Can calculate negative times", () => {
 			const timer = new TimerController(10);
 			timer.start();
 			vi.advanceTimersByTime(50);
 			expect(timer.getTimeRemaining()).toEqual(-40);
 		});
 
-		test("does not advance when stopped", () => {
+		test("Does not advance when stopped", () => {
 			const timer = new TimerController(10);
 			timer.start();
 			vi.advanceTimersByTime(4);
@@ -273,7 +273,7 @@ describe("Can run", () => {
 		});
 
 		describe("Does not count pauses", () => {
-			test("does not include time in pauses", () => {
+			test("Does not include time in pauses", () => {
 				const timer = new TimerController(10000);
 				timer.start();
 				vi.advanceTimersByTime(2000);
@@ -285,7 +285,7 @@ describe("Can run", () => {
 				expect(timer.getTimeElapsed()).toEqual(2000);
 			});
 
-			test("does not include time in pauses and calculates time elapsed after resume", () => {
+			test("Does not include time in pauses and calculates time elapsed after resume", () => {
 				const timer = new TimerController(20000);
 				timer.start();
 				vi.advanceTimersByTime(1000);
@@ -297,7 +297,7 @@ describe("Can run", () => {
 				expect(timer.getTimeElapsed()).toEqual(2000);
 			});
 
-			test("can handle multiple pauses", () => {
+			test("Can handle multiple pauses", () => {
 				const timer = new TimerController(100);
 				timer.start();
 				vi.advanceTimersByTime(10);
