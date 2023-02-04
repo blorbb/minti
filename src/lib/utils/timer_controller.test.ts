@@ -178,6 +178,59 @@ describe("Can run", () => {
 		});
 	});
 
+	describe("interaction methods", () => {
+		test("returns this", () => {
+			const timer = new TimerController(5000);
+			expect(timer.start().pause().resume().stop().reset().start()).toBe(timer);
+		});
+
+		test("calling twice does nothing", () => {
+			// test that running each method twice still produces the expected results
+			function step() {
+				vi.advanceTimersByTime(1);
+			}
+
+			const timer = new TimerController(10);
+			timer.start();
+			step(); // step
+			timer.start();
+			step(); // step
+			timer.pause();
+			step(); // no
+			timer.pause();
+			step(); // no
+			timer.resume();
+			step(); // step
+			timer.resume();
+			step(); // step
+			expect(timer.getTimeElapsed()).toEqual(4);
+		});
+
+		test("pause and resume do not do anything when timer hasn't started", () => {
+			const timer = new TimerController(10);
+			timer.resume();
+			timer.pause();
+			timer.resume();
+			expect(timer.isStarted()).toEqual(false);
+			expect(timer.isPaused()).toEqual(false);
+			expect(timer.isRunning()).toEqual(false);
+		});
+
+		test("reset completely resets the timer, with same default duration", () => {
+			const timer1 = new TimerController(30);
+			timer1.start();
+			vi.advanceTimersByTime(40);
+			timer1.reset();
+
+			expect(timer1.isStarted()).toEqual(false);
+			expect(timer1.isRunning()).toEqual(false);
+			expect(timer1.isPaused()).toEqual(false);
+			expect(timer1.isStopped()).toEqual(false);
+			expect(timer1.getTimeElapsed()).toEqual(0);
+			expect(timer1.getTimeRemaining()).toEqual(30);
+		});
+	});
+
 	describe("getTimeElapsed/getTimeRemaining", () => {
 		test("calculates time passed correctly", () => {
 			const timer = new TimerController(5000);
@@ -208,6 +261,15 @@ describe("Can run", () => {
 			timer.start();
 			vi.advanceTimersByTime(50);
 			expect(timer.getTimeRemaining()).toEqual(-40);
+		});
+
+		test("does not advance when stopped", () => {
+			const timer = new TimerController(10);
+			timer.start();
+			vi.advanceTimersByTime(4);
+			timer.stop();
+			vi.advanceTimersByTime(5);
+			expect(timer.getTimeElapsed()).toEqual(4);
 		});
 
 		describe("Does not count pauses", () => {
