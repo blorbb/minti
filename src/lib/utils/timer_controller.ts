@@ -236,10 +236,10 @@ export class TimerController {
 	 * Converts a time in ms to hours, minutes, seconds and milliseconds.
 	 *
 	 * @param time time in ms
-	 * @returns time converted to hours, minutes, seconds and milliseconds.
+	 * @returns time converted to days, hours, minutes, seconds and milliseconds.
 	 * Access the times easily with
 	 * ```ts
-	 * { h, m, s, ms } = Timer.parseToUnits(time)
+	 * { d, h, m, s, ms } = Timer.parseToUnits(time)
 	 * ```
 	 */
 	public static parseToUnits(time: number): TimeWithUnits {
@@ -308,7 +308,6 @@ export class TimerController {
 		}
 	}
 
-	// TODO: add automatic, only shows necessary digits
 	/**
 	 * Converts time in ms to a string with a specified range of units
 	 * to convert to.
@@ -414,7 +413,7 @@ export class TimerController {
 		const notNegative = time >= 0;
 
 		// reduce small->large
-		// rounds the values UP, so that timer ends as soon as seconds/mins/hrs = 0
+		// rounds the values UP, so that timer ends as soon as seconds/mins/hrs/days = 0
 		// can't put the truncatedTimes.* === 0 inside the first if statement
 		// as it may be -0, we want to set it to 0 for cleanliness
 		if (TimerController.UNITS_TO_INDEX.ms < smallestUnitIndex) {
