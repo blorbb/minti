@@ -6,25 +6,25 @@ describe("Parses time", () => {
 	describe("From milliseconds to h/m/s/ms", () => {
 		test.each([
 			[100, 0, 0, 0, 0, 100],
-			[58000, 0, 0, 0, 58, 0],
-			[60000, 0, 0, 1, 0, 0],
-			[137000, 0, 0, 2, 17, 0],
-			[3600000, 0, 1, 0, 0, 0],
-			[8340000, 0, 2, 19, 0, 0],
-			[86400000, 1, 0, 0, 0, 0],
-			[197292332, 2, 6, 48, 12, 332],
+			[58_000, 0, 0, 0, 58, 0],
+			[60_000, 0, 0, 1, 0, 0],
+			[137_000, 0, 0, 2, 17, 0],
+			[3_600_000, 0, 1, 0, 0, 0],
+			[8_340_000, 0, 2, 19, 0, 0],
+			[86_400_000, 1, 0, 0, 0, 0],
+			[197_292_332, 2, 6, 48, 12, 332],
 		])("Parses %ims to %id, %ih, %im, %is, %ims", (time, d, h, m, s, ms) => {
 			expect(TimerController.parseToUnits(time)).toEqual({ d, h, m, s, ms });
 		});
 
 		test.each([
 			[-100, -0, -0, -0, -0, -100],
-			[-58000, -0, -0, -0, -58, -0],
-			[-60000, -0, -0, -1, -0, -0],
-			[-137000, -0, -0, -2, -17, -0],
-			[-3600000, -0, -1, -0, -0, -0],
-			[-8340000, -0, -2, -19, -0, -0],
-			[-197292332, -2, -6, -48, -12, -332],
+			[-58_000, -0, -0, -0, -58, -0],
+			[-60_000, -0, -0, -1, -0, -0],
+			[-137_000, -0, -0, -2, -17, -0],
+			[-3_600_000, -0, -1, -0, -0, -0],
+			[-8_340_000, -0, -2, -19, -0, -0],
+			[-197_292_332, -2, -6, -48, -12, -332],
 		])(
 			"Parses a negative time of %ims to %id %ih, %im, %is, %ims",
 			(time, d, h, m, s, ms) => {
@@ -36,31 +36,31 @@ describe("Parses time", () => {
 	describe("From milliseconds to a clock time", () => {
 		describe("Handles trims and padding", () => {
 			test("Produces correct time range", () => {
-				expect(TimerController.parseToClock(137020, ["ms", "m"])).toEqual(
+				expect(TimerController.parseToClock(137_020, ["ms", "m"])).toEqual(
 					"2:17.020",
 				);
 			});
 
 			test("Can swap the given time range", () => {
-				expect(TimerController.parseToClock(137020, ["m", "ms"])).toEqual(
+				expect(TimerController.parseToClock(137_020, ["m", "ms"])).toEqual(
 					"2:17.020",
 				);
 			});
 
 			test("Can convert large units into the given range", () => {
-				expect(TimerController.parseToClock(5315938, ["ms", "m"])).toEqual(
+				expect(TimerController.parseToClock(5_315_938, ["ms", "m"])).toEqual(
 					"88:35.938",
 				);
 			});
 
 			test("Can allow units to have a longer string when LHS is trimmed", () => {
-				expect(TimerController.parseToClock(325225, ["ms", "s"])).toEqual(
+				expect(TimerController.parseToClock(325_225, ["ms", "s"])).toEqual(
 					"325.225",
 				);
 			});
 
 			test("Adds necessary 0 padding", () => {
-				expect(TimerController.parseToClock(123456, ["ms", "h"])).toEqual(
+				expect(TimerController.parseToClock(123_456, ["ms", "h"])).toEqual(
 					"0:02:03.456",
 				);
 			});
@@ -70,19 +70,19 @@ describe("Parses time", () => {
 			});
 
 			test("Adds 1 to rightmost unit when positive", () => {
-				expect(TimerController.parseToClock(137020, ["s", "m"])).toEqual(
+				expect(TimerController.parseToClock(137_020, ["s", "m"])).toEqual(
 					"2:18",
 				);
 			});
 
 			test("Does not add 1 when RHS unit is 0", () => {
-				expect(TimerController.parseToClock(137000, ["s", "m"])).toEqual(
+				expect(TimerController.parseToClock(137_000, ["s", "m"])).toEqual(
 					"2:17",
 				);
 			});
 
 			test("Supports single units, not adding separators", () => {
-				expect(TimerController.parseToClock(3242521, ["s", "s"])).toEqual(
+				expect(TimerController.parseToClock(3_242_521, ["s", "s"])).toEqual(
 					"3243",
 				);
 			});
@@ -102,11 +102,13 @@ describe("Parses time", () => {
 
 		describe("Handles negative times", () => {
 			test("Adds minus sign when negative", () => {
-				expect(TimerController.parseToClock(-19394)).toEqual("-0:00:00:19.394");
+				expect(TimerController.parseToClock(-19_394)).toEqual(
+					"-0:00:00:19.394",
+				);
 			});
 
 			test("Shifts minus sign when LHS is trimmed", () => {
-				expect(TimerController.parseToClock(-38471, ["ms", "m"])).toEqual(
+				expect(TimerController.parseToClock(-38_471, ["ms", "m"])).toEqual(
 					"-0:38.471",
 				);
 			});
@@ -116,7 +118,7 @@ describe("Parses time", () => {
 			});
 
 			test("Does not add 1 to time when negative", () => {
-				expect(TimerController.parseToClock(-23423, ["s", "m"])).toEqual(
+				expect(TimerController.parseToClock(-23_423, ["s", "m"])).toEqual(
 					"-0:23",
 				);
 			});
@@ -289,7 +291,7 @@ describe("Can run", () => {
 
 		describe("Does not count pauses", () => {
 			test("Does not include time in pauses", () => {
-				const timer = new TimerController(10000);
+				const timer = new TimerController(10_000);
 				timer.start();
 				vi.advanceTimersByTime(2000);
 				timer.pause();
@@ -301,7 +303,7 @@ describe("Can run", () => {
 			});
 
 			test("Does not include time in pauses and calculates time elapsed after resume", () => {
-				const timer = new TimerController(20000);
+				const timer = new TimerController(20_000);
 				timer.start();
 				vi.advanceTimersByTime(1000);
 				timer.pause();
