@@ -178,5 +178,77 @@ describe("Can run", () => {
 		});
 	});
 
-	// TODO add more tests for the timer counting down correctly
+	describe("getTimeElapsed/getTimeRemaining", () => {
+		test("calculates time passed correctly", () => {
+			const timer = new TimerController(5000);
+			timer.start();
+			vi.advanceTimersByTime(2345);
+			expect(timer.getTimeElapsed()).toEqual(2345);
+			expect(timer.getTimeRemaining()).toEqual(5000 - 2345);
+		});
+
+		test("do not advance when not started", () => {
+			const timer = new TimerController(9999);
+			vi.advanceTimersByTime(4532);
+			expect(timer.getTimeElapsed()).toEqual(0);
+			expect(timer.getTimeRemaining()).toEqual(9999);
+		});
+
+		test("is 0 when finished", () => {
+			const timer = new TimerController(1000);
+			timer.start();
+			timer.onFinish(() => {
+				expect(timer.getTimeRemaining()).toEqual(0);
+			});
+			vi.advanceTimersByTime(5000);
+		});
+
+		test("can calculate negative times", () => {
+			const timer = new TimerController(10);
+			timer.start();
+			vi.advanceTimersByTime(50);
+			expect(timer.getTimeRemaining()).toEqual(-40);
+		});
+
+		describe("Does not count pauses", () => {
+			test("does not include time in pauses", () => {
+				const timer = new TimerController(10000);
+				timer.start();
+				vi.advanceTimersByTime(2000);
+				timer.pause();
+				expect(timer.getTimeElapsed()).toEqual(2000);
+				vi.advanceTimersByTime(4525);
+				expect(timer.getTimeElapsed()).toEqual(2000);
+				vi.advanceTimersByTime(138764287);
+				expect(timer.getTimeElapsed()).toEqual(2000);
+			});
+
+			test("does not include time in pauses and calculates time elapsed after resume", () => {
+				const timer = new TimerController(20000);
+				timer.start();
+				vi.advanceTimersByTime(1000);
+				timer.pause();
+				vi.advanceTimersByTime(1500);
+				timer.resume();
+				expect(timer.getTimeElapsed()).toEqual(1000);
+				vi.advanceTimersByTime(1000);
+				expect(timer.getTimeElapsed()).toEqual(2000);
+			});
+
+			test("can handle multiple pauses", () => {
+				const timer = new TimerController(100);
+				timer.start();
+				vi.advanceTimersByTime(10);
+				timer.pause();
+				vi.advanceTimersByTime(42);
+				timer.resume();
+				vi.advanceTimersByTime(5);
+				timer.pause();
+				vi.advanceTimersByTime(2);
+				timer.resume();
+				vi.advanceTimersByTime(20);
+				expect(timer.getTimeElapsed()).toEqual(10 + 5 + 20);
+			});
+		});
+	});
 });
