@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TimerController } from "./timer_controller";
 
@@ -120,6 +121,37 @@ describe("Parses time", () => {
 			test("Does not add 1 to time when negative", () => {
 				expect(TimerController.parseToClock(-23_423, ["s", "m"])).toEqual(
 					"-0:23",
+				);
+			});
+		});
+
+		describe("Handles auto mode", () => {
+			test.each<[number, string]>([
+				[100_000_000, "1:03:46:40.000"],
+				[5_324_542, "1:28:44.542"],
+				[847_231, "14:07.231"],
+				[3742, "3.742"],
+			])("Auto-trims each of the units: from %ims to %s", (time, result) => {
+				expect(TimerController.parseToClock(time, ["ms", "d"], true)).toEqual(
+					result,
+				);
+			});
+
+			test("Keeps 0 seconds when in the last second of the timer", () => {
+				expect(TimerController.parseToClock(123, ["d", "ms"], true)).toEqual(
+					"0.123",
+				);
+			});
+
+			test("Can auto-trim to a restricted set of units", () => {
+				expect(
+					TimerController.parseToClock(500_000, ["ms", "s"], true),
+				).toEqual("500.000");
+			});
+
+			test("Can auto-trim from the right side", () => {
+				expect(TimerController.parseToClock(653_838, ["s", "d"], true)).toEqual(
+					"10:54",
 				);
 			});
 		});
