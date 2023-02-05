@@ -278,6 +278,20 @@ describe("Can run", () => {
 			expect(timer1.getTimeElapsed()).toEqual(0);
 			expect(timer1.getTimeRemaining()).toEqual(30);
 		});
+
+		test("Does not call onFinish multiple times", () => {
+			const mock = vi.fn();
+			const timer = new TimerController(1);
+			timer.onFinish(() => {
+				mock();
+			});
+
+			timer.start();
+			vi.advanceTimersByTime(10);
+			timer.pause().resume().pause().resume();
+
+			expect(mock).toHaveBeenCalledOnce();
+		});
 	});
 
 	describe("getTimeElapsed/getTimeRemaining", () => {

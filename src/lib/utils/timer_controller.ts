@@ -188,7 +188,6 @@ export class TimerController {
 	 * `stopFinishTimer()`.
 	 */
 	private startFinishTimer() {
-		// check if already finished
 		const timeRemaining = this.getTimeRemaining();
 		if (timeRemaining <= 0) this.setFinished();
 		// start timer to check again
@@ -214,6 +213,9 @@ export class TimerController {
 	 * `onFinish(callback)`.
 	 */
 	private setFinished() {
+		// check if already finished
+		// do not call onFinishCallback again
+		if (this.#finished) return;
 		this.#finished = true;
 		if (this.onFinishCallback) this.onFinishCallback();
 	}
