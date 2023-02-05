@@ -188,8 +188,6 @@ export class TimerController {
 	 * `stopFinishTimer()`.
 	 */
 	private startFinishTimer() {
-		if (this.#finished) return;
-		if (this.completionTimeout) this.stopFinishTimer();
 		// check if already finished
 		const timeRemaining = this.getTimeRemaining();
 		if (timeRemaining <= 0) this.setFinished();
