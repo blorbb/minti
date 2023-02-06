@@ -156,7 +156,7 @@
 			dispatch("remove");
 		}}
 	>
-		-
+		×
 	</button>
 </div>
 
@@ -231,7 +231,9 @@
 		background-color: var(--c-primary);
 		color: var(--c-primary-on);
 
-		padding: 0.5rem 1rem;
+		// padding: 0.5rem 1rem;
+		width: 5rem;
+		height: 2rem;
 		border-radius: 5rem;
 
 		filter: var(--shadow-drop-2);

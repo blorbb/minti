@@ -5,7 +5,7 @@
 	import { getCSSProp } from "$lib/utils/css";
 </script>
 
-<div class="timer-list">
+<div class="c-timer-list">
 	{#each $timerControllerList as tc (tc)}
 		<div
 			class="timer"
@@ -19,15 +19,22 @@
 </div>
 
 <style lang="scss">
-	.timer-list {
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		gap: 1rem;
+	.c-timer-list {
+		display: grid;
+		gap: var(--timer-padding);
+		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+		padding: var(--timer-padding);
 		height: 100%;
+		overflow: hidden scroll;
+		// scrollbar-gutter: stable both-edges;
+
+		&::-webkit-scrollbar {
+			width: 0;
+		}
 
 		.timer {
-			flex-basis: 8rem;
+			min-height: 8rem;
+			scroll-snap-align: center;
 		}
 	}
 </style>
