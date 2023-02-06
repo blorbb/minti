@@ -21,9 +21,9 @@
 <style lang="scss">
 	.c-timer-list {
 		display: grid;
-		gap: var(--timer-padding);
+		gap: var(--l-timer-padding);
 		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-		padding: var(--timer-padding);
+		padding: var(--l-timer-padding);
 		height: 100%;
 		overflow: hidden scroll;
 		// scrollbar-gutter: stable both-edges;

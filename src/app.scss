@@ -86,9 +86,9 @@
 	--default-font-feature-settings: "ss04";
 
 	// misc settings
-	--scrollbar-width: 0px;
-	--navbar-width: 3rem;
-	--timer-padding: 1rem;
+	--l-scrollbar-width: 0px;
+	--l-navbar-width: 3rem;
+	--l-timer-padding: 1rem;
 }
 
 // variables
@@ -131,13 +131,13 @@ body {
 }
 
 ::-webkit-scrollbar {
-	width: var(--scrollbar-width);
-	height: var(--scrollbar-width);
+	width: var(--l-scrollbar-width);
+	height: var(--l-scrollbar-width);
 }
 
 ::-webkit-scrollbar-thumb {
 	background: #000;
-	border-radius: var(--scrollbar-width);
+	border-radius: var(--l-scrollbar-width);
 }
 
 ::-webkit-scrollbar-track {

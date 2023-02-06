@@ -250,14 +250,14 @@
 		color: var(--c-error-on);
 
 		&.remove-timer-mini {
-			--l-size: 2rem;
+			--s-size: 2rem;
 
 			position: absolute;
 			top: 1rem;
 			right: 1rem;
 
-			width: var(--l-size);
-			height: var(--l-size);
+			width: var(--s-size);
+			height: var(--s-size);
 			padding: 0;
 			border-radius: 50%;
 

@@ -22,7 +22,7 @@
 <style lang="scss">
 	.contents {
 		display: grid;
-		grid-template-rows: calc(100vh - var(--navbar-width)) var(--navbar-width);
+		grid-template-rows: calc(100vh - var(--l-navbar-width)) var(--l-navbar-width);
 
 		width: 100vw;
 		height: 100vh;
@@ -44,8 +44,8 @@
 
 	@media (min-aspect-ratio: 3/2) {
 		.contents {
-			grid-template-columns: var(--navbar-width) calc(
-					100vw - var(--navbar-width)
+			grid-template-columns: var(--l-navbar-width) calc(
+					100vw - var(--l-navbar-width)
 				);
 			grid-template-rows: 1fr;
 		}

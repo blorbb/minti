@@ -9,7 +9,7 @@
 
 <style lang="scss">
 	.add-timer {
-		--l-size: 2rem;
+		--s-size: 2rem;
 
 		background-color: var(--c-tertiary);
 		color: var(--c-tertiary-on);
@@ -18,8 +18,8 @@
 		bottom: 2rem;
 		right: 2rem;
 
-		width: var(--l-size);
-		height: var(--l-size);
+		width: var(--s-size);
+		height: var(--s-size);
 		border-radius: 50%;
 
 		font-weight: 900;
