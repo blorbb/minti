@@ -51,6 +51,7 @@ export function parseInput(input: string) {
 		}
 		// should have already been checked before
 		// but just in case
+		/* c8 ignore next 3 */
 		if (token.type === "unknown") throw new Error("Invalid input");
 
 		// tracking stuff
@@ -201,6 +202,8 @@ function stringTokenToUnit(token: string): TimeAbbreviations {
 	else if (MIN_STRINGS.includes(token)) return "m";
 	else if (SEC_STRINGS.includes(token)) return "s";
 	else if (MS_STRINGS.includes(token)) return "ms";
+	// idk why it needs next 3
+	/* c8 ignore next 3 */
 	else throw new Error("Invalid unit");
 }
 

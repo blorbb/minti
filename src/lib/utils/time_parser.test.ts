@@ -23,9 +23,32 @@ function ms(time: number) {
 	return time;
 }
 
-describe("Does not accept mixed units", () => {
-	test.fails("Both", () => {
-		p("1:34h");
+describe("Rejects", () => {
+	test("Having both separators and letters", () => {
+		expect(() => p("1:34h")).toThrow();
+	});
+
+	test("Words that are not valid units", () => {
+		expect(() => p("1ha")).toThrow();
+	});
+
+	test.each(["aa", "oaik", "an hour", "a bunch of text"])(
+		"Random words",
+		(input) => {
+			expect(() => p(input)).toThrow();
+		},
+	);
+
+	test("Invalid numbers", () => {
+		expect(() => p("3-5")).toThrow();
+	});
+
+	test("Too many separators", () => {
+		expect(() => p("1:2:3:4:5")).toThrow();
+	});
+
+	test("Cannot infer after milliseconds", () => {
+		expect(() => p("83ms24")).toThrow();
 	});
 });
 
@@ -47,15 +70,6 @@ describe("Parses a duration", () => {
 			test("Allows decimals without leading 0", () => {
 				expect(p(".4")).toEqual(m(0.4));
 			});
-		});
-
-		describe("Rejects", () => {
-			test.fails.each(["aa", "oih", "an hour"])(
-				'Non-numeric inputs: "%s"',
-				(input) => {
-					p(input);
-				},
-			);
 		});
 	});
 
@@ -105,10 +119,6 @@ describe("Parses a duration", () => {
 
 			test("Allows for separators without numbers", () => {
 				expect(p("5::2")).toEqual(h(5) + s(2));
-			});
-
-			test.fails("Does not allow more separators", () => {
-				p("4:12:34:56:7");
 			});
 		});
 
@@ -236,10 +246,6 @@ describe("Parses a duration", () => {
 					expect(p(input)).toEqual(time);
 				},
 			);
-
-			test.fails("Cannot infer after milliseconds", () => {
-				p("83ms24");
-			});
 
 			describe("With decimals", () => {
 				test("Allows decimals", () => {
