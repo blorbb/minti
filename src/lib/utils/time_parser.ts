@@ -1,4 +1,9 @@
-import { TimerController, type TimeAbbreviations } from "./timer_controller";
+import {
+	convert,
+	order,
+	unitStrings,
+	type TimeAbbreviations,
+} from "./timer_utils";
 
 class TokenManager {
 	public static readonly LETTER_TOKEN_REGEX = /[a-z]/i;
@@ -11,12 +16,12 @@ class TokenManager {
 	}
 
 	// first input token is always going to be ""
-	public inputTokens: { token: string; type: TokenTypes }[] = [];
+	public inputTokens: { string: string; type: TokenTypes }[] = [];
 	public prevTokenType: TokenTypes = "unknown";
 	private currentToken = "";
 	public pushCurrentToken() {
 		this.inputTokens.push({
-			token: this.currentToken,
+			string: this.currentToken,
 			type: this.prevTokenType,
 		});
 		this.currentToken = "";
@@ -33,8 +38,6 @@ class TokenManager {
 	}
 }
 
-parseInput("1");
-
 export function parseInput(input: string) {
 	const tokenList = parseInputTokens(input);
 
@@ -45,7 +48,7 @@ export function parseInput(input: string) {
 	for (const token of tokenList) {
 		// numbers must be valid
 		if (token.type === "number") {
-			const number = +token.token;
+			const number = +token.string;
 			if (isNaN(number)) throw new Error("Invalid number");
 			continue;
 		}
@@ -56,7 +59,7 @@ export function parseInput(input: string) {
 
 		// tracking stuff
 		if (token.type === "separator") separatorCount++;
-		else if (!VALID_STRINGS.includes(token.token))
+		else if (!unitStrings.VALID_STRINGS.includes(token.string))
 			throw new Error("Invalid units");
 
 		if (parsingMethod) {
@@ -86,7 +89,7 @@ export function parseInput(input: string) {
 	// "separator" for *:*:* format
 	// "letter" for *h*m*s format
 	if (parsingMethod === "") {
-		return TimerController.MS_IN_MIN * +tokenList[0].token;
+		return convert.minsToMs(+tokenList[0].string);
 	}
 
 	let totalTime = 0;
@@ -95,12 +98,12 @@ export function parseInput(input: string) {
 	for (const token of tokenList) {
 		switch (token.type) {
 			case "number": {
-				currentNumber = +token.token;
+				currentNumber = +token.string;
 				break;
 			}
 			case "letter": {
-				const unit = stringTokenToUnit(token.token);
-				const time = unitTimeToMs(currentNumber, unit);
+				const unit = unitStrings.stringToUnit(token.string);
+				const time = convert.timeUnitToMs(currentNumber, unit);
 				totalTime += time;
 				currentNumber = 0;
 				currentUnit = unit;
@@ -112,9 +115,9 @@ export function parseInput(input: string) {
 				// 35:45:12 => 2 sep => hours (index 3)
 				// already guaranteed that the index is in range
 				// from prev check (separator > 3)
-				const unit = TimerController.INDEX_TO_UNITS[separatorCount + 1];
+				const unit = order.INDEX_TO_UNITS[separatorCount + 1];
+				const time = convert.timeUnitToMs(currentNumber, unit);
 				separatorCount--;
-				const time = unitTimeToMs(currentNumber, unit);
 				totalTime += time;
 				currentNumber = 0;
 				currentUnit = unit;
@@ -123,11 +126,12 @@ export function parseInput(input: string) {
 		}
 	}
 	if (currentNumber !== 0 && currentUnit) {
-		const nextUnitIndex = TimerController.UNITS_TO_INDEX[currentUnit];
-		if (nextUnitIndex === 0)
+		if (currentUnit === "ms")
 			throw new Error("No units smaller than ms accepted");
-		const nextUnit = TimerController.INDEX_TO_UNITS[nextUnitIndex - 1];
-		totalTime += unitTimeToMs(currentNumber, nextUnit);
+
+		const currentUnitIndex = order.UNITS_TO_INDEX[currentUnit];
+		const nextUnit = order.INDEX_TO_UNITS[currentUnitIndex - 1];
+		totalTime += convert.timeUnitToMs(currentNumber, nextUnit);
 	}
 
 	return totalTime;
@@ -172,45 +176,4 @@ function parseInputTokens(input: string) {
 
 	// first token is "" because currentToken is initially "" and pushed
 	return manager.inputTokens.slice(1);
-}
-
-const DAY_STRINGS = ["d", "day", "days"];
-const HOUR_STRINGS = ["h", "hr", "hrs", "hour", "hours"];
-const MIN_STRINGS = ["m", "min", "mins", "minute", "minutes"];
-const SEC_STRINGS = ["s", "sec", "secs", "second", "seconds"];
-const MS_STRINGS = [
-	"ms",
-	"milli",
-	"millis",
-	"millisec",
-	"millisecs",
-	"millisecond",
-	"milliseconds",
-];
-
-const VALID_STRINGS = [
-	...DAY_STRINGS,
-	...HOUR_STRINGS,
-	...MIN_STRINGS,
-	...SEC_STRINGS,
-	...MS_STRINGS,
-];
-
-function stringTokenToUnit(token: string): TimeAbbreviations {
-	if (DAY_STRINGS.includes(token)) return "d";
-	else if (HOUR_STRINGS.includes(token)) return "h";
-	else if (MIN_STRINGS.includes(token)) return "m";
-	else if (SEC_STRINGS.includes(token)) return "s";
-	else if (MS_STRINGS.includes(token)) return "ms";
-	// idk why it needs next 3
-	/* c8 ignore next 3 */
-	else throw new Error("Invalid unit");
-}
-
-function unitTimeToMs(num: number, unit: TimeAbbreviations) {
-	if (unit === "d") return num * TimerController.MS_IN_DAY;
-	else if (unit === "h") return num * TimerController.MS_IN_HOUR;
-	else if (unit === "m") return num * TimerController.MS_IN_MIN;
-	else if (unit === "s") return num * TimerController.MS_IN_SEC;
-	else return num;
 }

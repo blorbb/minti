@@ -1,5 +1,5 @@
 import { get, type Readable, writable } from "svelte/store";
-import { sleep } from "./async";
+import { sleep } from "./misc";
 import { getCSSProp } from "./css";
 import { TimerController } from "./timer_controller";
 

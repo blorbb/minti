@@ -1,3 +1,5 @@
+import { expectUnreachable } from "./misc";
+
 /**
  * first capturing group = number
  *
@@ -65,9 +67,7 @@ export function getCSSProp(
 			// TODO
 			throw new Error("TODO: LENGTH CASE");
 		}
-		default: {
-			const check: never = type;
-			throw new Error("Unhandled case for type " + check);
-		}
+		default:
+			expectUnreachable(type);
 	}
 }

@@ -1,26 +1,14 @@
-import { describe, test, expect } from "vitest";
-import { TimerController } from "./timer_controller";
+import { describe, expect, test } from "vitest";
+import { convert } from "./timer_utils";
 import { parseInput as p } from "./time_parser";
 
 // quick functions to easily convert units to ms
-function d(time: number) {
-	return time * TimerController.MS_IN_DAY;
-}
-
-function h(time: number) {
-	return time * TimerController.MS_IN_HOUR;
-}
-
-function m(time: number) {
-	return time * TimerController.MS_IN_MIN;
-}
-
-function s(time: number) {
-	return time * TimerController.MS_IN_SEC;
-}
-
-function ms(time: number) {
-	return time;
+const d = convert.daysToMs;
+const h = convert.hoursToMs;
+const m = convert.minsToMs;
+const s = convert.secsToMs;
+function ms(ms: number) {
+	return ms;
 }
 
 describe("Rejects", () => {
