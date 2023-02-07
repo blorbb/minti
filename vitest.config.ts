@@ -6,7 +6,7 @@ export default defineConfig({
 	},
 	test: {
 		coverage: {
-			provider: "c8",
+			provider: "istanbul",
 			reporter: ["text", "json", "html"],
 		},
 	},
