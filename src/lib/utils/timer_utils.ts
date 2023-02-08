@@ -44,12 +44,18 @@ export const unitStrings = {
 		];
 	},
 	stringToUnit(token: string): TimeAbbreviations {
+		// no clue why istanbul thinks that the SECS branch is not
+		// being covered. only this is comment working to ignore it
+		/* istanbul ignore else -- @preserve */
 		if (this.DAYS.includes(token)) return "d";
 		else if (this.HOURS.includes(token)) return "h";
 		else if (this.MINS.includes(token)) return "m";
 		else if (this.SECS.includes(token)) return "s";
 		else if (this.MS.includes(token)) return "ms";
-		else throw new Error("Invalid unit");
+		else {
+			/* istanbul ignore next -- @preserve */
+			throw new Error("Invalid unit");
+		}
 	},
 	// DO NOT set this `as const`
 	// for some reason it makes Array.prototype.includes only
@@ -77,9 +83,9 @@ export const convert = {
 				return this.secsToMs(num);
 			case "ms":
 				return num;
-			default:
-				expectUnreachable(fromUnit);
 		}
+		/* istanbul ignore next -- @preserve */
+		expectUnreachable(fromUnit);
 	},
 	msToTimeUnit(ms: number, toUnit: TimeAbbreviations) {
 		switch (toUnit) {
@@ -93,9 +99,9 @@ export const convert = {
 				return this.msToSecs(ms);
 			case "ms":
 				return ms;
-			default:
-				expectUnreachable(toUnit);
 		}
+		/* istanbul ignore next -- @preserve */
+		expectUnreachable(toUnit);
 	},
 	convert(num: number, fromUnit: TimeAbbreviations, toUnit: TimeAbbreviations) {
 		const ms = this.timeUnitToMs(num, fromUnit);

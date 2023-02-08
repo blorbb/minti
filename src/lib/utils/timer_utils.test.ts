@@ -1,4 +1,4 @@
-import { parseFromTime } from "./timer_utils";
+import { convert, parseFromTime } from "./timer_utils";
 import { describe, test, expect } from "vitest";
 
 describe("Parses time", () => {
@@ -83,6 +83,10 @@ describe("Parses time", () => {
 			test("Can trim to days only", () => {
 				expect(parseFromTime.toClock(200_000_000, ["d", "d"])).toEqual("3");
 			});
+
+			test("Number of days is 2 (not 3) when time is exactly 2 days", () => {
+				expect(parseFromTime.toClock(172_800_000, ["d", "d"])).toEqual("2");
+			});
 		});
 
 		describe("Handles negative times", () => {
@@ -131,5 +135,13 @@ describe("Parses time", () => {
 				);
 			});
 		});
+	});
+});
+
+describe("Converts", () => {
+	// temporary to cover a switch case
+	// TODO refactor all these tests, better describes and names
+	test("From ms to days", () => {
+		expect(convert.msToTimeUnit(43_200_000, "d")).toEqual(0.5);
 	});
 });

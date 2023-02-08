@@ -54,7 +54,7 @@ export function parseInput(input: string) {
 		}
 		// should have already been checked before
 		// but just in case
-		/* c8 ignore next 3 */
+		/* istanbul ignore if -- @preserve */
 		if (token.type === "unknown") throw new Error("Invalid input");
 
 		// tracking stuff

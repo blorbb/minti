@@ -137,6 +137,11 @@ describe("Can run", () => {
 
 			expect(mock).toHaveBeenCalledOnce();
 		});
+
+		test("Default duration is 0", () => {
+			const timer = new TimerController();
+			expect(timer.getTimeRemaining()).toEqual(0);
+		});
 	});
 
 	describe("getTimeElapsed/getTimeRemaining", () => {
