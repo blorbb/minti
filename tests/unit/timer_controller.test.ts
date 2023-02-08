@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TimerController } from "./timer_controller";
+import { TimerController } from "$lib/utils/timer_controller";
 
 describe("Can run", () => {
 	beforeEach(() => {

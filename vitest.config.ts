@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { resolve } from "path";
 
 export default defineConfig({
 	define: {
@@ -8,9 +9,14 @@ export default defineConfig({
 		coverage: {
 			provider: "istanbul",
 			reporter: ["text", "json", "html"],
+			reportsDirectory: "./tests/coverage",
+		},
+		include: ["tests/unit/**/*.{test,spec}.{js,ts}"],
+	},
+	// https://stackoverflow.com/a/74374936
+	resolve: {
+		alias: {
+			$lib: resolve(__dirname, "./src/lib"),
 		},
 	},
-	// test: {
-	// 	includeSource: ["src/**/*.{js,ts}"],
-	// },
 });

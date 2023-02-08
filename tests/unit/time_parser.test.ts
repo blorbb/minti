@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { convert } from "./timer_utils";
-import { parseInput as p } from "./time_parser";
+import { convert } from "../../src/lib/utils/timer_utils";
+import { parseInput as p } from "../../src/lib/utils/time_parser";
 
 // quick functions to easily convert units to ms
 const d = convert.daysToMs;

@@ -1,4 +1,4 @@
-import { convert, parseFromTime } from "./timer_utils";
+import { convert, parseFromTime } from "$lib/utils/timer_utils";
 import { describe, test, expect } from "vitest";
 
 describe("Parses time", () => {
