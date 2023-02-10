@@ -24,4 +24,10 @@
 
 		font-weight: 900;
 	}
+
+	@media (min-aspect-ratio: 3/2) {
+		.add-timer {
+			right: calc(var(--l-navbar-width) + 2rem);
+		}
+	}
 </style>
