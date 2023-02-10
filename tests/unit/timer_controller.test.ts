@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TimerController } from "$lib/utils/timer_controller";
 
-describe("Can run", () => {
+describe("TimerController", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 	});
@@ -51,22 +51,22 @@ describe("Can run", () => {
 			expect(timer[funcName]()).toEqual(values[5]);
 		}
 
-		test("Is started", () => {
+		test("Is started: after start, off after reset", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isStarted", [false, true, true, true, true, false]);
 		});
 
-		test("Is paused", () => {
+		test("Is paused: after started and paused", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isPaused", [false, false, true, false, false, false]);
 		});
 
-		test("Is running", () => {
+		test("Is running: after started and not paused", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isRunning", [false, true, false, true, false, false]);
 		});
 
-		test("Is stopped", () => {
+		test("Is stopped: only after calling stop, off after reset", () => {
 			const timer = new TimerController(1000);
 			results(timer, "isStopped", [false, false, false, false, true, false]);
 		});

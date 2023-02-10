@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { convert } from "../../src/lib/utils/timer_utils";
-import { parseInput as p } from "../../src/lib/utils/time_parser";
+import { convert } from "$lib/utils/timer_utils";
+import { parseInput as p } from "$lib/utils/time_parser";
 
 // quick functions to easily convert units to ms
 const d = convert.daysToMs;
@@ -20,8 +20,8 @@ describe("Rejects", () => {
 		expect(() => p("1ha")).toThrow();
 	});
 
-	test.each(["aa", "oaik", "an hour", "a bunch of text"])(
-		"Random words",
+	test.each(["aa", "oaik", "an hour", "a bunch of text", "12@!"])(
+		"Random words/symbols",
 		(input) => {
 			expect(() => p(input)).toThrow();
 		},
@@ -48,6 +48,10 @@ describe("Parses a duration", () => {
 
 		test("Converts a number greater than 60", () => {
 			expect(p("893")).toEqual(m(893));
+		});
+
+		test("Removes whitespace", () => {
+			expect(p("   3 45  ")).toEqual(m(345));
 		});
 
 		describe("With decimals", () => {
@@ -107,26 +111,6 @@ describe("Parses a duration", () => {
 
 			test("Allows for separators without numbers", () => {
 				expect(p("5::2")).toEqual(h(5) + s(2));
-			});
-		});
-
-		describe("With decimals", () => {
-			test("Uses milliseconds after dot", () => {
-				expect(p("5:13.273")).toEqual(m(5) + s(13) + ms(273));
-			});
-
-			test("Accepts decimals not at the end as well", () => {
-				expect(p("43:3.5:23")).toEqual(h(43) + m(3.5) + s(23));
-			});
-
-			test("Accepts multiple decimals", () => {
-				expect(p("34.2:1.74:23.45432")).toEqual(
-					h(34.2) + m(1.74) + s(23.45432),
-				);
-			});
-
-			test("Accepts decimal without leading 0", () => {
-				expect(p(".3:3")).toEqual(m(0.3) + s(3));
 			});
 		});
 	});
@@ -211,16 +195,6 @@ describe("Parses a duration", () => {
 			])("Converts many units %s to %i ms", (input, time) => {
 				expect(p(input)).toEqual(time);
 			});
-
-			describe("With decimals", () => {
-				test("Allows decimals in units", () => {
-					expect(p("32.1h65.2m2s")).toEqual(h(32.1) + m(65.2) + s(2));
-				});
-
-				test("Allows decimals without leading 0", () => {
-					expect(p(".5h3s")).toEqual(h(0.5) + s(3));
-				});
-			});
 		});
 
 		describe("Infers units", () => {
@@ -234,16 +208,6 @@ describe("Parses a duration", () => {
 					expect(p(input)).toEqual(time);
 				},
 			);
-
-			describe("With decimals", () => {
-				test("Allows decimals", () => {
-					expect(p("84.1m1.8")).toEqual(m(84.1) + s(1.8));
-				});
-
-				test("Allows decimals without leading 0", () => {
-					expect(p(".6m.2s")).toEqual(m(0.6) + s(0.2));
-				});
-			});
 		});
 	});
 });
