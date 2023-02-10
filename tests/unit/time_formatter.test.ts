@@ -129,6 +129,24 @@ describe("Formats time", () => {
 			test("Can auto-trim from the right side", () => {
 				expect(formatTimeToClock(653_838, ["s", "d"], true)).toEqual("10:54");
 			});
+
+			describe("Edge cases when a larger unit ticks down one", () => {
+				test("Stays as 1:00 when time is rounded to 1 minute, not 60 secs", () => {
+					expect(formatTimeToClock(59999, ["s", "d"], true)).toEqual("1:00");
+				});
+
+				test("Shows 59 seconds when time is exactly 59s", () => {
+					expect(formatTimeToClock(59000, ["s", "d"], true)).toEqual("59");
+				});
+
+				test("Goes to 59.999 sec when ms are enabled", () => {
+					expect(formatTimeToClock(59999, ["ms", "d"], true)).toEqual("59.999");
+				});
+
+				test("Does not use units larger than the given unit range", () => {
+					expect(formatTimeToClock(3_700_000, ["s", "m"])).toEqual("61:40");
+				});
+			});
 		});
 	});
 });

@@ -5,6 +5,7 @@
  */
 
 import { padMin } from "./misc";
+import type { TimeAbbreviations } from "./timer_controller";
 import {
 	constants,
 	convert,
@@ -39,21 +40,28 @@ class FormatTime {
 
 		FormatTime.reorderUnitRange(unitRange);
 
-		const largestUnitIndex = order.UNITS_TO_INDEX[unitRange[1]];
-		const smallestUnitIndex = order.UNITS_TO_INDEX[unitRange[0]];
+		const largestUnit = unitRange[1];
+		const largestUnitIndex = order.UNITS_TO_INDEX[largestUnit];
+		const smallestUnit = unitRange[0];
+		const smallestUnitIndex = order.UNITS_TO_INDEX[smallestUnit];
 
 		// add negative sign if required
 		let returnString = time < 0 ? "-" : "";
 
 		// add the necessary padding and separators
 		/** Whether the current unit is the first to be shown */
-		let firstIteration = true;
-		for (let i = largestUnitIndex; i >= smallestUnitIndex; i--) {
-			const currentUnit = order.INDEX_TO_UNITS[i];
+		let isFirstUnit = true;
+
+		for (
+			let unitIndex = largestUnitIndex;
+			unitIndex >= smallestUnitIndex;
+			unitIndex--
+		) {
+			const currentUnit = order.INDEX_TO_UNITS[unitIndex];
 			if (
 				auto &&
 				unitTimes[currentUnit] === 0 &&
-				firstIteration &&
+				isFirstUnit &&
 				currentUnit !== "s"
 			) {
 				// remove all 0's from the left side
@@ -66,20 +74,20 @@ class FormatTime {
 
 			let separator = "";
 			// add separators (:)
-			// do not add separators on first iteration
-			if (firstIteration) separator = "";
+			// do not add separators before the first number
+			if (isFirstUnit) separator = "";
 			else if (currentUnit !== "ms") separator = unitStrings.UNIT_SEPARATOR;
 			else separator = ".";
 
 			// add padding
 			let padding = 0;
-			if (firstIteration) padding = 0;
+			if (isFirstUnit) padding = 0;
 			else if (currentUnit !== "ms") padding = 2;
 			else padding = 3;
 			const paddedTime = padMin(padding, unitTimes[currentUnit]);
 
 			returnString += separator + paddedTime;
-			firstIteration = false;
+			isFirstUnit = false;
 		}
 		return returnString;
 	}
@@ -149,7 +157,76 @@ class FormatTime {
 			truncatedTimes.h = 0;
 		}
 
-		return truncatedTimes;
+		// check that none of the units have overflown
+		// e.g. for a time of 59sec 999ms and a range excluding ms
+		// seconds would be 60
+		// need to push this to the larger unit as 1 minute 0 seconds
+		// need to check:
+		// the unit value >= its overflow, and the larger unit
+		// is still within the unitRange
+		const orderedTimes = FormatTime.toOrderedMap(truncatedTimes);
+
+		for (const [unit, value] of orderedTimes) {
+			const nextUnit = this.nextLargerUnit(unit);
+
+			// check that it is within the unitRange
+			if (
+				nextUnit === null ||
+				order.UNITS_TO_INDEX[nextUnit] > largestUnitIndex
+			) {
+				break;
+			}
+
+			// get the number required for overflow
+			// e.g. current unit = hours
+			// convert 1 day to hours = 24 hours
+			const unitLimit = convert.convert(1, nextUnit, unit);
+			if (value >= unitLimit) {
+				// round this value
+				// in case it somehow is more than 2x greater
+				// than the limit, e.g. 49 hours => 2x
+				const limitExceedingMultiplier = Math.floor(value / unitLimit);
+				// convert this unit down to within its limit
+				orderedTimes.set(unit, value % unitLimit);
+
+				// increment next value
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const nextValue = orderedTimes.get(nextUnit)!;
+				orderedTimes.set(nextUnit, nextValue + limitExceedingMultiplier);
+			}
+		}
+
+		return Object.fromEntries(orderedTimes);
+	}
+
+	/**
+	 * Gets the next larger unit from the one given. Returns `null` if
+	 * the given unit is already the largest one there is ("d")
+	 *
+	 * @param unit any time abbreviation EXCLUDING days ("d")
+	 */
+	private static nextLargerUnit(unit: TimeAbbreviations) {
+		const nextUnitIndex = order.UNITS_TO_INDEX[unit] + 1;
+
+		if (!(nextUnitIndex in order.INDEX_TO_UNITS)) return null;
+		return order.INDEX_TO_UNITS[nextUnitIndex];
+	}
+
+	/**
+	 * Converts a TimeWithUnits object to a Map, which can be iterated upon.
+	 * Goes from milliseconds to days.
+	 *
+	 * @param timeWithUnits
+	 */
+	private static toOrderedMap(timeWithUnits: TimeWithUnits) {
+		const map = new Map<TimeAbbreviations, number>();
+		map.set("ms", timeWithUnits.ms);
+		map.set("s", timeWithUnits.s);
+		map.set("m", timeWithUnits.m);
+		map.set("h", timeWithUnits.h);
+		map.set("d", timeWithUnits.d);
+
+		return map;
 	}
 }
 
