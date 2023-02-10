@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { getCSSProp } from "$lib/utils/css";
-	import { TimerController } from "$lib/utils/timer_controller";
+	import type { TimerController } from "$lib/utils/timer_controller";
+	import { formatTimeToClock } from "$lib/utils/time_formatter";
+	import { parseInput } from "$lib/utils/time_parser";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
 
@@ -26,14 +28,13 @@
 		running = tc.isRunning();
 	}
 
-	//#region timer updates
 	// using interval: NodeJS.Timer raises a linting error
 	let interval: ReturnType<typeof setInterval>;
 
 	function startTimerUpdates() {
 		interval = setInterval(() => {
 			const timeRemaining = tc.getTimeRemaining();
-			clockTime = TimerController.parseToClock(timeRemaining, ["s", "h"], true);
+			clockTime = formatTimeToClock(timeRemaining, ["s", "h"], true);
 			// remove the last ms, accuracy up to 10ms
 			// uncomment if using range ["ms", *]
 			// clockTime = clockTime.slice(0, clockTime.length - 1);
@@ -45,15 +46,21 @@
 	}
 
 	let input: HTMLInputElement;
-	let previousValue = 0;
+	let previousValue = "";
 	function submitTime() {
-		const time = +input.value;
+		const time = parseInput(input.value);
 		if (time <= 0 || isNaN(time)) return;
-		previousValue = time;
+		previousValue = input.value;
 		tc.reset(time);
 		tc.start();
 		updateStatuses();
 		startTimerUpdates();
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.code === "Enter") {
+			submitTime();
+		}
 	}
 
 	const dispatch = createEventDispatcher();
@@ -61,7 +68,6 @@
 	onDestroy(() => {
 		stopTimerUpdates();
 	});
-	//#endregion
 
 	let countdownElem: HTMLElement;
 	tc.onFinish(async () => {
@@ -89,9 +95,10 @@
 		{#if !started}
 			<input
 				type="text"
-				placeholder="Enter Time (ms)"
+				placeholder="Enter Time"
 				bind:this={input}
 				class:finished
+				on:keydown={handleKeydown}
 			/>
 		{:else}
 			{clockTime}
@@ -142,7 +149,7 @@
 						updateStatuses();
 						await tick();
 						countdownElem.classList.remove(FINISH_CLASS_NAME);
-						input.value = previousValue.toString();
+						input.value = previousValue;
 					}}
 				>
 					Reset
