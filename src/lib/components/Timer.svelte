@@ -86,7 +86,7 @@
 </script>
 
 <div
-	class="c-timer"
+	class="c-timer-box"
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
@@ -168,7 +168,7 @@
 </div>
 
 <style lang="scss">
-	.c-timer {
+	.c-timer-box {
 		display: flex;
 		flex-direction: column;
 		align-items: center;

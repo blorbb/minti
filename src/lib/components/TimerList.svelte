@@ -8,7 +8,7 @@
 <div class="c-timer-list">
 	{#each $timerControllerList as tc (tc)}
 		<div
-			class="timer"
+			class="timer-container"
 			animate:flip={{
 				duration: getCSSProp("--t-transition", "time") ?? 100,
 			}}
@@ -25,16 +25,13 @@
 		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
 		padding: var(--l-timer-padding);
 		height: 100%;
-		overflow: hidden scroll;
-		// scrollbar-gutter: stable both-edges;
 
 		&::-webkit-scrollbar {
 			width: 0;
 		}
 
-		.timer {
+		.timer-container {
 			min-height: 8rem;
-			scroll-snap-align: center;
 		}
 	}
 </style>

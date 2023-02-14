@@ -14,7 +14,7 @@
 		background-color: var(--c-tertiary);
 		color: var(--c-tertiary-on);
 
-		position: fixed;
+		position: absolute;
 		bottom: 2rem;
 		right: 2rem;
 
@@ -23,11 +23,5 @@
 		border-radius: 50%;
 
 		font-weight: 900;
-	}
-
-	@media (min-aspect-ratio: 3/2) {
-		.add-timer {
-			right: calc(var(--l-navbar-width) + 2rem);
-		}
 	}
 </style>

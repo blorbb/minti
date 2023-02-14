@@ -9,10 +9,10 @@
 	<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 </svelte:head>
 
-<div class="contents">
-	<div class="main-content">
+<div class="viewport">
+	<main class="main-content">
 		<slot />
-	</div>
+	</main>
 	<div class="navbar">
 		<div>a</div>
 		<div>a</div>
@@ -20,23 +20,24 @@
 </div>
 
 <style lang="scss">
-	.contents {
-		display: grid;
-		grid-template-rows: calc(100vh - var(--l-navbar-width)) var(
-				--l-navbar-width
-			);
+	.viewport {
+		display: flex;
+		flex-direction: column;
 
 		width: 100vw;
 		height: 100vh;
-
-		// overflow: hidden;
 	}
 
 	.main-content {
-		overflow: auto;
+		flex-grow: 1;
+		position: relative;
 	}
 
 	.navbar {
+		flex-grow: 0;
+		flex-shrink: 0;
+		flex-basis: var(--l-navbar-width);
+
 		display: flex;
 		align-items: center;
 		justify-content: space-around;
@@ -45,11 +46,8 @@
 	}
 
 	@media (min-aspect-ratio: 3/2) {
-		.contents {
-			grid-template-columns:
-				calc(100vw - var(--l-navbar-width))
-				var(--l-navbar-width);
-			grid-template-rows: 1fr;
+		.viewport {
+			flex-direction: row;
 		}
 
 		.navbar {
