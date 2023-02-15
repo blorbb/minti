@@ -18,21 +18,21 @@ export class TimerController {
 	}
 
 	//#region interaction methods
-	public start = () => {
+	public start = (startTime = Date.now()) => {
 		if (this.isStarted()) {
 			return this;
 		}
 		this.clear();
-		this.#startTimestamp = Date.now();
-		this.resume();
+		this.#startTimestamp = startTime;
+		this.resume(startTime);
 		return this;
 	};
 
-	public resume = () => {
+	public resume = (resumeTime = Date.now()) => {
 		if (!this.isPaused() || this.isStopped()) {
 			return this;
 		}
-		this.#lastResumeTimestamp = Date.now();
+		this.#lastResumeTimestamp = resumeTime;
 		this.startFinishTimer();
 		return this;
 	};
@@ -69,6 +69,26 @@ export class TimerController {
 		this.stopFinishTimer();
 		return this;
 	};
+
+	/**
+	 * Increase or decrease duration of the timer.
+	 *
+	 * @param ms Milliseconds to increase the duration by.
+	 * Use a negative number to decrease duration.
+	 */
+	public addDuration(ms: number) {
+		if (this.isStopped()) {
+			return this;
+		}
+
+		this.#duration += ms;
+
+		// reset finish timer
+		this.stopFinishTimer();
+		this.startFinishTimer();
+
+		return this;
+	}
 	//#endregion
 
 	//#region status methods
@@ -141,8 +161,16 @@ export class TimerController {
 	public getTimeRemaining() {
 		return this.#duration - this.getTimeElapsed();
 	}
+
+	/**
+	 * @returns Duration of the timer in ms
+	 */
+	public getTimerDuration() {
+		return this.#duration;
+	}
 	//#endregion
 
+	//#region finish
 	/**
 	 * Timeout used to wait until the timer finishes to send
 	 * the `onFinish` event. Only use through `startFinishTimer()`
@@ -200,6 +228,7 @@ export class TimerController {
 	public onFinish(callback: () => void) {
 		this.onFinishCallback = callback;
 	}
+	//#endregion
 }
 
 export type TimeAbbreviations = "d" | "h" | "m" | "s" | "ms";

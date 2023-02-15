@@ -75,7 +75,9 @@ describe("TimerController", () => {
 	describe("Interaction methods", () => {
 		test("Returns this", () => {
 			const timer = new TimerController(5000);
-			expect(timer.start().pause().resume().stop().reset().start()).toBe(timer);
+			expect(
+				timer.start().pause().resume().stop().reset().addDuration(1).start(),
+			).toBe(timer);
 		});
 
 		test("Calling twice does nothing", () => {
@@ -223,6 +225,70 @@ describe("TimerController", () => {
 				timer.resume();
 				vi.advanceTimersByTime(20);
 				expect(timer.getTimeElapsed()).toEqual(10 + 5 + 20);
+			});
+		});
+	});
+
+	describe("Update duration", () => {
+		test("Can add time before start", () => {
+			const timer = new TimerController(10);
+			timer.addDuration(100);
+			expect(timer.getTimeRemaining()).toEqual(110);
+		});
+
+		test("Does nothing if stopped", () => {
+			const timer = new TimerController(10);
+			timer.start().stop().addDuration(200);
+			expect(timer.getTimeRemaining()).toEqual(10);
+		});
+
+		describe("Increase duration", () => {
+			test("Can add duration to the timer", () => {
+				const timer = new TimerController(10_000);
+				timer.addDuration(1234);
+				expect(timer.getTimeElapsed()).toEqual(0);
+				expect(timer.getTimeRemaining()).toEqual(1_1234);
+			});
+
+			test("Calculates correct time remaining after increased duration", () => {
+				const timer = new TimerController(1000);
+				timer.start();
+				vi.advanceTimersByTime(200);
+				timer.addDuration(1000);
+				vi.advanceTimersByTime(100);
+				expect(timer.getTimeElapsed()).toEqual(300);
+				expect(timer.getTimeRemaining()).toEqual(2000 - 300);
+			});
+		});
+
+		describe("Decrease duration", () => {
+			test("Can decrease duration to the timer", () => {
+				const timer = new TimerController(1234);
+				timer.addDuration(-100);
+				expect(timer.getTimeElapsed()).toEqual(0);
+				expect(timer.getTimeRemaining()).toEqual(1234 - 100);
+			});
+
+			test("Calculates correct time remaining after decreased duration", () => {
+				const timer = new TimerController(1000);
+				timer.start();
+				vi.advanceTimersByTime(200);
+				timer.addDuration(-100);
+				vi.advanceTimersByTime(100);
+				expect(timer.getTimeElapsed()).toEqual(300);
+				expect(timer.getTimeRemaining()).toEqual(1000 - 100 - 300);
+			});
+
+			test("Immediately finishes if decrease >= time remaining", () => {
+				const timer = new TimerController(300);
+				timer.start();
+				const mock = vi.fn();
+				timer.onFinish(mock);
+				vi.advanceTimersByTime(10);
+
+				timer.addDuration(-290);
+
+				expect(mock).toHaveBeenCalledOnce();
 			});
 		});
 	});
