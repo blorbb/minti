@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getCSSProp } from "$lib/utils/css";
 	import type { TimerController } from "$lib/utils/timer_controller";
+	import { constants } from "$lib/utils/timer_utils";
 	import { formatTimeToClock } from "$lib/utils/time_formatter";
 	import { parseInput } from "$lib/utils/time_parser";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
@@ -34,7 +35,7 @@
 	function startTimerUpdates() {
 		interval = setInterval(() => {
 			const timeRemaining = tc.getTimeRemaining();
-			clockTime = formatTimeToClock(timeRemaining, ["s", "h"], true);
+			clockTime = formatTimeToClock(timeRemaining, ["s", "d"], true);
 			// remove the last ms, accuracy up to 10ms
 			// uncomment if using range ["ms", *]
 			// clockTime = clockTime.slice(0, clockTime.length - 1);
@@ -106,12 +107,30 @@
 	</div>
 	<div class="controls">
 		{#if !started}
-			<button class="start" on:click={submitTime}> Start </button>
+			<button class="m-primary start" on:click={submitTime}> Start </button>
 		{:else}
 			<div class="control-left">
+				<button
+					class="add-time m-light"
+					on:click={() => {
+						tc.addDuration(constants.MS_IN_MIN);
+					}}
+				>
+					+
+				</button>
+				<button
+					class="subtract-time m-light"
+					on:click={() => {
+						tc.addDuration(-constants.MS_IN_MIN);
+					}}
+				>
+					-
+				</button>
+			</div>
+			<div class="control-right">
 				{#if paused}
 					<button
-						class="resume"
+						class="m-primary resume"
 						on:click={() => {
 							tc.resume();
 							updateStatuses();
@@ -121,7 +140,7 @@
 					</button>
 				{:else if running}
 					<button
-						class="pause"
+						class="m-primary pause"
 						on:click={() => {
 							tc.pause();
 							updateStatuses();
@@ -129,36 +148,26 @@
 					>
 						Pause
 					</button>
-				{:else if finished}
+				{:else}
 					<button
-						class="remove-timer"
-						on:click={() => {
-							dispatch("remove");
+						class="m-primary reset"
+						on:click={async () => {
+							tc.reset();
+							stopTimerUpdates();
+							updateStatuses();
+							await tick();
+							countdownElem.classList.remove(FINISH_CLASS_NAME);
+							input.value = previousValue;
 						}}
 					>
-						Remove
+						Reset
 					</button>
 				{/if}
-			</div>
-			<div class="control-right">
-				<button
-					class="reset"
-					on:click={async () => {
-						tc.reset();
-						stopTimerUpdates();
-						updateStatuses();
-						await tick();
-						countdownElem.classList.remove(FINISH_CLASS_NAME);
-						input.value = previousValue;
-					}}
-				>
-					Reset
-				</button>
 			</div>
 		{/if}
 	</div>
 	<button
-		class="remove-timer remove-timer-mini"
+		class="remove-timer"
 		on:click={() => {
 			dispatch("remove");
 		}}
@@ -225,24 +234,19 @@
 		grid-template-columns: repeat(2, 1fr);
 		gap: 3rem;
 
+		// center the start button
 		> button.start {
 			grid-column: span 2;
 		}
 
+		// left/right equidistant from the middle
 		> .control-left {
 			text-align: right;
 		}
 	}
 
 	button {
-		background-color: var(--c-primary);
-		color: var(--c-primary-on);
-
-		// padding: 0.5rem 1rem;
-		width: 5rem;
-		height: 2rem;
-		border-radius: 5rem;
-
+		// transitions
 		filter: var(--shadow-drop-2);
 		transition-property: filter, outline-width;
 		transition-duration: var(--t-transition);
@@ -250,25 +254,53 @@
 		&:is(:hover, :focus-visible) {
 			filter: var(--shadow-drop-3);
 		}
-	}
 
-	.remove-timer {
-		background-color: var(--c-error);
-		color: var(--c-error-on);
+		// specific styles
+		&.m-primary {
+			background-color: var(--c-primary);
+			color: var(--c-primary-on);
 
-		&.remove-timer-mini {
+			// padding: 0.5rem 1rem;
+			width: 5rem;
+			height: 2rem;
+			border-radius: 5rem;
+		}
+
+		&.m-light {
 			--s-size: 2rem;
 
-			position: absolute;
-			top: 1rem;
-			right: 1rem;
+			background-color: transparent;
+			color: var(--c-text);
 
 			width: var(--s-size);
 			height: var(--s-size);
-			padding: 0;
 			border-radius: 50%;
 
-			font-weight: 900;
+			&:is(:hover, :focus-visible) {
+				background-color: var(--c-overlay-light);
+			}
+
+			&:active {
+				background-color: var(--c-overlay-lighter);
+			}
 		}
+	}
+
+	.remove-timer {
+		--s-size: 2rem;
+
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+
+		background-color: var(--c-error);
+		color: var(--c-error-on);
+
+		width: var(--s-size);
+		height: var(--s-size);
+		padding: 0;
+		border-radius: 50%;
+
+		font-weight: 900;
 	}
 </style>
