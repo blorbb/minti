@@ -3,6 +3,10 @@
 	import { timerControllerList } from "$lib/utils/stores";
 </script>
 
+<svelte:head>
+	<title>Timer</title>
+</svelte:head>
+
 <TimerList />
 
 <button class="add-timer" on:click={timerControllerList.addTimer}> + </button>
@@ -14,7 +18,7 @@
 		background-color: var(--c-tertiary);
 		color: var(--c-tertiary-on);
 
-		position: absolute;
+		position: fixed;
 		bottom: 2rem;
 		right: 2rem;
 

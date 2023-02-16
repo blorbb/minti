@@ -24,7 +24,7 @@
 		gap: var(--l-timer-padding);
 		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
 		padding: var(--l-timer-padding);
-		height: 100%;
+		min-height: 100%;
 
 		&::-webkit-scrollbar {
 			width: 0;

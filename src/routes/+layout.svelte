@@ -10,9 +10,11 @@
 </svelte:head>
 
 <div class="viewport">
-	<main class="main-content">
-		<slot />
-	</main>
+	<div class="context">
+		<main>
+			<slot />
+		</main>
+	</div>
 	<div class="navbar">
 		<div>a</div>
 		<div>a</div>
@@ -28,9 +30,21 @@
 		height: 100vh;
 	}
 
-	.main-content {
+	.context {
 		flex-grow: 1;
 		position: relative;
+		overflow: unset;
+
+		// required to make `position: fixed;` relative to this.
+		// using `position: absolute;` doesn't work with scrolling
+		// https://stackoverflow.com/a/38796408
+		transform: translate(0);
+
+		> main {
+			overflow: scroll;
+			width: 100%;
+			height: 100%;
+		}
 	}
 
 	.navbar {
