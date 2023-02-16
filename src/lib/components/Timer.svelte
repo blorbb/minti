@@ -6,6 +6,7 @@
 	import { parseInput } from "$lib/utils/time_parser";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
+	import Progress from "$lib/components/Progress.svelte";
 
 	export let tc: TimerController;
 
@@ -21,12 +22,14 @@
 	let started = false;
 	let paused = false;
 	let running = false;
+	let duration = 0;
 
 	function updateStatuses() {
 		finished = tc.isStopped();
 		started = tc.isStarted();
 		paused = tc.isPaused();
 		running = tc.isRunning();
+		duration = tc.getTimerDuration();
 	}
 
 	// using interval: NodeJS.Timer raises a linting error
@@ -54,6 +57,7 @@
 		previousValue = input.value;
 		tc.reset(time);
 		tc.start();
+
 		updateStatuses();
 		startTimerUpdates();
 	}
@@ -78,6 +82,7 @@
 		clockTime = "0";
 
 		// flash the text
+		if (!countdownElem) return;
 		countdownElem.classList.add(FINISH_CLASS_NAME);
 		for (let i = 0; i < FLASHES * 2; i++) {
 			countdownElem.classList.toggle(FINISH_CLASS_NAME);
@@ -105,6 +110,7 @@
 			{clockTime}
 		{/if}
 	</div>
+	<Progress {duration} {paused} {started} />
 	<div class="controls">
 		{#if !started}
 			<button class="m-primary start" on:click={submitTime}> Start </button>
@@ -114,6 +120,7 @@
 					class="add-time m-light"
 					on:click={() => {
 						tc.addDuration(constants.MS_IN_MIN);
+						updateStatuses();
 					}}
 				>
 					+
@@ -122,6 +129,7 @@
 					class="subtract-time m-light"
 					on:click={() => {
 						tc.addDuration(-constants.MS_IN_MIN);
+						updateStatuses();
 					}}
 				>
 					-
