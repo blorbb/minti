@@ -56,10 +56,12 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
         "resizable": true,
         "title": "MinTi",
-        "width": 800
+        "width": 400,
+        "height": 160,
+        "minWidth": 400,
+        "minHeight": 160
       }
     ]
   }
