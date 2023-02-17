@@ -1,5 +1,9 @@
 <script lang="ts">
+	import Countdown from "$lib/components/Timer/Countdown.svelte";
+	import Progress from "$lib/components/Timer/Progress.svelte";
+
 	import { getCSSProp } from "$lib/utils/css";
+	import { timerControllerList } from "$lib/utils/stores";
 	import type {
 		TimeAbbreviations,
 		TimerController,
@@ -8,23 +12,23 @@
 	import { constants, order } from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { parseInput } from "$lib/utils/time_parser";
-	import { createEventDispatcher, onDestroy, tick } from "svelte";
-	import { scale } from "svelte/transition";
 
-	import Progress from "$lib/components/Progress.svelte";
-	import { timerControllerList } from "$lib/utils/stores";
+	import { onDestroy, tick } from "svelte";
+	import { scale } from "svelte/transition";
 
 	export let tc: TimerController;
 
 	const INTERVAL_TIME = 200;
-	const FINISH_CLASS_NAME = "finished";
-	const FLASHES = 3;
-	const FLASH_DURATION = 100;
 	const AUTO_TRIM_TIME = true;
 	const TIME_UNIT_RANGE: UnitRange = ["s", "d"];
 	let progressType: "line" | "background" = "background";
 
 	let countdownTimes: [TimeAbbreviations, string][] = [];
+	// ensure that the format is the same
+	// e.g. showing 0m 00s if set to ["s", "m"] and auto=false
+	const endingTimes = Array.from(
+		order.recordToMap(formatTimeToStrings(0, TIME_UNIT_RANGE, AUTO_TRIM_TIME)),
+	).reverse();
 
 	//#region statuses
 	let finished = false;
@@ -34,7 +38,7 @@
 	let duration = 0;
 
 	function updateStatuses() {
-		finished = tc.isStopped();
+		finished = tc.isFinished();
 		started = tc.isStarted();
 		paused = tc.isPaused();
 		running = tc.isRunning();
@@ -48,7 +52,9 @@
 
 	function startTimerUpdates() {
 		function run() {
-			const timeRemaining = tc.getTimeRemaining();
+			// keep positive so the overtime timer doesn't have
+			// negative sign
+			const timeRemaining = Math.abs(tc.getTimeRemaining());
 			const times = formatTimeToStrings(
 				timeRemaining,
 				TIME_UNIT_RANGE,
@@ -106,7 +112,6 @@
 		stopTimerUpdates();
 		updateStatuses();
 		await tick();
-		countdownElem.classList.remove(FINISH_CLASS_NAME);
 		input.value = previousValue;
 	}
 
@@ -115,25 +120,14 @@
 		updateStatuses();
 	}
 
-	function subtractDuration(s: number) {
-		tc.addDuration(-s);
+	function subtractDuration(ms: number) {
+		// clamp so that it stops at 0 if subtracting time
+		ms = Math.min(tc.getTimeRemaining(), ms);
+		addDuration(-ms);
 	}
 
-	let countdownElem: HTMLElement;
-	tc.onFinish(async () => {
-		tc.stop();
-		stopTimerUpdates();
+	tc.onFinish(() => {
 		updateStatuses();
-		const times = formatTimeToStrings(0, TIME_UNIT_RANGE, AUTO_TRIM_TIME);
-		countdownTimes = Array.from(order.recordToMap(times)).reverse();
-
-		// flash the text
-		if (!countdownElem) return;
-		countdownElem.classList.add(FINISH_CLASS_NAME);
-		for (let i = 0; i < FLASHES * 2; i++) {
-			countdownElem.classList.toggle(FINISH_CLASS_NAME);
-			await new Promise((resolve) => setTimeout(resolve, FLASH_DURATION));
-		}
 	});
 	//#endregion
 
@@ -158,7 +152,7 @@
 >
 	<Progress {duration} {paused} {started} type={progressType} border={false} />
 	<div class="c-timer-front">
-		<div class="countdown" bind:this={countdownElem}>
+		<div class="countdown">
 			{#if !started}
 				<input
 					type="text"
@@ -167,17 +161,17 @@
 					class:finished
 					on:keydown={handleKeydown}
 				/>
+			{:else if !finished}
+				<Countdown times={countdownTimes} />
 			{:else}
-				{#each countdownTimes as [unit, value]}
-					<span class="time-value">
-						<span class="time">{value}</span><span class="unit">{unit}</span>
-					</span>
-				{/each}
+				<Countdown times={endingTimes} />
 			{/if}
 		</div>
 		<div class="controls">
 			{#if !started}
-				<button class="m-primary start" on:click={start}> <iconify-icon inline icon="ph:play-fill" /> </button>
+				<button class="m-primary start" on:click={start}>
+					<iconify-icon inline icon="ph:play-fill" />
+				</button>
 			{:else}
 				<div class="control-left">
 					{#if !finished}
@@ -201,7 +195,10 @@
 							<iconify-icon inline icon="ph:clock-counter-clockwise" />
 						</button>
 					{:else}
-						<div class="overtime-timer">TODO</div>
+						<span class="overtime-timer">
+							<iconify-icon inline icon="ph:timer-bold" />
+							<Countdown times={countdownTimes} />
+						</span>
 					{/if}
 				</div>
 				<div class="control-right">
@@ -209,7 +206,7 @@
 						<button class="m-primary resume" on:click={resume}>
 							<iconify-icon inline icon="ph:play-fill" />
 						</button>
-					{:else if running}
+					{:else if running && !finished}
 						<button class="m-primary pause" on:click={pause}>
 							<iconify-icon inline icon="ph:pause-fill" />
 						</button>
@@ -242,6 +239,23 @@
 
 		&.progress--background {
 			padding: var(--l-progress-bar--bg__padding);
+		}
+
+		&[data-finished="true"] .countdown {
+			animation: finish-flash 420ms steps(1, end) forwards;
+		}
+	}
+
+	@keyframes finish-flash {
+		0%,
+		50%,
+		100% {
+			color: var(--c-timer--countdown__finish-color);
+		}
+
+		25%,
+		75% {
+			color: var(--c-text);
 		}
 	}
 
@@ -279,20 +293,13 @@
 	}
 
 	.countdown {
-		display: flex;
-		justify-content: center;
-		gap: 0.5ch;
-
 		height: 2.25rem;
 
 		font-size: 1.5rem;
 		font-weight: 700;
+		text-align: center;
 		// fixed width numbers
-		font-feature-settings: "tnum", var(--default-font-feature-settings);
-
-		&:global(.finished) {
-			color: rgb(235, 86, 59);
-		}
+		font-variant-numeric: lining-nums tabular-nums;
 
 		input {
 			background-color: transparent;
@@ -302,12 +309,7 @@
 
 			font-weight: normal;
 			text-align: center;
-			font-feature-settings: var(--default-font-feature-settings);
-		}
-
-		.unit {
-			font-size: 0.66666em;
-			font-weight: 500;
+			font-variant-numeric: normal;
 		}
 	}
 
@@ -321,9 +323,14 @@
 			grid-column: span 2;
 		}
 
+		> :is(.control-left, .control-right) {
+			display: flex;
+			align-items: center;
+		}
+
 		// left/right equidistant from the middle
 		> .control-left {
-			text-align: right;
+			justify-content: end;
 		}
 	}
 
@@ -383,5 +390,10 @@
 			color: var(--c-error-on);
 			transition: none;
 		}
+	}
+
+	.overtime-timer {
+		color: var(--c-timer--countdown__finish-color);
+		font-variant-numeric: lining-nums tabular-nums;
 	}
 </style>

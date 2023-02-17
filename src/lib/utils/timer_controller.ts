@@ -26,7 +26,7 @@ export class TimerController {
 		this.#startTimestamp = startTime;
 		this.resume(startTime);
 		return this;
-	};
+	}
 
 	public resume(resumeTime = Date.now()) {
 		if (!this.isPaused() || this.isStopped()) {
@@ -35,7 +35,7 @@ export class TimerController {
 		this.#lastResumeTimestamp = resumeTime;
 		this.startFinishTimer();
 		return this;
-	};
+	}
 
 	public pause() {
 		if (this.#lastResumeTimestamp === undefined || !this.isStarted()) {
@@ -45,20 +45,20 @@ export class TimerController {
 		this.#lastResumeTimestamp = undefined;
 		this.stopFinishTimer();
 		return this;
-	};
+	}
 
 	public reset(duration = this.#duration) {
 		this.clear();
 		this.#duration = duration;
 		return this;
-	};
+	}
 
 	public stop() {
 		this.pause();
 		this.#endTimestamp = Date.now();
 		this.stopFinishTimer();
 		return this;
-	};
+	}
 
 	private clear() {
 		this.#startTimestamp = undefined;
@@ -68,7 +68,7 @@ export class TimerController {
 		this.#finished = false;
 		this.stopFinishTimer();
 		return this;
-	};
+	}
 
 	/**
 	 * Increase or decrease duration of the timer.
@@ -134,6 +134,10 @@ export class TimerController {
 	 */
 	public isStopped() {
 		return this.#endTimestamp !== undefined;
+	}
+
+	public isFinished() {
+		return this.getTimeRemaining() <= 0;
 	}
 
 	/**
