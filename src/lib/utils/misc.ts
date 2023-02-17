@@ -28,3 +28,7 @@ export function padMin(length: number, num: number) {
 	// add padding
 	return str.padStart(length, "0");
 }
+
+export function reverseMap<K, V>(map: Map<K, V>) {
+	return new Map(Array.from(map).reverse());
+}

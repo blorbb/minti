@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * Utility functions to be used by the other timer functions.
  *
@@ -9,6 +10,7 @@ import { expectUnreachable } from "./misc";
 export type TimeAbbreviations = "d" | "h" | "m" | "s" | "ms";
 export type UnitRange = [TimeAbbreviations, TimeAbbreviations];
 export type TimeWithUnits = Record<TimeAbbreviations, number>;
+export type TimeStringsWithUnits = Partial<Record<TimeAbbreviations, string>>;
 
 export const constants = {
 	MS_IN_SEC: 1000,
@@ -142,4 +144,21 @@ export const order = {
 		h: 3,
 		d: 4,
 	} as Record<TimeAbbreviations, number>,
+	/**
+	 * @param record TimeWithUnits or TimeStringsWithUnits object.
+	 * Does not need to have all keys.
+	 * @returns The same object as a map, with only the defined keys.
+	 * Order is from milliseconds to days.
+	 */
+	recordToMap<T>(record: Partial<Record<TimeAbbreviations, T>>) {
+		const map = new Map<TimeAbbreviations, T>();
+
+		if ("ms" in record) map.set("ms", record.ms!);
+		if ("s" in record) map.set("s", record.s!);
+		if ("m" in record) map.set("m", record.m!);
+		if ("h" in record) map.set("h", record.h!);
+		if ("d" in record) map.set("d", record.d!);
+
+		return map;
+	},
 };

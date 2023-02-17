@@ -4,13 +4,14 @@
  * - units: converts time to days + hours + minutes + seconds + milliseconds
  */
 
-import { padMin } from "./misc";
+import { padMin, reverseMap } from "./misc";
 import type { TimeAbbreviations } from "./timer_controller";
 import {
 	constants,
 	convert,
 	order,
 	unitStrings,
+	type TimeStringsWithUnits,
 	type TimeWithUnits,
 	type UnitRange,
 } from "./timer_utils";
@@ -36,6 +37,35 @@ class FormatTime {
 		unitRange: UnitRange = ["ms", "d"],
 		auto = false,
 	) {
+		const map = reverseMap(
+			order.recordToMap(FormatTime.toStrings(time, unitRange, auto)),
+		);
+
+		let returnString = "";
+
+		// add the necessary padding and separators
+		/** Whether the current unit is the first to be shown */
+		let isFirstUnit = true;
+
+		for (const [unit, stringTime] of map) {
+			let separator = "";
+			// add separators (:)
+			// do not add separators before the first number
+			if (isFirstUnit) separator = "";
+			else if (unit !== "ms") separator = unitStrings.UNIT_SEPARATOR;
+			else separator = ".";
+
+			returnString += separator + stringTime;
+			isFirstUnit = false;
+		}
+		return returnString;
+	}
+
+	public static toStrings(
+		time: number,
+		unitRange: UnitRange = ["ms", "d"],
+		auto = false,
+	): TimeStringsWithUnits {
 		const unitTimes = FormatTime.reduceUnitsToRange(time, unitRange);
 
 		FormatTime.reorderUnitRange(unitRange);
@@ -46,7 +76,8 @@ class FormatTime {
 		const smallestUnitIndex = order.UNITS_TO_INDEX[smallestUnit];
 
 		// add negative sign if required
-		let returnString = time < 0 ? "-" : "";
+
+		const returnObj: TimeStringsWithUnits = {};
 
 		// add the necessary padding and separators
 		/** Whether the current unit is the first to be shown */
@@ -72,24 +103,22 @@ class FormatTime {
 				continue;
 			}
 
-			let separator = "";
-			// add separators (:)
-			// do not add separators before the first number
-			if (isFirstUnit) separator = "";
-			else if (currentUnit !== "ms") separator = unitStrings.UNIT_SEPARATOR;
-			else separator = ".";
-
 			// add padding
 			let padding = 0;
 			if (isFirstUnit) padding = 0;
 			else if (currentUnit !== "ms") padding = 2;
 			else padding = 3;
-			const paddedTime = padMin(padding, unitTimes[currentUnit]);
+			let paddedTime = padMin(padding, unitTimes[currentUnit]);
 
-			returnString += separator + paddedTime;
+			// add negative sign behind largest unit
+			if (isFirstUnit && time < 0) {
+				paddedTime = "-" + paddedTime;
+			}
+
+			returnObj[currentUnit] = paddedTime;
 			isFirstUnit = false;
 		}
-		return returnString;
+		return returnObj;
 	}
 
 	/**
@@ -164,7 +193,7 @@ class FormatTime {
 		// need to check:
 		// the unit value >= its overflow, and the larger unit
 		// is still within the unitRange
-		const orderedTimes = FormatTime.toOrderedMap(truncatedTimes);
+		const orderedTimes = order.recordToMap(truncatedTimes);
 
 		for (const [unit, value] of orderedTimes) {
 			const nextUnit = this.nextLargerUnit(unit);
@@ -211,23 +240,6 @@ class FormatTime {
 		if (!(nextUnitIndex in order.INDEX_TO_UNITS)) return null;
 		return order.INDEX_TO_UNITS[nextUnitIndex];
 	}
-
-	/**
-	 * Converts a TimeWithUnits object to a Map, which can be iterated upon.
-	 * Goes from milliseconds to days.
-	 *
-	 * @param timeWithUnits
-	 */
-	private static toOrderedMap(timeWithUnits: TimeWithUnits) {
-		const map = new Map<TimeAbbreviations, number>();
-		map.set("ms", timeWithUnits.ms);
-		map.set("s", timeWithUnits.s);
-		map.set("m", timeWithUnits.m);
-		map.set("h", timeWithUnits.h);
-		map.set("d", timeWithUnits.d);
-
-		return map;
-	}
 }
 
 /**
@@ -255,3 +267,9 @@ export const formatTimeToUnits = FormatTime.toUnits;
  * by `:` (or `.` for milliseconds).
  */
 export const formatTimeToClock = FormatTime.toClock;
+
+/**
+ * Converts a time in ms to an object of units and their values as
+ * a string. The strings have the correct padding applied.
+ */
+export const formatTimeToStrings = FormatTime.toStrings;

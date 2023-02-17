@@ -1,11 +1,19 @@
 <script lang="ts">
 	import { getCSSProp } from "$lib/utils/css";
-	import type { TimerController } from "$lib/utils/timer_controller";
-	import { constants } from "$lib/utils/timer_utils";
-	import { formatTimeToClock } from "$lib/utils/time_formatter";
+	import type {
+		TimeAbbreviations,
+		TimerController,
+		UnitRange,
+	} from "$lib/utils/timer_controller";
+	import { constants, order } from "$lib/utils/timer_utils";
+	import {
+		formatTimeToClock,
+		formatTimeToStrings,
+	} from "$lib/utils/time_formatter";
 	import { parseInput } from "$lib/utils/time_parser";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
+	import { pulse } from "$lib/utils/actions";
 
 	import Progress from "$lib/components/Progress.svelte";
 
@@ -15,9 +23,12 @@
 	const FINISH_CLASS_NAME = "finished";
 	const FLASHES = 3;
 	const FLASH_DURATION = 100;
+	const AUTO_TRIM_TIME = true;
+	const TIME_UNIT_RANGE: UnitRange = ["s", "d"];
 	let progressType: "line" | "background" = "background";
 
 	let clockTime = "";
+	let time: [TimeAbbreviations, string][] = [];
 
 	// statuses
 	let finished = false;
@@ -38,13 +49,24 @@
 	let interval: ReturnType<typeof setInterval>;
 
 	function startTimerUpdates() {
-		interval = setInterval(() => {
+		function run() {
 			const timeRemaining = tc.getTimeRemaining();
-			clockTime = formatTimeToClock(timeRemaining, ["s", "d"], true);
+			const times = formatTimeToStrings(
+				timeRemaining,
+				TIME_UNIT_RANGE,
+				AUTO_TRIM_TIME,
+			);
+
+			time = Array.from(order.recordToMap(times)).reverse();
+
 			// remove the last ms, accuracy up to 10ms
 			// uncomment if using range ["ms", *]
 			// clockTime = clockTime.slice(0, clockTime.length - 1);
-		}, INTERVAL_TIME);
+		}
+
+		// run immediately first to avoid blank
+		run();
+		interval = setInterval(run, INTERVAL_TIME);
 	}
 
 	function stopTimerUpdates() {
@@ -81,7 +103,8 @@
 		tc.stop();
 		stopTimerUpdates();
 		updateStatuses();
-		clockTime = "0";
+		const times = formatTimeToStrings(0, TIME_UNIT_RANGE, AUTO_TRIM_TIME);
+		time = Array.from(order.recordToMap(times)).reverse();
 
 		// flash the text
 		if (!countdownElem) return;
@@ -111,7 +134,11 @@
 					on:keydown={handleKeydown}
 				/>
 			{:else}
-				{clockTime}
+				{#each time as [unit, value]}
+					<span class="time-value">
+						<span class="time">{value}</span><span class="unit">{unit}</span>
+					</span>
+				{/each}
 			{/if}
 		</div>
 		<div class="controls">
@@ -248,8 +275,9 @@
 	.countdown {
 		display: flex;
 		justify-content: center;
+		gap: 0.5ch;
 
-		height: 1.5rem;
+		height: 2.25rem;
 
 		font-size: 1.5rem;
 		font-weight: 700;
@@ -258,6 +286,11 @@
 
 		&:global(.finished) {
 			color: rgb(235, 86, 59);
+		}
+
+		.unit {
+			font-size: 0.66666em;
+			font-weight: 500;
 		}
 	}
 
@@ -323,6 +356,15 @@
 		top: 0rem;
 		right: 0rem;
 
-		border-radius: 0 0 0 0.5rem;
+		border-radius: 0 0.5rem;
+
+		transition-property: background-color, color;
+		transition-duration: var(--t-transition);
+
+		&:active {
+			background-color: var(--c-error);
+			color: var(--c-error-on);
+			transition: none;
+		}
 	}
 </style>
