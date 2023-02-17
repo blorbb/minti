@@ -18,7 +18,7 @@ export class TimerController {
 	}
 
 	//#region interaction methods
-	public start = (startTime = Date.now()) => {
+	public start(startTime = Date.now()) {
 		if (this.isStarted()) {
 			return this;
 		}
@@ -28,7 +28,7 @@ export class TimerController {
 		return this;
 	};
 
-	public resume = (resumeTime = Date.now()) => {
+	public resume(resumeTime = Date.now()) {
 		if (!this.isPaused() || this.isStopped()) {
 			return this;
 		}
@@ -37,7 +37,7 @@ export class TimerController {
 		return this;
 	};
 
-	public pause = () => {
+	public pause() {
 		if (this.#lastResumeTimestamp === undefined || !this.isStarted()) {
 			return this;
 		}
@@ -47,20 +47,20 @@ export class TimerController {
 		return this;
 	};
 
-	public reset = (duration = this.#duration) => {
+	public reset(duration = this.#duration) {
 		this.clear();
 		this.#duration = duration;
 		return this;
 	};
 
-	public stop = () => {
+	public stop() {
 		this.pause();
 		this.#endTimestamp = Date.now();
 		this.stopFinishTimer();
 		return this;
 	};
 
-	private clear = () => {
+	private clear() {
 		this.#startTimestamp = undefined;
 		this.#endTimestamp = undefined;
 		this.#lastResumeTimestamp = undefined;
