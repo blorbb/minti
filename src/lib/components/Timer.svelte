@@ -68,6 +68,15 @@
 		clearInterval(interval);
 	}
 
+	async function reset() {
+		tc.reset();
+		stopTimerUpdates();
+		updateStatuses();
+		await tick();
+		countdownElem.classList.remove(FINISH_CLASS_NAME);
+		input.value = previousValue;
+	}
+
 	let input: HTMLInputElement;
 	let previousValue = "";
 	function submitTime() {
@@ -81,18 +90,6 @@
 		updateStatuses();
 		startTimerUpdates();
 	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.code === "Enter") {
-			submitTime();
-		}
-	}
-
-	const dispatch = createEventDispatcher();
-
-	onDestroy(() => {
-		stopTimerUpdates();
-	});
 
 	let countdownElem: HTMLElement;
 	tc.onFinish(async () => {
@@ -110,10 +107,26 @@
 			await new Promise((resolve) => setTimeout(resolve, FLASH_DURATION));
 		}
 	});
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.code === "Enter") {
+			submitTime();
+		}
+	}
+
+	const dispatch = createEventDispatcher();
+
+	onDestroy(() => {
+		stopTimerUpdates();
+	});
 </script>
 
 <div
 	class={`c-timer-box progress--${progressType}`}
+	data-paused={paused}
+	data-started={started}
+	data-finished={finished}
+	data-running={running}
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
@@ -142,24 +155,31 @@
 				<button class="m-primary start" on:click={submitTime}> Start </button>
 			{:else}
 				<div class="control-left">
-					<button
-						class="add-time m-light"
-						on:click={() => {
-							tc.addDuration(constants.MS_IN_MIN);
-							updateStatuses();
-						}}
-					>
-						+
-					</button>
-					<button
-						class="subtract-time m-light"
-						on:click={() => {
-							tc.addDuration(-constants.MS_IN_MIN);
-							updateStatuses();
-						}}
-					>
-						-
-					</button>
+					{#if !finished}
+						<button
+							class="add-time m-light"
+							on:click={() => {
+								tc.addDuration(constants.MS_IN_MIN);
+								updateStatuses();
+							}}
+						>
+							<iconify-icon inline icon="ph:plus" />
+						</button>
+						<button
+							class="subtract-time m-light"
+							on:click={() => {
+								tc.addDuration(-constants.MS_IN_MIN);
+								updateStatuses();
+							}}
+						>
+							<iconify-icon inline icon="ph:minus" />
+						</button>
+						<button class="reset-timer m-light" on:click={reset}>
+							<iconify-icon inline icon="ph:clock-counter-clockwise" />
+						</button>
+					{:else}
+						<div class="overtime-timer">TODO</div>
+					{/if}
 				</div>
 				<div class="control-right">
 					{#if paused}
@@ -185,13 +205,8 @@
 					{:else}
 						<button
 							class="m-primary reset"
-							on:click={async () => {
-								tc.reset();
-								stopTimerUpdates();
-								updateStatuses();
-								await tick();
-								countdownElem.classList.remove(FINISH_CLASS_NAME);
-								input.value = previousValue;
+							on:click={() => {
+								reset();
 							}}
 						>
 							Reset
@@ -257,17 +272,6 @@
 		}
 	}
 
-	input {
-		background-color: transparent;
-
-		border: none;
-		width: clamp(15rem, 50%, 25rem);
-
-		font-weight: normal;
-		text-align: center;
-		font-feature-settings: var(--default-font-feature-settings);
-	}
-
 	.countdown {
 		display: flex;
 		justify-content: center;
@@ -282,6 +286,17 @@
 
 		&:global(.finished) {
 			color: rgb(235, 86, 59);
+		}
+
+		input {
+			background-color: transparent;
+
+			border: none;
+			width: clamp(15rem, 50%, 25rem);
+
+			font-weight: normal;
+			text-align: center;
+			font-feature-settings: var(--default-font-feature-settings);
 		}
 
 		.unit {
