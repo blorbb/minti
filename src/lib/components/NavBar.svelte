@@ -1,15 +1,10 @@
 <script lang="ts">
 	import { timerControllerList } from "$lib/utils/stores";
-	import { pulse } from "$lib/utils/actions";
 </script>
 
 <nav>
 	<div class="navbar-item">
-		<button
-			class="add-timer circled"
-			on:click={timerControllerList.addTimer}
-			use:pulse={"var(--c-tertiary)"}
-		>
+		<button class="add-timer circled" on:click={timerControllerList.addTimer}>
 			<iconify-icon inline icon="ph:plus" />
 		</button>
 	</div>
@@ -17,7 +12,6 @@
 		<button
 			class="remove-all-timers circled"
 			on:click={timerControllerList.removeAll}
-			use:pulse={"var(--c-error)"}
 		>
 			<iconify-icon inline icon="ph:trash" />
 		</button>
@@ -85,11 +79,14 @@
 		--s-color: var(--c-tertiary);
 
 		color: var(--s-color);
-
 		border: 2px solid var(--s-color);
+
+		transition: background-color var(--t-transition) linear;
 
 		&:active {
 			background-color: var(--s-color);
+			// only transition on release
+			transition: none;
 		}
 	}
 

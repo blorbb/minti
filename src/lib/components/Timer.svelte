@@ -6,14 +6,10 @@
 		UnitRange,
 	} from "$lib/utils/timer_controller";
 	import { constants, order } from "$lib/utils/timer_utils";
-	import {
-		formatTimeToClock,
-		formatTimeToStrings,
-	} from "$lib/utils/time_formatter";
+	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { parseInput } from "$lib/utils/time_parser";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
-	import { pulse } from "$lib/utils/actions";
 
 	import Progress from "$lib/components/Progress.svelte";
 
@@ -27,8 +23,7 @@
 	const TIME_UNIT_RANGE: UnitRange = ["s", "d"];
 	let progressType: "line" | "background" = "background";
 
-	let clockTime = "";
-	let time: [TimeAbbreviations, string][] = [];
+	let countdownTimes: [TimeAbbreviations, string][] = [];
 
 	// statuses
 	let finished = false;
@@ -57,7 +52,7 @@
 				AUTO_TRIM_TIME,
 			);
 
-			time = Array.from(order.recordToMap(times)).reverse();
+			countdownTimes = Array.from(order.recordToMap(times)).reverse();
 
 			// remove the last ms, accuracy up to 10ms
 			// uncomment if using range ["ms", *]
@@ -79,6 +74,7 @@
 		const time = parseInput(input.value);
 		if (time <= 0 || isNaN(time)) return;
 		previousValue = input.value;
+
 		tc.reset(time);
 		tc.start();
 
@@ -104,7 +100,7 @@
 		stopTimerUpdates();
 		updateStatuses();
 		const times = formatTimeToStrings(0, TIME_UNIT_RANGE, AUTO_TRIM_TIME);
-		time = Array.from(order.recordToMap(times)).reverse();
+		countdownTimes = Array.from(order.recordToMap(times)).reverse();
 
 		// flash the text
 		if (!countdownElem) return;
@@ -134,7 +130,7 @@
 					on:keydown={handleKeydown}
 				/>
 			{:else}
-				{#each time as [unit, value]}
+				{#each countdownTimes as [unit, value]}
 					<span class="time-value">
 						<span class="time">{value}</span><span class="unit">{unit}</span>
 					</span>
