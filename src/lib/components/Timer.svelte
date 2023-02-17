@@ -12,6 +12,7 @@
 	import { scale } from "svelte/transition";
 
 	import Progress from "$lib/components/Progress.svelte";
+	import { timerControllerList } from "$lib/utils/stores";
 
 	export let tc: TimerController;
 
@@ -25,7 +26,7 @@
 
 	let countdownTimes: [TimeAbbreviations, string][] = [];
 
-	// statuses
+	//#region statuses
 	let finished = false;
 	let started = false;
 	let paused = false;
@@ -39,7 +40,9 @@
 		running = tc.isRunning();
 		duration = tc.getTimerDuration();
 	}
+	//#endregion
 
+	//#region timer updates
 	// using interval: NodeJS.Timer raises a linting error
 	let interval: ReturnType<typeof setInterval>;
 
@@ -68,18 +71,15 @@
 		clearInterval(interval);
 	}
 
-	async function reset() {
-		tc.reset();
+	onDestroy(() => {
 		stopTimerUpdates();
-		updateStatuses();
-		await tick();
-		countdownElem.classList.remove(FINISH_CLASS_NAME);
-		input.value = previousValue;
-	}
+	});
+	//#endregion
 
+	//#region timer events
 	let input: HTMLInputElement;
 	let previousValue = "";
-	function submitTime() {
+	function start() {
 		const time = parseInput(input.value);
 		if (time <= 0 || isNaN(time)) return;
 		previousValue = input.value;
@@ -89,6 +89,34 @@
 
 		updateStatuses();
 		startTimerUpdates();
+	}
+
+	function resume() {
+		tc.resume();
+		updateStatuses();
+	}
+
+	function pause() {
+		tc.pause();
+		updateStatuses();
+	}
+
+	async function reset() {
+		tc.reset();
+		stopTimerUpdates();
+		updateStatuses();
+		await tick();
+		countdownElem.classList.remove(FINISH_CLASS_NAME);
+		input.value = previousValue;
+	}
+
+	function addDuration(ms: number) {
+		tc.addDuration(ms);
+		updateStatuses();
+	}
+
+	function subtractDuration(s: number) {
+		tc.addDuration(-s);
 	}
 
 	let countdownElem: HTMLElement;
@@ -107,18 +135,15 @@
 			await new Promise((resolve) => setTimeout(resolve, FLASH_DURATION));
 		}
 	});
+	//#endregion
 
+	//#region misc helpers
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.code === "Enter") {
-			submitTime();
+			start();
 		}
 	}
-
-	const dispatch = createEventDispatcher();
-
-	onDestroy(() => {
-		stopTimerUpdates();
-	});
+	//#endregion
 </script>
 
 <div
@@ -152,15 +177,14 @@
 		</div>
 		<div class="controls">
 			{#if !started}
-				<button class="m-primary start" on:click={submitTime}> Start </button>
+				<button class="m-primary start" on:click={start}> Start </button>
 			{:else}
 				<div class="control-left">
 					{#if !finished}
 						<button
 							class="add-time m-light"
 							on:click={() => {
-								tc.addDuration(constants.MS_IN_MIN);
-								updateStatuses();
+								addDuration(constants.MS_IN_MIN);
 							}}
 						>
 							<iconify-icon inline icon="ph:plus" />
@@ -168,8 +192,7 @@
 						<button
 							class="subtract-time m-light"
 							on:click={() => {
-								tc.addDuration(-constants.MS_IN_MIN);
-								updateStatuses();
+								subtractDuration(constants.MS_IN_MIN);
 							}}
 						>
 							<iconify-icon inline icon="ph:minus" />
@@ -183,34 +206,11 @@
 				</div>
 				<div class="control-right">
 					{#if paused}
-						<button
-							class="m-primary resume"
-							on:click={() => {
-								tc.resume();
-								updateStatuses();
-							}}
-						>
-							Resume
-						</button>
+						<button class="m-primary resume" on:click={resume}> Resume </button>
 					{:else if running}
-						<button
-							class="m-primary pause"
-							on:click={() => {
-								tc.pause();
-								updateStatuses();
-							}}
-						>
-							Pause
-						</button>
+						<button class="m-primary pause" on:click={pause}> Pause </button>
 					{:else}
-						<button
-							class="m-primary reset"
-							on:click={() => {
-								reset();
-							}}
-						>
-							Reset
-						</button>
+						<button class="m-primary reset" on:click={reset}> Reset </button>
 					{/if}
 				</div>
 			{/if}
@@ -218,7 +218,7 @@
 		<button
 			class="remove-timer m-light"
 			on:click={() => {
-				dispatch("remove");
+				timerControllerList.removeTimer(tc);
 			}}
 		>
 			×

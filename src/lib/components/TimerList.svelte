@@ -13,7 +13,7 @@
 				duration: getCSSProp("--t-transition", "time") ?? 100,
 			}}
 		>
-			<Timer {tc} on:remove={() => timerControllerList.removeTimer(tc)} />
+			<Timer {tc} />
 		</div>
 	{/each}
 </div>
