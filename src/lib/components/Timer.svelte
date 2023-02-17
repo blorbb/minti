@@ -177,7 +177,7 @@
 		</div>
 		<div class="controls">
 			{#if !started}
-				<button class="m-primary start" on:click={start}> Start </button>
+				<button class="m-primary start" on:click={start}> <iconify-icon inline icon="ph:play-fill" /> </button>
 			{:else}
 				<div class="control-left">
 					{#if !finished}
@@ -206,11 +206,17 @@
 				</div>
 				<div class="control-right">
 					{#if paused}
-						<button class="m-primary resume" on:click={resume}> Resume </button>
+						<button class="m-primary resume" on:click={resume}>
+							<iconify-icon inline icon="ph:play-fill" />
+						</button>
 					{:else if running}
-						<button class="m-primary pause" on:click={pause}> Pause </button>
+						<button class="m-primary pause" on:click={pause}>
+							<iconify-icon inline icon="ph:pause-fill" />
+						</button>
 					{:else}
-						<button class="m-primary reset" on:click={reset}> Reset </button>
+						<button class="m-primary reset" on:click={reset}>
+							<iconify-icon inline icon="ph:clock-counter-clockwise-bold" />
+						</button>
 					{/if}
 				</div>
 			{/if}
