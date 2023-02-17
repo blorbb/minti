@@ -2,6 +2,7 @@
 	import "../app.scss";
 	import "normalize.css";
 	import "iconify-icon";
+	import NavBar from "$lib/components/NavBar.svelte";
 </script>
 
 <svelte:head>
@@ -15,10 +16,7 @@
 			<slot />
 		</main>
 	</div>
-	<div class="navbar">
-		<div>a</div>
-		<div>a</div>
-	</div>
+	<NavBar />
 </div>
 
 <style lang="scss">
@@ -33,7 +31,7 @@
 	.context {
 		flex-grow: 1;
 		position: relative;
-		overflow: unset;
+		overflow: scroll;
 
 		// required to make `position: fixed;` relative to this.
 		// using `position: absolute;` doesn't work with scrolling
@@ -47,25 +45,9 @@
 		}
 	}
 
-	.navbar {
-		flex-grow: 0;
-		flex-shrink: 0;
-		flex-basis: var(--l-navbar-width);
-
-		display: flex;
-		align-items: center;
-		justify-content: space-around;
-
-		background-color: var(--c-surface-1);
-	}
-
 	@media (min-aspect-ratio: 3/2) {
 		.viewport {
 			flex-direction: row;
-		}
-
-		.navbar {
-			flex-direction: column;
 		}
 	}
 </style>

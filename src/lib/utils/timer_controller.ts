@@ -81,7 +81,8 @@ export class TimerController {
 			return this;
 		}
 
-		this.#duration += ms;
+		// require always non negative
+		this.#duration = Math.max(0, this.#duration + ms);
 
 		// reset finish timer
 		this.stopFinishTimer();

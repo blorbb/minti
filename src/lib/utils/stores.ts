@@ -7,6 +7,7 @@ import { TimerController } from "./timer_controller";
 interface TimerControllerListStore extends Readable<TimerController[]> {
 	removeTimer: (timer: TimerController) => void;
 	addTimer: () => void;
+	removeAll: () => void;
 }
 
 function initTimerControllerList(): TimerControllerListStore {
@@ -26,10 +27,17 @@ function initTimerControllerList(): TimerControllerListStore {
 		store.update((list) => [...list, new TimerController()]);
 	}
 
+	async function removeAll() {
+		store.set([]);
+		await sleep(getCSSProp("--t-transition", "time") ?? 100);
+		store.set([new TimerController()]);
+	}
+
 	return {
 		subscribe: store.subscribe,
 		removeTimer,
 		addTimer,
+		removeAll,
 	};
 }
 

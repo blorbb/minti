@@ -6,14 +6,16 @@
 	import { parseInput } from "$lib/utils/time_parser";
 	import { createEventDispatcher, onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
+
 	import Progress from "$lib/components/Progress.svelte";
 
 	export let tc: TimerController;
 
-	const INTERVAL_TIME = 5;
+	const INTERVAL_TIME = 200;
 	const FINISH_CLASS_NAME = "finished";
 	const FLASHES = 3;
 	const FLASH_DURATION = 100;
+	let progressType: "line" | "background" = "background";
 
 	let clockTime = "";
 
@@ -92,121 +94,143 @@
 </script>
 
 <div
-	class="c-timer-box"
+	class={`c-timer-box progress--${progressType}`}
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
 >
-	<div class="countdown" bind:this={countdownElem}>
-		{#if !started}
-			<input
-				type="text"
-				placeholder="Enter Time"
-				bind:this={input}
-				class:finished
-				on:keydown={handleKeydown}
-			/>
-		{:else}
-			{clockTime}
-		{/if}
-	</div>
-	<Progress {duration} {paused} {started} />
-	<div class="controls">
-		{#if !started}
-			<button class="m-primary start" on:click={submitTime}> Start </button>
-		{:else}
-			<div class="control-left">
-				<button
-					class="add-time m-light"
-					on:click={() => {
-						tc.addDuration(constants.MS_IN_MIN);
-						updateStatuses();
-					}}
-				>
-					+
-				</button>
-				<button
-					class="subtract-time m-light"
-					on:click={() => {
-						tc.addDuration(-constants.MS_IN_MIN);
-						updateStatuses();
-					}}
-				>
-					-
-				</button>
-			</div>
-			<div class="control-right">
-				{#if paused}
+	<Progress {duration} {paused} {started} type={progressType} border={false} />
+	<div class="c-timer-front">
+		<div class="countdown" bind:this={countdownElem}>
+			{#if !started}
+				<input
+					type="text"
+					placeholder="Enter Time"
+					bind:this={input}
+					class:finished
+					on:keydown={handleKeydown}
+				/>
+			{:else}
+				{clockTime}
+			{/if}
+		</div>
+		<div class="controls">
+			{#if !started}
+				<button class="m-primary start" on:click={submitTime}> Start </button>
+			{:else}
+				<div class="control-left">
 					<button
-						class="m-primary resume"
+						class="add-time m-light"
 						on:click={() => {
-							tc.resume();
+							tc.addDuration(constants.MS_IN_MIN);
 							updateStatuses();
 						}}
 					>
-						Resume
+						+
 					</button>
-				{:else if running}
 					<button
-						class="m-primary pause"
+						class="subtract-time m-light"
 						on:click={() => {
-							tc.pause();
+							tc.addDuration(-constants.MS_IN_MIN);
 							updateStatuses();
 						}}
 					>
-						Pause
+						-
 					</button>
-				{:else}
-					<button
-						class="m-primary reset"
-						on:click={async () => {
-							tc.reset();
-							stopTimerUpdates();
-							updateStatuses();
-							await tick();
-							countdownElem.classList.remove(FINISH_CLASS_NAME);
-							input.value = previousValue;
-						}}
-					>
-						Reset
-					</button>
-				{/if}
-			</div>
-		{/if}
+				</div>
+				<div class="control-right">
+					{#if paused}
+						<button
+							class="m-primary resume"
+							on:click={() => {
+								tc.resume();
+								updateStatuses();
+							}}
+						>
+							Resume
+						</button>
+					{:else if running}
+						<button
+							class="m-primary pause"
+							on:click={() => {
+								tc.pause();
+								updateStatuses();
+							}}
+						>
+							Pause
+						</button>
+					{:else}
+						<button
+							class="m-primary reset"
+							on:click={async () => {
+								tc.reset();
+								stopTimerUpdates();
+								updateStatuses();
+								await tick();
+								countdownElem.classList.remove(FINISH_CLASS_NAME);
+								input.value = previousValue;
+							}}
+						>
+							Reset
+						</button>
+					{/if}
+				</div>
+			{/if}
+		</div>
+		<button
+			class="remove-timer m-light"
+			on:click={() => {
+				dispatch("remove");
+			}}
+		>
+			×
+		</button>
 	</div>
-	<button
-		class="remove-timer"
-		on:click={() => {
-			dispatch("remove");
-		}}
-	>
-		×
-	</button>
 </div>
 
 <style lang="scss">
 	.c-timer-box {
+		position: relative;
+		display: flex;
+		height: 100%;
+		border-radius: var(--l-timer-box__border-radius);
+		overflow: hidden;
+
+		&.progress--background {
+			padding: var(--l-progress-bar--bg__padding);
+		}
+	}
+
+	.c-timer-front {
+		flex-grow: 1;
+
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: space-evenly;
 		position: relative;
 
-		background-color: var(--c-container);
+		background-color: hsla(
+			var(--p-hsl-timer-front__bgc) / var(--p-a-timer-front__bgc)
+		);
 		color: var(--c-secondary-container-on);
 
-		height: 100%;
-		border-radius: 0.5rem;
+		border-radius: var(--l-timer-box__border-radius);
 
-		filter: none;
+		backdrop-filter: blur(1rem);
 
-		transition-property: filter, background-color;
+		// don't transition the backdrop filter
+		// makes weird artifacts
+		transition-property: background-color;
 		transition-duration: var(--t-transition);
 		transition-timing-function: ease-in-out;
 
 		&:is(:hover, :focus-within) {
-			background-color: var(--c-container-up);
-			filter: var(--shadow-drop-2);
+			background-color: hsla(
+				var(--p-hsl-timer-front__bgc) / calc(var(--p-a-timer-front__bgc) + 0.02)
+			);
+
+			backdrop-filter: blur(1.5rem);
 		}
 	}
 
@@ -225,9 +249,9 @@
 		display: flex;
 		justify-content: center;
 
-		height: 3rem;
+		height: 1.5rem;
 
-		font-size: 2rem;
+		font-size: 1.5rem;
 		font-weight: 700;
 		// fixed width numbers
 		font-feature-settings: "tnum", var(--default-font-feature-settings);
@@ -289,26 +313,16 @@
 			}
 
 			&:active {
-				background-color: var(--c-overlay-lighter);
+				background-color: var(--c-overlay-lightest);
 			}
 		}
 	}
 
-	.remove-timer {
-		--s-size: 2rem;
-
+	button.remove-timer {
 		position: absolute;
-		top: 1rem;
-		right: 1rem;
+		top: 0rem;
+		right: 0rem;
 
-		background-color: var(--c-error);
-		color: var(--c-error-on);
-
-		width: var(--s-size);
-		height: var(--s-size);
-		padding: 0;
-		border-radius: 50%;
-
-		font-weight: 900;
+		border-radius: 0 0 0 0.5rem;
 	}
 </style>

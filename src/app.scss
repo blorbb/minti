@@ -1,4 +1,18 @@
 :root {
+	//#region basic settings
+
+	/// type naming conventions:
+	/// --[type]-<name>
+	/// types:
+	/// c: color
+	/// t: time
+	/// l: length
+	/// s: scoped (non-global variable, inside a component)
+	/// p-[subtype]: partial variable, to be used with other things
+	/// 	e.g. p-hsl: hsl values (h s% l%)
+	/// 		 use it with hsla(var(--p-hsl-...) / <alpha>)
+	/// no type: anything else
+
 	--c-bg: #1b1c18;
 
 	--p-hsl-text: 60 20% 90%;
@@ -43,7 +57,10 @@
 	--c-container-up: #2d2d2d;
 
 	--c-overlay-light: rgba(255 255 255 / 0.05);
-	--c-overlay-lighter: rgba(255 255 255 / 0.15);
+	--c-overlay-lighter: rgba(255 255 255 / 0.07);
+	--c-overlay-lightest: rgba(255 255 255 / 0.15);
+	--c-overlay-dark: rgba(0 0 0 / 0.05);
+	--c-overlay-darker: rgba(0 0 0 / 0.1);
 
 	--t-transition: 200ms;
 
@@ -87,11 +104,49 @@
 
 	// disambiguation without 0
 	--default-font-feature-settings: "ss04";
+	//#endregion
 
-	// misc settings
-	--l-scrollbar-width: 0px;
-	--l-navbar-width: 3rem;
-	--l-timer-padding: 1rem;
+	//#region component specific settings
+
+	/// naming convention:
+	/// --[type]-[component]--[modifiers]__[property]
+	/// type: see above
+	/// component: name of the targeted component class, without the prepending c-
+	/// modifiers: any variations or sub-components
+	/// property: property name or general description of what is changed
+	///
+	/// no component means it affects global stuff
+
+	--background: radial-gradient(
+			farthest-corner at top left,
+			hsl(343, 41%, 10%),
+			transparent
+		),
+		radial-gradient(
+			farthest-corner at top right,
+			hsl(275, 46%, 11%),
+			transparent
+		),
+		radial-gradient(farthest-corner at 30% 100%, hsl(330, 29%, 8%), transparent);
+	--l-scrollbar__width: 0px;
+	--l-navbar__width: 3rem;
+
+	// timer
+	// how far apart different timers are
+	--l-timer-list__padding: 0.5rem;
+	--l-timer-box__border-radius: 0.5rem;
+	// color
+	--p-hsl-timer-front__bgc: 0 0% 23%;
+	--p-a-timer-front__bgc: 0.93;
+
+	// progress bar
+	--c-progress-bar--value__color: var(--c-tertiary);
+	// background only
+	// thickness of the progress bar around the front section
+	--l-progress-bar--bg__padding: 1rem;
+	// line only
+	--l-progress-bar--line__height: 3px;
+	//#endregion
 }
 
 // variables
@@ -131,16 +186,17 @@
 body {
 	height: 100vh;
 	overflow: hidden;
+	background: var(--background);
 }
 
 ::-webkit-scrollbar {
-	width: var(--l-scrollbar-width);
-	height: var(--l-scrollbar-width);
+	width: var(--l-scrollbar__width);
+	height: var(--l-scrollbar__width);
 }
 
 ::-webkit-scrollbar-thumb {
 	background: #000;
-	border-radius: var(--l-scrollbar-width);
+	border-radius: var(--l-scrollbar__width);
 }
 
 ::-webkit-scrollbar-track {
@@ -165,12 +221,12 @@ input {
 // set outlines
 button:focus-visible,
 input:focus-visible {
-	outline: var(--c-outline) 0.25rem solid;
+	outline: var(--c-outline) 2px solid;
 	outline-offset: 0.25rem;
 }
 
 button,
 input {
-	outline: var(--c-outline) 0 solid;
-	transition: outline-width var(--t-transition);
+	outline: transparent;
+	// transition: outline-width var(--t-transition);
 }
