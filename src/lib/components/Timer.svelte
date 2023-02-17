@@ -221,7 +221,7 @@
 				timerControllerList.removeTimer(tc);
 			}}
 		>
-			×
+			<iconify-icon inline icon="ph:x" />
 		</button>
 	</div>
 </div>
