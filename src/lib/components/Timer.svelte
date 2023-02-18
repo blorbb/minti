@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Countdown from "$lib/components/Timer/Countdown.svelte";
 	import Progress from "$lib/components/Timer/Progress.svelte";
+	import PrimaryButton from "$lib/components/Timer/PrimaryButton.svelte";
+	import LightButton from "$lib/components/Timer/LightButton.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
 	import { timerControllerList } from "$lib/utils/stores";
@@ -169,31 +171,23 @@
 		</div>
 		<div class="controls">
 			{#if !started}
-				<button class="m-primary start" on:click={start}>
-					<iconify-icon inline icon="ph:play-fill" />
-				</button>
+				<PrimaryButton class="start" icon="ph:play-bold" on:click={start} />
 			{:else}
 				<div class="control-left">
 					{#if !finished}
-						<button
-							class="add-time m-light"
+						<LightButton
+							icon="ph:plus"
 							on:click={() => {
 								addDuration(constants.MS_IN_MIN);
 							}}
-						>
-							<iconify-icon inline icon="ph:plus" />
-						</button>
-						<button
-							class="subtract-time m-light"
+						/>
+						<LightButton
+							icon="ph:minus"
 							on:click={() => {
 								subtractDuration(constants.MS_IN_MIN);
 							}}
-						>
-							<iconify-icon inline icon="ph:minus" />
-						</button>
-						<button class="reset-timer m-light" on:click={reset}>
-							<iconify-icon inline icon="ph:clock-counter-clockwise" />
-						</button>
+						/>
+						<LightButton icon="ph:clock-counter-clockwise" on:click={reset} />
 					{:else}
 						<span class="overtime-timer">
 							<iconify-icon inline icon="ph:timer-bold" />
@@ -202,30 +196,26 @@
 					{/if}
 				</div>
 				<div class="control-right">
-					{#if paused}
-						<button class="m-primary resume" on:click={resume}>
-							<iconify-icon inline icon="ph:play-fill" />
-						</button>
+					{#if paused && !finished}
+						<PrimaryButton icon="ph:play-bold" on:click={resume} />
 					{:else if running && !finished}
-						<button class="m-primary pause" on:click={pause}>
-							<iconify-icon inline icon="ph:pause-fill" />
-						</button>
+						<PrimaryButton icon="ph:pause-bold" on:click={pause} />
 					{:else}
-						<button class="m-primary reset" on:click={reset}>
-							<iconify-icon inline icon="ph:clock-counter-clockwise-bold" />
-						</button>
+						<PrimaryButton
+							icon="ph:clock-counter-clockwise-bold"
+							on:click={reset}
+						/>
 					{/if}
 				</div>
 			{/if}
 		</div>
-		<button
-			class="remove-timer m-light"
+		<LightButton
+			class="remove-timer"
+			icon="ph:x"
 			on:click={() => {
 				timerControllerList.removeTimer(tc);
 			}}
-		>
-			<iconify-icon inline icon="ph:x" />
-		</button>
+		/>
 	</div>
 </div>
 
@@ -319,7 +309,7 @@
 		gap: 3rem;
 
 		// center the start button
-		> button.start {
+		> :global(button.start) {
 			grid-column: span 2;
 		}
 
@@ -334,48 +324,7 @@
 		}
 	}
 
-	button {
-		// transitions
-		filter: var(--shadow-drop-2);
-		transition-property: filter, outline-width;
-		transition-duration: var(--t-transition);
-
-		&:is(:hover, :focus-visible) {
-			filter: var(--shadow-drop-3);
-		}
-
-		// specific styles
-		&.m-primary {
-			background-color: var(--c-primary);
-			color: var(--c-primary-on);
-
-			// padding: 0.5rem 1rem;
-			width: 5rem;
-			height: 2rem;
-			border-radius: 5rem;
-		}
-
-		&.m-light {
-			--s-size: 2rem;
-
-			background-color: transparent;
-			color: var(--c-text);
-
-			width: var(--s-size);
-			height: var(--s-size);
-			border-radius: 50%;
-
-			&:is(:hover, :focus-visible) {
-				background-color: var(--c-overlay-light);
-			}
-
-			&:active {
-				background-color: var(--c-overlay-lightest);
-			}
-		}
-	}
-
-	button.remove-timer {
+	:global(button.remove-timer.m-light) {
 		position: absolute;
 		top: 0rem;
 		right: 0rem;
