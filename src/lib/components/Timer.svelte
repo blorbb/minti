@@ -221,11 +221,16 @@
 
 <style lang="scss">
 	.c-timer-box {
-		position: relative;
 		display: flex;
+		position: relative;
+
 		height: 100%;
 		border-radius: var(--l-timer-box__border-radius);
+
 		overflow: hidden;
+
+		// for the backdrop blur to scale according to the timer size
+		container-type: inline-size;
 
 		&.progress--background {
 			padding: var(--l-progress-bar--bg__padding);
@@ -265,7 +270,9 @@
 
 		border-radius: var(--l-timer-box__border-radius);
 
+		// fallback
 		backdrop-filter: blur(1rem);
+		backdrop-filter: blur(min(1.5cqw, 1rem));
 
 		// don't transition the backdrop filter
 		// makes weird artifacts
@@ -275,10 +282,11 @@
 
 		&:is(:hover, :focus-within) {
 			background-color: hsla(
-				var(--p-hsl-timer-front__bgc) / calc(var(--p-a-timer-front__bgc) + 0.02)
+				var(--p-hsl-timer-front__bgc) / calc(var(--p-a-timer-front__bgc) * 1.02)
 			);
 
-			backdrop-filter: blur(1.5rem);
+			backdrop-filter: blur(1.25rem);
+			backdrop-filter: blur(min(2cqw, 1.25rem));
 		}
 	}
 
