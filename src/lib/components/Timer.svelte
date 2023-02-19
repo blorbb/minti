@@ -21,17 +21,6 @@
 	export let tc: TimerController;
 
 	let countdownTimes: [TimeAbbreviations, string][] = [];
-	// ensure that the format is the same
-	// e.g. showing 0m 00s if set to ["s", "m"] and auto=false
-	const endingTimes = Array.from(
-		order.recordToMap(
-			formatTimeToStrings(
-				0,
-				$settings.timerUnitRange,
-				$settings.autoTrimTimerDisplay,
-			),
-		),
-	).reverse();
 
 	//#region statuses
 	let finished = false;
@@ -58,7 +47,7 @@
 	function updateTimer() {
 		// keep positive so the overtime timer doesn't have
 		// negative sign
-		const timeRemaining = Math.abs(tc.getTimeRemaining());
+		const timeRemaining = tc.getTimeRemaining();
 		const times = formatTimeToStrings(
 			timeRemaining,
 			$settings.timerUnitRange,
@@ -67,7 +56,19 @@
 
 		// don't format this as a string as there are different
 		// classes for the different parts of the time
-		countdownTimes = Array.from(order.recordToMap(times)).reverse();
+		let timeArray = Array.from(order.recordToMap(times)).reverse();
+
+		// check that all digits are 0
+		// if so, remove the negative 0
+		if (timeArray.every(([_, timeStr]) => +timeStr == 0)) {
+			// omit the negative 0
+			let timeStr = timeArray[0][1];
+			if (timeStr[0] === "-") timeStr = timeStr.slice(1);
+
+			timeArray[0][1] = timeStr;
+		}
+
+		countdownTimes = timeArray;
 	}
 
 	function startTimerUpdates() {
@@ -185,10 +186,8 @@
 					class:finished
 					on:keydown={handleKeydown}
 				/>
-			{:else if !finished}
-				<Countdown times={countdownTimes} />
 			{:else}
-				<Countdown times={endingTimes} />
+				<Countdown times={countdownTimes} />
 			{/if}
 		</div>
 		<div class="controls">
@@ -196,25 +195,20 @@
 				<PrimaryButton class="start" icon="ph:play-bold" on:click={start} />
 			{:else}
 				<div class="control-left">
+					<LightButton
+						icon="ph:plus"
+						on:click={() => {
+							addDuration(constants.MS_IN_MIN);
+						}}
+					/>
+					<LightButton
+						icon="ph:minus"
+						on:click={() => {
+							subtractDuration(constants.MS_IN_MIN);
+						}}
+					/>
 					{#if !finished}
-						<LightButton
-							icon="ph:plus"
-							on:click={() => {
-								addDuration(constants.MS_IN_MIN);
-							}}
-						/>
-						<LightButton
-							icon="ph:minus"
-							on:click={() => {
-								subtractDuration(constants.MS_IN_MIN);
-							}}
-						/>
 						<LightButton icon="ph:clock-counter-clockwise" on:click={reset} />
-					{:else}
-						<span class="overtime-timer">
-							<iconify-icon inline icon="ph:timer-bold" />
-							<Countdown times={countdownTimes} />
-						</span>
 					{/if}
 				</div>
 				<div class="control-right">
