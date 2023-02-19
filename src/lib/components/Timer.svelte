@@ -5,6 +5,7 @@
 	import Progress from "$lib/components/Timer/Progress.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
+	import { sleep } from "$lib/utils/misc";
 	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
 	import {
@@ -38,6 +39,15 @@
 		// update whenever any status changes
 		updateTimer();
 	}
+	//#endregion
+
+	//#region other statuses/elements
+	let fullscreen = document.fullscreenElement !== null;
+	let previousValue = "";
+
+	let timerBox: HTMLElement | undefined;
+	let countdownElem: HTMLElement | undefined;
+	let input: HTMLInputElement | undefined;
 	//#endregion
 
 	//#region timer updates
@@ -80,16 +90,12 @@
 	function stopTimerUpdates() {
 		clearInterval(interval);
 	}
-
-	onDestroy(() => {
-		stopTimerUpdates();
-	});
 	//#endregion
 
 	//#region timer events
-	let input: HTMLInputElement;
-	let previousValue = "";
+
 	function start() {
+		if (!input) return;
 		const time = parseInput(input.value);
 		if (time <= 0 || isNaN(time)) return;
 		previousValue = input.value;
@@ -116,6 +122,7 @@
 		stopTimerUpdates();
 		updateStatuses();
 		await tick();
+		if (!input) return;
 		input.value = previousValue;
 	}
 
@@ -131,9 +138,14 @@
 		easing: "ease-out",
 	};
 
-	let countdownElem: HTMLElement | undefined;
-	function addDuration(ms: number) {
-		tc.addDuration(ms);
+	async function addDuration(ms: number) {
+		// if already finished, reset to the ms specified
+		if (finished) {
+			tc.addDuration(ms - tc.getTimeRemaining());
+		} else {
+			tc.addDuration(ms);
+		}
+
 		updateStatuses();
 		// jump timer upward
 		if (!countdownElem) return;
@@ -161,6 +173,25 @@
 			start();
 		}
 	}
+
+	function enableFullscreen() {
+		if (!timerBox || !document.fullscreenEnabled) return;
+		timerBox.requestFullscreen();
+	}
+
+	function disableFullscreen() {
+		document.exitFullscreen();
+	}
+
+	function updateFullscreen() {
+		fullscreen = document.fullscreenElement !== null;
+	}
+
+	document.addEventListener("fullscreenchange", updateFullscreen);
+	onDestroy(() => {
+		stopTimerUpdates();
+		document.removeEventListener("fullscreenchange", updateFullscreen);
+	});
 	//#endregion
 </script>
 
@@ -171,11 +202,12 @@
 	data-finished={finished}
 	data-running={running}
 	data-settings-progress-bar-type={$settings.progressBarType}
+	bind:this={timerBox}
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
 >
-	<Progress {duration} {paused} {started} />
+	<Progress {duration} {paused} {finished} {started} />
 	<div class="c-timer-front">
 		<div class="countdown" bind:this={countdownElem}>
 			{#if !started}
@@ -192,35 +224,48 @@
 		</div>
 		<div class="controls">
 			{#if !started}
-				<PrimaryButton class="start" icon="ph:play-bold" on:click={start} />
+				<div class="control-middle">
+					<PrimaryButton class="start" icon="ph:play-bold" on:click={start} />
+					{#if fullscreen}
+						<LightButton icon="ph:corners-in" on:click={disableFullscreen} />
+					{:else}
+						<LightButton icon="ph:corners-out" on:click={enableFullscreen} />
+					{/if}
+				</div>
 			{:else}
 				<div class="control-left">
-					<LightButton
-						icon="ph:plus"
-						on:click={() => {
-							addDuration(constants.MS_IN_MIN);
-						}}
-					/>
-					<LightButton
-						icon="ph:minus"
-						on:click={() => {
-							subtractDuration(constants.MS_IN_MIN);
-						}}
-					/>
 					{#if !finished}
 						<LightButton icon="ph:clock-counter-clockwise" on:click={reset} />
+						<LightButton
+							icon="ph:plus"
+							on:click={() => addDuration(constants.MS_IN_MIN)}
+						/>
+						<LightButton
+							icon="ph:minus"
+							on:click={() => subtractDuration(constants.MS_IN_MIN)}
+						/>
+					{:else}
+						<PrimaryButton
+							icon="ph:plus"
+							on:click={() => addDuration(constants.MS_IN_MIN)}
+						/>
 					{/if}
 				</div>
 				<div class="control-right">
-					{#if paused && !finished}
-						<PrimaryButton icon="ph:play-bold" on:click={resume} />
-					{:else if running && !finished}
-						<PrimaryButton icon="ph:pause-bold" on:click={pause} />
-					{:else}
+					{#if finished}
 						<PrimaryButton
 							icon="ph:clock-counter-clockwise-bold"
 							on:click={reset}
 						/>
+					{:else if paused}
+						<PrimaryButton icon="ph:play-bold" on:click={resume} />
+					{:else}
+						<PrimaryButton icon="ph:pause-bold" on:click={pause} />
+					{/if}
+					{#if fullscreen}
+						<LightButton icon="ph:corners-in" on:click={disableFullscreen} />
+					{:else}
+						<LightButton icon="ph:corners-out" on:click={enableFullscreen} />
 					{/if}
 				</div>
 			{/if}
@@ -257,6 +302,14 @@
 
 		&[data-finished="true"] .countdown {
 			animation: finish-flash 420ms steps(1, end) forwards;
+		}
+
+		&[data-paused="true"] .countdown {
+			color: var(--c-text--faded);
+		}
+
+		&:fullscreen {
+			border-radius: 0;
 		}
 	}
 
@@ -336,14 +389,14 @@
 		grid-template-columns: repeat(2, 1fr);
 		gap: 3rem;
 
-		// center the start button
-		> :global(button.start) {
-			grid-column: span 2;
-		}
-
-		> :is(.control-left, .control-right) {
+		> [class^="control"] {
 			display: flex;
 			align-items: center;
+			gap: 0.5rem;
+		}
+
+		> .control-middle {
+			grid-column: span 2;
 		}
 
 		// left/right equidistant from the middle

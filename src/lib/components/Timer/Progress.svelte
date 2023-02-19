@@ -4,6 +4,7 @@
 	export let duration: number;
 	export let paused: boolean;
 	export let started: boolean;
+	export let finished: boolean;
 </script>
 
 <div
@@ -12,6 +13,7 @@
 	data-border={$settings.progressBarBackgroundBorder !== 0}
 	data-started={started}
 	data-paused={paused}
+	data-finished={finished}
 	data-type={$settings.progressBarType}
 >
 	<div class="progress-value" style:animation-duration={duration + "ms"} />
@@ -58,7 +60,7 @@
 			}
 		}
 
-		&[data-paused="true"] .progress-value {
+		&:is([data-paused="true"], [data-finished="true"]) .progress-value {
 			animation-play-state: paused;
 		}
 
