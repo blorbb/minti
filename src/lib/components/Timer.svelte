@@ -45,6 +45,8 @@
 		paused = tc.isPaused();
 		running = tc.isRunning();
 		duration = tc.getTimerDuration();
+		// update whenever any status changes
+		updateTimer();
 	}
 	//#endregion
 
@@ -52,27 +54,25 @@
 	// using interval: NodeJS.Timer raises a linting error
 	let interval: ReturnType<typeof setInterval>;
 
+	function updateTimer() {
+		// keep positive so the overtime timer doesn't have
+		// negative sign
+		const timeRemaining = Math.abs(tc.getTimeRemaining());
+		const times = formatTimeToStrings(
+			timeRemaining,
+			TIME_UNIT_RANGE,
+			AUTO_TRIM_TIME,
+		);
+
+		// don't format this as a string as there are different
+		// classes for the different parts of the time
+		countdownTimes = Array.from(order.recordToMap(times)).reverse();
+	}
+
 	function startTimerUpdates() {
-		function run() {
-			// keep positive so the overtime timer doesn't have
-			// negative sign
-			const timeRemaining = Math.abs(tc.getTimeRemaining());
-			const times = formatTimeToStrings(
-				timeRemaining,
-				TIME_UNIT_RANGE,
-				AUTO_TRIM_TIME,
-			);
-
-			countdownTimes = Array.from(order.recordToMap(times)).reverse();
-
-			// remove the last ms, accuracy up to 10ms
-			// uncomment if using range ["ms", *]
-			// clockTime = clockTime.slice(0, clockTime.length - 1);
-		}
-
 		// run immediately first to avoid blank
-		run();
-		interval = setInterval(run, INTERVAL_TIME);
+		updateTimer();
+		interval = setInterval(updateTimer, INTERVAL_TIME);
 	}
 
 	function stopTimerUpdates() {
@@ -117,15 +117,35 @@
 		input.value = previousValue;
 	}
 
+	function bumpAnimation(em: number) {
+		return [
+			{ transform: "translateY(0px)" },
+			{ transform: `translateY(${em}em)` },
+			{ transform: "translateY(0px)" },
+		];
+	}
+	const BUMP_OPTIONS: KeyframeAnimationOptions = {
+		duration: 100,
+		easing: "ease-out",
+	};
+
+	let countdownElem: HTMLElement | undefined;
 	function addDuration(ms: number) {
 		tc.addDuration(ms);
 		updateStatuses();
+		// jump timer upward
+		if (!countdownElem) return;
+		countdownElem.animate(bumpAnimation(-0.2), BUMP_OPTIONS);
 	}
 
 	function subtractDuration(ms: number) {
 		// clamp so that it stops at 0 if subtracting time
 		ms = Math.min(tc.getTimeRemaining(), ms);
-		addDuration(-ms);
+		tc.addDuration(-ms);
+		updateStatuses();
+		// jump timer downward
+		if (!countdownElem) return;
+		countdownElem.animate(bumpAnimation(0.2), BUMP_OPTIONS);
 	}
 
 	tc.onFinish(() => {
@@ -154,7 +174,7 @@
 >
 	<Progress {duration} {paused} {started} type={progressType} border={false} />
 	<div class="c-timer-front">
-		<div class="countdown">
+		<div class="countdown" bind:this={countdownElem}>
 			{#if !started}
 				<input
 					type="text"
