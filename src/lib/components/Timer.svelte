@@ -314,6 +314,7 @@
 		height: 2.25rem;
 
 		font-size: 1.5rem;
+		font-size: max(1.5rem, 10cqmin);
 		font-weight: 700;
 		text-align: center;
 		// fixed width numbers
@@ -323,7 +324,7 @@
 			background-color: transparent;
 
 			border: none;
-			width: clamp(15rem, 50%, 25rem);
+			width: max(15rem, 50%);
 
 			font-weight: normal;
 			text-align: center;
