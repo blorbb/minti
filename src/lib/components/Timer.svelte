@@ -246,7 +246,7 @@
 		overflow: hidden;
 
 		// for the backdrop blur to scale according to the timer size
-		container-type: inline-size;
+		container-type: size;
 
 		&[data-settings-progress-bar-type="background"] {
 			padding: calc(
