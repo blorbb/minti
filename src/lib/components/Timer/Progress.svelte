@@ -1,18 +1,18 @@
 <script lang="ts">
+	import { settings } from "$lib/utils/stores";
+
 	export let duration: number;
 	export let paused: boolean;
 	export let started: boolean;
-	export let type: "line" | "background";
-	export let border: boolean;
 </script>
 
 <div
 	class={`c-progress-bar`}
-	class:style--border={border}
 	role="progressbar"
+	data-border={$settings.progressBarBackgroundBorder !== 0}
 	data-started={started}
 	data-paused={paused}
-	data-type={type}
+	data-type={$settings.progressBarType}
 >
 	<div class="progress-value" style:animation-duration={duration + "ms"} />
 </div>
@@ -26,7 +26,7 @@
 		border-radius: inherit;
 
 		&[data-type="background"] {
-			inset: 0.2rem;
+			inset: 0;
 			// to round the corners but not the progress value in the middle
 			overflow: hidden;
 
@@ -72,8 +72,8 @@
 		}
 
 		// place box shadow above progress-value
-		&.style--border {
-			border: 0.2rem solid #393939;
+		&[data-border="true"] {
+			border: var(--l-progress-bar--bg__border-width) solid #393939;
 			&::before {
 				content: "";
 
@@ -83,7 +83,7 @@
 				inset: 0;
 				z-index: 1;
 
-				border-radius: inherit;
+				// border-radius: inherit;
 
 				pointer-events: none;
 			}

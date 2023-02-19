@@ -2,6 +2,7 @@ import { get, type Readable, writable } from "svelte/store";
 import { sleep } from "./misc";
 import { getCSSProp } from "./css";
 import { TimerController } from "./timer_controller";
+import type { UnitRange } from "./timer_utils";
 
 //#region timer list
 interface TimerControllerListStore extends Readable<TimerController[]> {
@@ -43,3 +44,21 @@ function initTimerControllerList(): TimerControllerListStore {
 
 export const timerControllerList = initTimerControllerList();
 //#endregion
+
+// settings
+
+type Settings = {
+	timerUpdateInterval: number;
+	autoTrimTimerDisplay: boolean;
+	timerUnitRange: UnitRange;
+	progressBarType: "line" | "background";
+	progressBarBackgroundBorder: number;
+};
+
+export const settings = writable<Settings>({
+	timerUpdateInterval: 200,
+	autoTrimTimerDisplay: true,
+	timerUnitRange: ["s", "d"],
+	progressBarType: "background",
+	progressBarBackgroundBorder: 1,
+});

@@ -71,3 +71,7 @@ export function getCSSProp(
 			expectUnreachable(type);
 	}
 }
+
+export function setCSSProp(prop: string, value: string) {
+	document.documentElement.style.setProperty(prop, value);
+}

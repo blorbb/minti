@@ -3,6 +3,13 @@
 	import "normalize.css";
 	import "iconify-icon";
 	import NavBar from "$lib/components/NavBar.svelte";
+	import { setCSSProp } from "$lib/utils/css";
+	import { settings } from "$lib/utils/stores";
+
+	setCSSProp(
+		"--l-progress-bar--bg__border-width",
+		$settings.progressBarBackgroundBorder.toString() + "px",
+	);
 </script>
 
 <svelte:head>

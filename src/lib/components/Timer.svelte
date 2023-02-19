@@ -1,17 +1,16 @@
 <script lang="ts">
 	import Countdown from "$lib/components/Timer/Countdown.svelte";
-	import Progress from "$lib/components/Timer/Progress.svelte";
-	import PrimaryButton from "$lib/components/Timer/PrimaryButton.svelte";
 	import LightButton from "$lib/components/Timer/LightButton.svelte";
+	import PrimaryButton from "$lib/components/Timer/PrimaryButton.svelte";
+	import Progress from "$lib/components/Timer/Progress.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
-	import { timerControllerList } from "$lib/utils/stores";
+	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
 	import {
 		constants,
 		order,
 		type TimeAbbreviations,
-		type UnitRange,
 	} from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { parseInput } from "$lib/utils/time_parser";
@@ -21,16 +20,17 @@
 
 	export let tc: TimerController;
 
-	const INTERVAL_TIME = 200;
-	const AUTO_TRIM_TIME = true;
-	const TIME_UNIT_RANGE: UnitRange = ["s", "d"];
-	let progressType: "line" | "background" = "background";
-
 	let countdownTimes: [TimeAbbreviations, string][] = [];
 	// ensure that the format is the same
 	// e.g. showing 0m 00s if set to ["s", "m"] and auto=false
 	const endingTimes = Array.from(
-		order.recordToMap(formatTimeToStrings(0, TIME_UNIT_RANGE, AUTO_TRIM_TIME)),
+		order.recordToMap(
+			formatTimeToStrings(
+				0,
+				$settings.timerUnitRange,
+				$settings.autoTrimTimerDisplay,
+			),
+		),
 	).reverse();
 
 	//#region statuses
@@ -61,8 +61,8 @@
 		const timeRemaining = Math.abs(tc.getTimeRemaining());
 		const times = formatTimeToStrings(
 			timeRemaining,
-			TIME_UNIT_RANGE,
-			AUTO_TRIM_TIME,
+			$settings.timerUnitRange,
+			$settings.autoTrimTimerDisplay,
 		);
 
 		// don't format this as a string as there are different
@@ -73,7 +73,7 @@
 	function startTimerUpdates() {
 		// run immediately first to avoid blank
 		updateTimer();
-		interval = setInterval(updateTimer, INTERVAL_TIME);
+		interval = setInterval(updateTimer, $settings.timerUpdateInterval);
 	}
 
 	function stopTimerUpdates() {
@@ -164,16 +164,17 @@
 </script>
 
 <div
-	class={`c-timer-box progress--${progressType}`}
+	class={`c-timer-box`}
 	data-paused={paused}
 	data-started={started}
 	data-finished={finished}
 	data-running={running}
+	data-settings-progress-bar-type={$settings.progressBarType}
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
 >
-	<Progress {duration} {paused} {started} type={progressType} border={false} />
+	<Progress {duration} {paused} {started} />
 	<div class="c-timer-front">
 		<div class="countdown" bind:this={countdownElem}>
 			{#if !started}
@@ -253,8 +254,11 @@
 		// for the backdrop blur to scale according to the timer size
 		container-type: inline-size;
 
-		&.progress--background {
-			padding: var(--l-progress-bar--bg__padding);
+		&[data-settings-progress-bar-type="background"] {
+			padding: calc(
+				var(--l-progress-bar--bg__padding) +
+					var(--l-progress-bar--bg__border-width)
+			);
 		}
 
 		&[data-finished="true"] .countdown {

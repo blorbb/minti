@@ -142,6 +142,8 @@
 	// background only
 	// thickness of the progress bar around the front section
 	--l-progress-bar--bg__padding: 1rem;
+	// set by settings
+	--l-progress-bar--bg__border-width: 0;
 	// line only
 	--l-progress-bar--line__height: 3px;
 	//#endregion
