@@ -38,7 +38,7 @@
 	.context {
 		flex-grow: 1;
 		position: relative;
-		overflow: scroll;
+		overflow: hidden;
 
 		// required to make `position: fixed;` relative to this.
 		// using `position: absolute;` doesn't work with scrolling
@@ -46,7 +46,7 @@
 		transform: translate(0);
 
 		> main {
-			overflow: scroll;
+			overflow-y: scroll;
 			width: 100%;
 			height: 100%;
 		}

@@ -125,7 +125,7 @@
 			transparent
 		),
 		radial-gradient(farthest-corner at 30% 100%, hsl(330, 29%, 8%), transparent);
-	--l-scrollbar__width: 0px;
+	--l-scrollbar__width: 8px;
 	--l-navbar__width: 3rem;
 
 	// timer
@@ -196,12 +196,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #000;
+	background: var(--c-secondary-container);
 	border-radius: var(--l-scrollbar__width);
 }
 
 ::-webkit-scrollbar-track {
-	background-color: transparent;
+	background-color: #2c2c30;
 }
 
 ::-webkit-scrollbar-corner {
