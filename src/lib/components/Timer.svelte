@@ -6,12 +6,13 @@
 
 	import { getCSSProp } from "$lib/utils/css";
 	import { timerControllerList } from "$lib/utils/stores";
-	import type {
-		TimeAbbreviations,
-		TimerController,
-		UnitRange,
-	} from "$lib/utils/timer_controller";
-	import { constants, order } from "$lib/utils/timer_utils";
+	import type { TimerController } from "$lib/utils/timer_controller";
+	import {
+		constants,
+		order,
+		type TimeAbbreviations,
+		type UnitRange,
+	} from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { parseInput } from "$lib/utils/time_parser";
 

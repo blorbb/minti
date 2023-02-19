@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TimeAbbreviations } from "$lib/utils/timer_controller";
+	import type { TimeAbbreviations } from "$lib/utils/timer_utils";
 
 	export let times: [TimeAbbreviations, string][];
 </script>

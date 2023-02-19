@@ -235,8 +235,3 @@ export class TimerController {
 	}
 	//#endregion
 }
-
-export type TimeAbbreviations = "d" | "h" | "m" | "s" | "ms";
-export type UnitRange = [TimeAbbreviations, TimeAbbreviations];
-
-export type TimeWithUnits = Record<TimeAbbreviations, number>;
