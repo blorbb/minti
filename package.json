@@ -13,7 +13,8 @@
 		"test:once": "vitest run",
 		"coverage": "vitest run --coverage",
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
+		"format": "prettier --plugin-search-dir . --write .",
+		"precommit": "conc \"prettier --plugin-search-dir . --check .\" \"eslint .\" \"vitest run\""
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^2.0.0",
@@ -23,6 +24,7 @@
 		"@typescript-eslint/eslint-plugin": "^5.51.0",
 		"@typescript-eslint/parser": "^5.51.0",
 		"@vitest/coverage-istanbul": "^0.28.4",
+		"concurrently": "^7.6.0",
 		"eslint": "^8.33.0",
 		"eslint-config-prettier": "^8.6.0",
 		"eslint-plugin-svelte3": "^4.0.0",
