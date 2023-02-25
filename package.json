@@ -37,6 +37,7 @@
 		"svelte": "^3.55.1",
 		"svelte-check": "^3.0.3",
 		"svelte-preprocess": "^5.0.1",
+		"tippy.js": "^6.3.7",
 		"typescript": "^4.9.5",
 		"vite": "^4.1.1",
 		"vitest": "^0.28.4"

@@ -21,6 +21,7 @@ specifiers:
   svelte: ^3.55.1
   svelte-check: ^3.0.3
   svelte-preprocess: ^5.0.1
+  tippy.js: ^6.3.7
   typescript: ^4.9.5
   vite: ^4.1.1
   vitest: ^0.28.4
@@ -46,6 +47,7 @@ devDependencies:
   svelte: 3.55.1
   svelte-check: 3.0.3_sass@1.58.0+svelte@3.55.1
   svelte-preprocess: 5.0.1_cjyprvzu4kavkaguwtgkgx5cp4
+  tippy.js: 6.3.7
   typescript: 4.9.5
   vite: 4.1.1_sass@1.58.0
   vitest: 0.28.4_sass@1.58.0
@@ -559,6 +561,10 @@ packages:
 
   /@polka/url/1.0.0-next.21:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
+    dev: true
+
+  /@popperjs/core/2.11.6:
+    resolution: {integrity: sha512-50/17A98tWUfQ176raKiOGXuYpLyyVMkxxG6oylzL3BPOlA6ADGdK7EYunSa4I064xerltq9TGXs8HmOk5E+vw==}
     dev: true
 
   /@sveltejs/adapter-auto/2.0.0_@sveltejs+kit@1.5.0:
@@ -2549,6 +2555,12 @@ packages:
   /tinyspy/1.1.1:
     resolution: {integrity: sha512-UVq5AXt/gQlti7oxoIg5oi/9r0WpF7DGEVwXgqWSMmyN16+e3tl5lIvTaOpJ3TAtu5xFzWccFRM4R5NaWHF+4g==}
     engines: {node: '>=14.0.0'}
+    dev: true
+
+  /tippy.js/6.3.7:
+    resolution: {integrity: sha512-E1d3oP2emgJ9dRQZdf3Kkn0qJgI6ZLpyS5z6ZkY1DF3kaQaBsGZsndEpHwx+eC+tYM41HaSNvNtLx8tU57FzTQ==}
+    dependencies:
+      '@popperjs/core': 2.11.6
     dev: true
 
   /to-fast-properties/2.0.0:
