@@ -6,6 +6,7 @@
 
 	import { getCSSProp } from "$lib/utils/css";
 	import { resetAnimation } from "$lib/utils/misc";
+	import { Signal } from "$lib/utils/signal";
 	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
 	import {
@@ -14,7 +15,8 @@
 		type TimeAbbreviations,
 	} from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
-	import { parseInput } from "$lib/utils/time_parser";
+	import { parseInput, ValidationError } from "$lib/utils/time_parser";
+	import { tooltip } from "$lib/utils/tippy";
 
 	import { onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
@@ -48,6 +50,10 @@
 	let timerBox: HTMLElement | undefined;
 	let countdownElem: HTMLElement | undefined;
 	let input: HTMLInputElement | undefined;
+
+	let inputErrorMessage = "";
+	let inputIsInvalid = false;
+	const errorSignal = new Signal();
 	//#endregion
 
 	//#region timer updates
@@ -94,14 +100,30 @@
 
 	//#region timer events
 
-	function start() {
+	async function start() {
 		if (!input) return;
-		const time = parseInput(input.value);
-		if (time <= 0 || isNaN(time)) return;
+
+		let time: number;
+		try {
+			time = parseInput(input.value);
+			if (time <= 0) throw new ValidationError("Time must be positive");
+			if (isNaN(time)) throw new ValidationError("Invalid input");
+		} catch (error) {
+			if (!(error instanceof ValidationError)) throw error;
+
+			inputErrorMessage = error.message;
+			inputIsInvalid = true;
+			await tick();
+			errorSignal.emit();
+
+			return;
+		}
+
+		inputIsInvalid = false;
+
 		previousValue = input.value;
 
-		tc.reset(time);
-		tc.start();
+		tc.reset(time).start();
 
 		updateStatuses();
 		startTimerUpdates();
@@ -219,7 +241,20 @@
 					placeholder="Enter Time"
 					bind:this={input}
 					class:finished
+					aria-invalid={inputIsInvalid}
+					aria-required
 					on:keydown={handleKeydown}
+					use:tooltip={{
+						text: inputErrorMessage,
+						theme: "error",
+						enabled: inputIsInvalid,
+						receivers: {
+							show: errorSignal.newReceiver(),
+						},
+						tippy: {
+							hideOnClick: false,
+						},
+					}}
 				/>
 			{:else}
 				<Countdown times={countdownTimes} />
@@ -417,11 +452,16 @@
 			background-color: transparent;
 
 			border: none;
+			border-radius: 0.5rem;
 			width: max(15rem, 50%);
 
 			font-weight: normal;
 			text-align: center;
 			font-variant-numeric: normal;
+
+			&[aria-invalid="true"] {
+				outline: 3px solid var(--c-error);
+			}
 		}
 	}
 

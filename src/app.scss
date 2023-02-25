@@ -226,6 +226,9 @@ input {
 button:focus-visible,
 input:focus-visible {
 	outline: var(--c-outline) 2px solid;
+}
+
+button:focus-visible {
 	outline-offset: 0.25rem;
 }
 

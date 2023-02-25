@@ -15,12 +15,10 @@
 
 // add [data-tippy-root] to increase specificity over the default styles
 [data-tippy-root] .tippy-box {
-	--s-tippy-bg: black;
-
-	background: var(--s-tippy-bg);
+	background: black;
 	// not sure if this is needed
 	.tippy-svg-arrow {
-		fill: var(--s-tippy-bg);
+		fill: black;
 	}
 
 	// allow multi-line
@@ -30,17 +28,17 @@
 
 	// custom themes
 	&[data-theme~="dark"] {
-		--s-tippy-bg: black;
+		background: black;
 		color: var(--c-text);
 	}
 
 	&[data-theme~="error"] {
-		--s-tippy-bg: black;
-		color: var(--c-error);
+		background: var(--c-error);
+		color: var(--c-error-on);
 	}
 
 	&[data-theme~="translucent"] {
-		--s-tippy-bg: hsla(0 0% 100% / 0.9);
+		background: hsla(0 0% 100% / 0.9);
 		color: var(--c-text--invert);
 		backdrop-filter: blur(2px);
 	}
