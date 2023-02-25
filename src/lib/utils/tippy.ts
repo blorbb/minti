@@ -1,5 +1,6 @@
 import tippy from "tippy.js";
 import type { Props as TippyProps, DefaultProps } from "tippy.js";
+import type { SignalReceiver } from "./signal";
 
 /**
  * Svelte action for tooltips.
@@ -48,6 +49,10 @@ export function tooltip(target: HTMLElement, options: TooltipOptions) {
 		instance.disable();
 	}
 
+	options.receivers?.show?.onSignal(() => {
+		instance.show();
+	});
+
 	return {
 		destroy() {
 			instance.destroy();
@@ -72,10 +77,12 @@ export const THEME_PROPS: Record<TooltipThemes, Partial<TippyProps>> = {
 	dark: {
 		animation: "scale",
 		inertia: true,
+		arrow: false,
 	},
 	error: {
 		animation: "scale",
 		inertia: true,
+		arrow: false,
 	},
 	translucent: {
 		animation: "fade",
@@ -89,6 +96,9 @@ export type TooltipOptions = {
 	text: string | string[];
 	theme?: TooltipThemes;
 	enabled?: boolean;
+	receivers?: {
+		show?: SignalReceiver;
+	};
 	tippy?: Omit<Partial<TippyProps>, "content" | "theme">;
 };
 
