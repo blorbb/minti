@@ -32,3 +32,12 @@ export function padMin(length: number, num: number) {
 export function reverseMap<K, V>(map: Map<K, V>) {
 	return new Map(Array.from(map).reverse());
 }
+
+// https://css-tricks.com/restart-css-animation/#aa-update-another-javascript-method-to-restart-a-css-animation
+export function resetAnimation(elem: HTMLElement) {
+	const prevAnimName = elem.style.animationName;
+	elem.style.animationName = "none";
+	// trigger a reflow
+	void elem.offsetWidth;
+	elem.style.animationName = prevAnimName;
+}

@@ -5,7 +5,7 @@
 	import Progress from "$lib/components/Timer/Progress.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
-	import { sleep } from "$lib/utils/misc";
+	import { resetAnimation } from "$lib/utils/misc";
 	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
 	import {
@@ -70,7 +70,7 @@
 
 		// check that all digits are 0
 		// if so, remove the negative 0
-		if (timeArray.every(([_, timeStr]) => +timeStr == 0)) {
+		if (timeArray.every(([, timeStr]) => +timeStr == 0)) {
 			// omit the negative 0
 			let timeStr = timeArray[0][1];
 			if (timeStr[0] === "-") timeStr = timeStr.slice(1);
@@ -141,7 +141,10 @@
 	async function addDuration(ms: number) {
 		// if already finished, reset to the ms specified
 		if (finished) {
-			tc.addDuration(ms - tc.getTimeRemaining());
+			const progressValue = timerBox?.querySelector(".progress-value");
+			if (!progressValue) return;
+			resetAnimation(progressValue as HTMLElement);
+			tc.reset(ms).start();
 		} else {
 			tc.addDuration(ms);
 		}
