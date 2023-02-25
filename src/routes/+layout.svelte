@@ -1,6 +1,11 @@
 <script lang="ts">
+	import "tippy.js/dist/svg-arrow.css";
+	import "tippy.js/animations/scale.css";
+	import "tippy.js/dist/tippy.css";
+	import "../tippy.scss";
 	import "../app.scss";
 	import "normalize.css";
+
 	import "iconify-icon";
 	import NavBar from "$lib/components/NavBar.svelte";
 	import { setCSSProp } from "$lib/utils/css";

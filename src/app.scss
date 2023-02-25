@@ -18,6 +18,7 @@
 	--p-hsl-text: 60 20% 90%;
 	--c-text: hsla(var(--p-hsl-text) / 0.88);
 	--c-text--faded: hsla(var(--p-hsl-text) / 0.5);
+	--c-text--invert: hsla(240, 22%, 10%, 0.95);
 
 	// material design colors
 	// primary #426916, everything else auto
@@ -64,6 +65,7 @@
 	--c-overlay-darker: rgba(0 0 0 / 0.1);
 
 	--t-transition: 200ms;
+	--t-transition-short: 80ms;
 
 	// box shadows based on https://medium.com/@Florian/freebie-google-material-design-shadow-helper-2a0501295a2d
 	// separated so that they can be used as inset

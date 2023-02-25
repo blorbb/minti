@@ -228,29 +228,49 @@
 		<div class="controls">
 			{#if !started}
 				<div class="control-middle">
-					<PrimaryButton class="start" icon="ph:play-bold" on:click={start} />
+					<PrimaryButton
+						class="start"
+						icon="ph:play-bold"
+						on:click={start}
+						tooltipContent="Start Timer"
+					/>
 					{#if fullscreen}
-						<LightButton icon="ph:corners-in" on:click={disableFullscreen} />
+						<LightButton
+							icon="ph:corners-in"
+							on:click={disableFullscreen}
+							tooltipContent="Exit Fullscreen"
+						/>
 					{:else}
-						<LightButton icon="ph:corners-out" on:click={enableFullscreen} />
+						<LightButton
+							icon="ph:corners-out"
+							on:click={enableFullscreen}
+							tooltipContent="Fullscreen"
+						/>
 					{/if}
 				</div>
 			{:else}
 				<div class="control-left">
 					{#if !finished}
-						<LightButton icon="ph:clock-counter-clockwise" on:click={reset} />
+						<LightButton
+							icon="ph:clock-counter-clockwise"
+							on:click={reset}
+							tooltipContent="Reset"
+						/>
 						<LightButton
 							icon="ph:plus"
 							on:click={() => addDuration(constants.MS_IN_MIN)}
+							tooltipContent="Add 1m"
 						/>
 						<LightButton
 							icon="ph:minus"
 							on:click={() => subtractDuration(constants.MS_IN_MIN)}
+							tooltipContent="Subtract 1m"
 						/>
 					{:else}
 						<PrimaryButton
 							icon="ph:plus"
 							on:click={() => addDuration(constants.MS_IN_MIN)}
+							tooltipContent="Add 1m"
 						/>
 					{/if}
 				</div>
@@ -259,16 +279,33 @@
 						<PrimaryButton
 							icon="ph:clock-counter-clockwise-bold"
 							on:click={reset}
+							tooltipContent="Reset"
 						/>
 					{:else if paused}
-						<PrimaryButton icon="ph:play-bold" on:click={resume} />
+						<PrimaryButton
+							icon="ph:play-bold"
+							on:click={resume}
+							tooltipContent="Resume"
+						/>
 					{:else}
-						<PrimaryButton icon="ph:pause-bold" on:click={pause} />
+						<PrimaryButton
+							icon="ph:pause-bold"
+							on:click={pause}
+							tooltipContent="Pause"
+						/>
 					{/if}
 					{#if fullscreen}
-						<LightButton icon="ph:corners-in" on:click={disableFullscreen} />
+						<LightButton
+							icon="ph:corners-in"
+							on:click={disableFullscreen}
+							tooltipContent="Exit Fullscreen"
+						/>
 					{:else}
-						<LightButton icon="ph:corners-out" on:click={enableFullscreen} />
+						<LightButton
+							icon="ph:corners-out"
+							on:click={enableFullscreen}
+							tooltipContent="Fullscreen"
+						/>
 					{/if}
 				</div>
 			{/if}
@@ -279,6 +316,7 @@
 			on:click={() => {
 				timerControllerList.removeTimer(tc);
 			}}
+			tooltipContent="Remove"
 		/>
 	</div>
 </div>
