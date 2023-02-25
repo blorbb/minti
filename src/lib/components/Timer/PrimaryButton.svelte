@@ -1,10 +1,17 @@
 <script lang="ts">
+	import { settings } from "$lib/utils/stores";
+	import { scale } from "svelte/transition";
+
 	export let icon: string;
 	let className = "";
 	export { className as class };
 </script>
 
-<button class={`m-primary ${className}`} on:click>
+<button
+	class={`m-primary ${className}`}
+	on:click
+	in:scale={{ duration: $settings.buttonScaleDuration }}
+>
 	<iconify-icon inline {icon} />
 </button>
 

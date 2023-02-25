@@ -53,6 +53,7 @@ type Settings = {
 	timerUnitRange: UnitRange;
 	progressBarType: "line" | "background";
 	progressBarBackgroundBorder: number;
+	buttonScaleDuration: number;
 };
 
 export const settings = writable<Settings>({
@@ -61,4 +62,5 @@ export const settings = writable<Settings>({
 	timerUnitRange: ["s", "d"],
 	progressBarType: "background",
 	progressBarBackgroundBorder: 1,
+	buttonScaleDuration: 200,
 });
