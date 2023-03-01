@@ -77,14 +77,14 @@
 	.scroll-shadow {
 		// TODO make shadow version customisable in settings
 		// dark shadow
-		// --s-shadow-color: hsla(0, 0%, 0%, 0.5);
-		// --s-shadow-height: 1rem;
-		// mix-blend-mode: multiply;
+		--s-shadow-color: hsla(0, 0%, 0%, 0.5);
+		--s-shadow-height: 1rem;
+		mix-blend-mode: multiply;
 
 		// light shadow
-		--s-shadow-color: hsla(184, 100%, 97%, 0.1);
-		--s-shadow-height: 0.5rem;
-		mix-blend-mode: screen;
+		// --s-shadow-color: hsla(184, 100%, 97%, 0.1);
+		// --s-shadow-height: 0.5rem;
+		// mix-blend-mode: screen;
 
 		position: fixed;
 		left: 0;

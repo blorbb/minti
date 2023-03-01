@@ -61,6 +61,6 @@ export const settings = writable<Settings>({
 	autoTrimTimerDisplay: true,
 	timerUnitRange: ["s", "d"],
 	progressBarType: "background",
-	progressBarBackgroundBorder: 1,
+	progressBarBackgroundBorder: 0,
 	buttonScaleDuration: 200,
 });

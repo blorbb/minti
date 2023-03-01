@@ -108,17 +108,22 @@
 
 	--background: radial-gradient(
 			farthest-corner at top left,
-			hsl(343, 41%, 10%),
+			hsl(343, 68%, 77%),
 			transparent
 		),
 		radial-gradient(
 			farthest-corner at top right,
-			hsl(275, 46%, 11%),
+			hsl(275, 100%, 85%),
 			transparent
 		),
-		radial-gradient(farthest-corner at 30% 100%, hsl(330, 29%, 8%), transparent);
+		radial-gradient(
+			farthest-corner at 30% 100%,
+			hsl(165, 84%, 75%),
+			transparent
+		);
 	--l-scrollbar__width: 0px;
 	--l-navbar__width: 3rem;
+	--navbar__background: rgba(0, 0, 0, 0.719);
 
 	// timer
 	// how far apart different timers are

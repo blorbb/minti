@@ -51,7 +51,7 @@
 			place-items: center;
 		}
 
-		background-color: var(--c-surface-1);
+		background-color: var(--navbar__background);
 	}
 
 	@media (min-aspect-ratio: 3/2) {
