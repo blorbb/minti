@@ -65,45 +65,34 @@
 	--c-overlay-darker: rgba(0 0 0 / 0.1);
 
 	--t-transition: 200ms;
-	--t-transition-short: 80ms;
+	--t-transition--short: 80ms;
 
 	// box shadows based on https://medium.com/@Florian/freebie-google-material-design-shadow-helper-2a0501295a2d
-	// separated so that they can be used as inset
-	--p-shadow-1-1: 0 1px 3px rgba(0 0 0 / 0.12);
-	--p-shadow-1-2: 0 1px 2px rgba(0 0 0 / 0.24);
-	--p-shadow-2-1: 0 3px 6px rgba(0 0 0 / 0.16);
-	--p-shadow-2-2: 0 3px 6px rgba(0 0 0 / 0.23);
-	--p-shadow-3-1: 0 10px 20px rgba(0 0 0 / 0.19);
-	--p-shadow-3-2: 0 6px 6px rgba(0 0 0 / 0.23);
-	--p-shadow-4-1: 0 14px 28px rgba(0 0 0 / 0.25);
-	--p-shadow-4-2: 0 10px 10px rgba(0 0 0 / 0.22);
-	--p-shadow-5-1: 0 19px 38px rgba(0 0 0 / 0.3);
-	--p-shadow-5-2: 0 15px 12px rgba(0 0 0 / 0.22);
+	--shadow-1: 0 1px 3px rgba(0 0 0 / 0.12), 0 1px 2px rgba(0 0 0 / 0.24);
+	--shadow-2: 0 3px 6px rgba(0 0 0 / 0.16), 0 3px 6px rgba(0 0 0 / 0.23);
+	--shadow-3: 0 10px 20px rgba(0 0 0 / 0.19), 0 6px 6px rgba(0 0 0 / 0.23);
+	--shadow-4: 0 14px 28px rgba(0 0 0 / 0.25), 0 10px 10px rgba(0 0 0 / 0.22);
+	--shadow-5: 0 19px 38px rgba(0 0 0 / 0.3), 0 15px 12px rgba(0 0 0 / 0.22);
 
-	--shadow-1: var(--p-shadow-1-1), var(--p-shadow-1-2);
-	--shadow-2: var(--p-shadow-2-1), var(--p-shadow-2-2);
-	--shadow-3: var(--p-shadow-3-1), var(--p-shadow-3-2);
-	--shadow-4: var(--p-shadow-4-1), var(--p-shadow-4-2);
-	--shadow-5: var(--p-shadow-5-1), var(--p-shadow-5-2);
-
-	// for use in filter: var(--shadow-drop-*);
+	// for use in `filter: var(--shadow-*--drop);`
 	// filter blur radius is twice the box-shadow blur radius
-	--shadow-drop-1: drop-shadow(0 1px 1.5px rgba(0 0 0 / 0.12))
+	--shadow-1--drop: drop-shadow(0 1px 1.5px rgba(0 0 0 / 0.12))
 		drop-shadow(0 1px 1px rgba(0 0 0 / 0.24));
-	--shadow-drop-2: drop-shadow(0 3px 3px rgba(0 0 0 / 0.16))
+	--shadow-2--drop: drop-shadow(0 3px 3px rgba(0 0 0 / 0.16))
 		drop-shadow(0 3px 3px rgba(0 0 0 / 0.23));
-	--shadow-drop-3: drop-shadow(0 10px 10px rgba(0 0 0 / 0.19))
+	--shadow-3--drop: drop-shadow(0 10px 10px rgba(0 0 0 / 0.19))
 		drop-shadow(0 6px 3px rgba(0 0 0 / 0.23));
-	--shadow-drop-4: drop-shadow(0 14px 14px rgba(0 0 0 / 0.25))
+	--shadow-4--drop: drop-shadow(0 14px 14px rgba(0 0 0 / 0.25))
 		drop-shadow(0 10px 5px rgba(0 0 0 / 0.22));
-	--shadow-drop-5: drop-shadow(0 19px 19px rgba(0 0 0 / 0.3))
+	--shadow-5--drop: drop-shadow(0 19px 19px rgba(0 0 0 / 0.3))
 		drop-shadow(0 15px 6px rgba(0 0 0 / 0.22));
 
-	--shadow-1-inset: inset var(--p-shadow-1-1), inset var(--p-shadow-1-2);
-	--shadow-2-inset: inset var(--p-shadow-2-1), inset var(--p-shadow-2-2);
-	--shadow-3-inset: inset var(--p-shadow-3-1), inset var(--p-shadow-3-2);
-	--shadow-4-inset: inset var(--p-shadow-4-1), inset var(--p-shadow-4-2);
-	--shadow-5-inset: inset var(--p-shadow-5-1), inset var(--p-shadow-5-2);
+	// two insets to make both shadows inset
+	--shadow-1--inset: inset var(--shadow-1) inset;
+	--shadow-2--inset: inset var(--shadow-2) inset;
+	--shadow-3--inset: inset var(--shadow-3) inset;
+	--shadow-4--inset: inset var(--shadow-4) inset;
+	--shadow-5--inset: inset var(--shadow-5) inset;
 	//#endregion
 
 	//#region component specific settings

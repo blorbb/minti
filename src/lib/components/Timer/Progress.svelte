@@ -79,7 +79,7 @@
 			&::before {
 				content: "";
 
-				box-shadow: var(--shadow-2-inset);
+				box-shadow: var(--shadow-2--inset);
 
 				position: absolute;
 				inset: 0;

@@ -36,11 +36,11 @@
 		height: 2rem;
 		border-radius: 5rem;
 
-		filter: var(--shadow-drop-2);
+		filter: var(--shadow-2--drop);
 		transition: filter var(--t-transition);
 
 		&:is(:hover, :focus-visible) {
-			filter: var(--shadow-drop-3);
+			filter: var(--shadow-3--drop);
 		}
 
 		&:active {
