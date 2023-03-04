@@ -15,7 +15,7 @@
 		type TimeAbbreviations,
 	} from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
-	import { parseInput, ValidationError } from "$lib/utils/time_parser";
+	import { ParseError, parseInput } from "$lib/utils/time_parser";
 	import { tooltip } from "$lib/utils/tippy";
 
 	import { onDestroy, tick } from "svelte";
@@ -23,233 +23,257 @@
 
 	export let tc: TimerController;
 
-	let countdownTimes: [TimeAbbreviations, string][] = [];
+	const timerStatus = {
+		finished: false,
+		started: false,
+		paused: false,
+		running: false,
+		duration: 0,
+		update() {
+			timerStatus.finished = tc.isFinished();
+			timerStatus.started = tc.isStarted();
+			timerStatus.paused = tc.isPaused();
+			timerStatus.running = tc.isRunning();
+			timerStatus.duration = tc.getTimerDuration();
+			// update whenever any status changes
+			timerDisplay.update();
+		},
+	};
+	tc.onFinish(timerStatus.update);
 
-	//#region statuses
-	let finished = false;
-	let started = false;
-	let paused = false;
-	let running = false;
-	let duration = 0;
+	const timerTime = {
+		async start() {
+			if (!elements.input) return;
 
-	function updateStatuses() {
-		finished = tc.isFinished();
-		started = tc.isStarted();
-		paused = tc.isPaused();
-		running = tc.isRunning();
-		duration = tc.getTimerDuration();
-		// update whenever any status changes
-		updateTimer();
-	}
-	//#endregion
+			let time: number;
+			try {
+				time = parseInput(elements.input.value);
+				if (time <= 0) throw new ParseError("Time must be positive");
+				if (isNaN(time)) throw new ParseError("Invalid input");
+			} catch (err) {
+				if (!(err instanceof ParseError)) throw err;
 
-	//#region other statuses/elements
-	let fullscreen = document.fullscreenElement !== null;
-	let previousValue = "";
+				userInput.error.message = err.message;
+				userInput.error.invalid = true;
+				await tick();
+				userInput.error.signal.emit();
+				return;
+			}
 
-	let timerBox: HTMLElement | undefined;
-	let countdownElem: HTMLElement | undefined;
-	let input: HTMLInputElement | undefined;
-
-	let inputErrorMessage = "";
-	let inputIsInvalid = false;
-	const errorSignal = new Signal();
-	//#endregion
-
-	//#region timer updates
-	// using interval: NodeJS.Timer raises a linting error
-	let interval: ReturnType<typeof setInterval>;
-
-	function updateTimer() {
-		// keep positive so the overtime timer doesn't have
-		// negative sign
-		const timeRemaining = tc.getTimeRemaining();
-		const times = formatTimeToStrings(
-			timeRemaining,
-			$settings.timerUnitRange,
-			$settings.autoTrimTimerDisplay,
-		);
-
-		// don't format this as a string as there are different
-		// classes for the different parts of the time
-		let timeArray = Array.from(order.recordToMap(times)).reverse();
-
-		// check that all digits are 0
-		// if so, remove the negative 0
-		if (timeArray.every(([, timeStr]) => +timeStr == 0)) {
-			// omit the negative 0
-			let timeStr = timeArray[0][1];
-			if (timeStr[0] === "-") timeStr = timeStr.slice(1);
-
-			timeArray[0][1] = timeStr;
-		}
-
-		countdownTimes = timeArray;
-	}
-
-	function startTimerUpdates() {
-		// run immediately first to avoid blank
-		updateTimer();
-		interval = setInterval(updateTimer, $settings.timerUpdateInterval);
-	}
-
-	function stopTimerUpdates() {
-		clearInterval(interval);
-	}
-	//#endregion
-
-	//#region timer events
-
-	async function start() {
-		if (!input) return;
-
-		let time: number;
-		try {
-			time = parseInput(input.value);
-			if (time <= 0) throw new ValidationError("Time must be positive");
-			if (isNaN(time)) throw new ValidationError("Invalid input");
-		} catch (error) {
-			if (!(error instanceof ValidationError)) throw error;
-
-			inputErrorMessage = error.message;
-			inputIsInvalid = true;
+			userInput.error.invalid = false;
+			userInput.previous = elements.input.value;
+			tc.reset(time).start();
+			timerStatus.update();
+			timerDisplay.startInterval();
+		},
+		resume() {
+			tc.resume();
+			timerStatus.update();
+		},
+		pause() {
+			tc.pause();
+			timerStatus.update();
+		},
+		async reset() {
+			tc.reset();
+			timerDisplay.stopInterval();
+			timerStatus.update();
 			await tick();
-			errorSignal.emit();
+			if (!elements.input) return;
+			elements.input.value = userInput.previous;
+		},
+		duration: {
+			async add(ms: number) {
+				// in case used the wrong function
+				if (ms < 0) {
+					console.warn(
+						`Warning: Used a negative time (${ms}) in duration.add function. Calling duration.subtract instead. Stack trace below.`,
+					);
+					console.trace();
+					timerTime.duration.subtract(-ms);
+					return;
+				}
 
-			return;
-		}
+				// if already finished, reset to the ms specified
+				if (timerStatus.finished) {
+					const progressValue =
+						elements.timerBox?.querySelector(".progress-value");
+					if (!progressValue) return;
+					resetAnimation(progressValue as HTMLElement);
+					tc.reset(ms).start();
+				} else {
+					tc.addDuration(ms);
+				}
 
-		inputIsInvalid = false;
+				timerStatus.update();
+				// jump timer upward
+				elements.bumpCountdown("up");
+			},
+			subtract(ms: number) {
+				// in case used the wrong function
+				if (ms < 0) {
+					console.warn(
+						`Warning: Used a negative time (${ms}) in duration.subtract function. Calling duration.add instead. Stack trace below.`,
+					);
+					console.trace();
+					timerTime.duration.add(-ms);
+					return;
+				}
 
-		previousValue = input.value;
-
-		tc.reset(time).start();
-
-		updateStatuses();
-		startTimerUpdates();
-	}
-
-	function resume() {
-		tc.resume();
-		updateStatuses();
-	}
-
-	function pause() {
-		tc.pause();
-		updateStatuses();
-	}
-
-	async function reset() {
-		tc.reset();
-		stopTimerUpdates();
-		updateStatuses();
-		await tick();
-		if (!input) return;
-		input.value = previousValue;
-	}
-
-	function bumpAnimation(em: number) {
-		return [
-			{ transform: "translateY(0px)" },
-			{ transform: `translateY(${em}em)` },
-			{ transform: "translateY(0px)" },
-		];
-	}
-	const BUMP_OPTIONS: KeyframeAnimationOptions = {
-		duration: 100,
-		easing: "ease-out",
+				// clamp so that it stops at 0 if subtracting time
+				ms = Math.min(tc.getTimeRemaining(), ms);
+				tc.addDuration(-ms);
+				timerStatus.update();
+				// jump timer downward
+				elements.bumpCountdown("down");
+			},
+		},
 	};
 
-	async function addDuration(ms: number) {
-		// if already finished, reset to the ms specified
-		if (finished) {
-			const progressValue = timerBox?.querySelector(".progress-value");
-			if (!progressValue) return;
-			resetAnimation(progressValue as HTMLElement);
-			tc.reset(ms).start();
-		} else {
-			tc.addDuration(ms);
-		}
+	const timerDisplay = {
+		timeArray: [] as [TimeAbbreviations, string][],
+		updateTimer: undefined as Maybe<NodeJS.Timer>,
+		update() {
+			const timeRemaining = tc.getTimeRemaining();
+			const times = formatTimeToStrings(
+				timeRemaining,
+				$settings.timerUnitRange,
+				$settings.autoTrimTimerDisplay,
+			);
 
-		updateStatuses();
-		// jump timer upward
-		if (!countdownElem) return;
-		countdownElem.animate(bumpAnimation(-0.2), BUMP_OPTIONS);
-	}
+			// don't format this as a string as there are different
+			// classes for the different parts of the time
+			let timeArray = Array.from(order.recordToMap(times)).reverse();
 
-	function subtractDuration(ms: number) {
-		// clamp so that it stops at 0 if subtracting time
-		ms = Math.min(tc.getTimeRemaining(), ms);
-		tc.addDuration(-ms);
-		updateStatuses();
-		// jump timer downward
-		if (!countdownElem) return;
-		countdownElem.animate(bumpAnimation(0.2), BUMP_OPTIONS);
-	}
+			// check that all digits are 0
+			// if so, remove the negative 0
+			if (timeArray.every(([, timeStr]) => +timeStr == 0)) {
+				// omit the negative 0
+				let timeStr = timeArray[0][1];
+				if (timeStr[0] === "-") timeStr = timeStr.slice(1);
 
-	tc.onFinish(() => {
-		updateStatuses();
-	});
-	//#endregion
+				timeArray[0][1] = timeStr;
+			}
 
-	//#region misc helpers
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.code === "Enter") {
-			start();
-		}
-	}
+			timerDisplay.timeArray = timeArray;
+		},
+		startInterval() {
+			if (timerDisplay.updateTimer) timerDisplay.stopInterval();
+			timerDisplay.update();
+			timerDisplay.updateTimer = setInterval(
+				timerDisplay.update,
+				$settings.timerUpdateInterval,
+			);
+		},
+		stopInterval() {
+			clearInterval(timerDisplay.updateTimer);
+			timerDisplay.updateTimer = undefined;
+		},
+	};
 
-	function enableFullscreen() {
-		if (!timerBox || !document.fullscreenEnabled) return;
-		timerBox.requestFullscreen();
-	}
+	type Maybe<T> = T | undefined;
+	const elements = {
+		timerBox: undefined as Maybe<HTMLElement>,
+		countdown: undefined as Maybe<HTMLElement>,
+		input: undefined as Maybe<HTMLInputElement>,
+		onInputKeydown(event: KeyboardEvent) {
+			if (event.code === "Enter") {
+				timerTime.start();
+			} else if (event.code === "Escape") {
+				if (!elements.input) return;
+				elements.input.value = userInput.previous;
+				elements.input.blur();
+			}
+		},
+		bumpCountdown(direction: "up" | "down") {
+			if (!elements.countdown) return;
+			const bumpDistance =
+				$settings.countdownBumpAmount * (direction === "up" ? -1 : 1);
+			elements.countdown.animate(
+				[
+					{ transform: "translateY(0px)" },
+					{ transform: `translateY(${bumpDistance}em)` },
+					{ transform: "translateY(0px)" },
+				],
+				{
+					duration: 100,
+					easing: "ease-out",
+				},
+			);
+		},
+	};
 
-	function disableFullscreen() {
-		document.exitFullscreen();
-	}
+	const userInput = {
+		previous: "",
+		error: {
+			message: "",
+			invalid: false,
+			signal: new Signal(),
+		},
+		updatePrevious() {
+			if (elements.input) userInput.previous = elements.input.value;
+		},
+	};
 
-	function updateFullscreen() {
-		fullscreen = document.fullscreenElement !== null;
-	}
+	const fullscreen = {
+		// if timerBoxElem is undefined, isFullscreen === false
+		isFullscreen: document.fullscreenElement === elements.timerBox,
+		enable() {
+			if (!elements.timerBox || !document.fullscreenEnabled) return;
+			elements.timerBox.requestFullscreen();
+		},
+		disable() {
+			document.exitFullscreen();
+		},
+		updateStatus() {
+			fullscreen.isFullscreen =
+				document.fullscreenElement === elements.timerBox;
+		},
+	};
 
-	document.addEventListener("fullscreenchange", updateFullscreen);
+	document.addEventListener("fullscreenchange", fullscreen.updateStatus);
 	onDestroy(() => {
-		stopTimerUpdates();
-		document.removeEventListener("fullscreenchange", updateFullscreen);
+		timerDisplay.stopInterval();
+		document.removeEventListener("fullscreenchange", fullscreen.updateStatus);
 	});
-	//#endregion
 </script>
 
 <div
 	class={`c-timer-box`}
-	data-paused={paused}
-	data-started={started}
-	data-finished={finished}
-	data-running={running}
+	data-paused={timerStatus.paused}
+	data-started={timerStatus.started}
+	data-finished={timerStatus.finished}
+	data-running={timerStatus.running}
 	data-settings-progress-bar-type={$settings.progressBarType}
-	bind:this={timerBox}
+	bind:this={elements.timerBox}
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
 >
-	<Progress {duration} {paused} {finished} {started} />
+	<Progress
+		duration={timerStatus.duration}
+		paused={timerStatus.paused}
+		finished={timerStatus.finished}
+		started={timerStatus.started}
+	/>
 	<div class="c-timer-front">
-		<div class="countdown" bind:this={countdownElem}>
-			{#if !started}
+		<div class="countdown" bind:this={elements.countdown}>
+			{#if !timerStatus.started}
 				<input
 					type="text"
 					placeholder="Enter Time"
-					bind:this={input}
-					class:finished
-					aria-invalid={inputIsInvalid}
+					bind:this={elements.input}
+					class:finished={timerStatus.finished}
+					aria-invalid={userInput.error.invalid}
 					aria-required
-					on:keydown={handleKeydown}
+					on:keydown={elements.onInputKeydown}
+					on:blur={userInput.updatePrevious}
 					use:tooltip={{
-						text: inputErrorMessage,
+						text: userInput.error.message,
 						theme: "error",
-						enabled: inputIsInvalid,
+						enabled: userInput.error.invalid,
 						receivers: {
-							show: errorSignal.newReceiver(),
+							show: userInput.error.signal.newReceiver(),
 						},
 						tippy: {
 							hideOnClick: false,
@@ -257,88 +281,88 @@
 					}}
 				/>
 			{:else}
-				<Countdown times={countdownTimes} />
+				<Countdown times={timerDisplay.timeArray} />
 			{/if}
 		</div>
 		<div class="controls">
-			{#if !started}
+			{#if !timerStatus.started}
 				<div class="control-middle">
 					<PrimaryButton
 						class="start"
 						icon="ph:play-bold"
-						on:click={start}
+						on:click={timerTime.start}
 						tooltipContent="Start Timer"
 					/>
-					{#if fullscreen}
+					{#if fullscreen.isFullscreen}
 						<LightButton
 							icon="ph:corners-in"
-							on:click={disableFullscreen}
+							on:click={fullscreen.disable}
 							tooltipContent="Exit Fullscreen"
 						/>
 					{:else}
 						<LightButton
 							icon="ph:corners-out"
-							on:click={enableFullscreen}
+							on:click={fullscreen.enable}
 							tooltipContent="Fullscreen"
 						/>
 					{/if}
 				</div>
 			{:else}
 				<div class="control-left">
-					{#if !finished}
+					{#if !timerStatus.finished}
 						<LightButton
 							icon="ph:clock-counter-clockwise"
-							on:click={reset}
+							on:click={timerTime.reset}
 							tooltipContent="Reset"
 						/>
 						<LightButton
 							icon="ph:plus"
-							on:click={() => addDuration(constants.MS_IN_MIN)}
+							on:click={() => timerTime.duration.add(constants.MS_IN_MIN)}
 							tooltipContent="Add 1m"
 						/>
 						<LightButton
 							icon="ph:minus"
-							on:click={() => subtractDuration(constants.MS_IN_MIN)}
+							on:click={() => timerTime.duration.subtract(constants.MS_IN_MIN)}
 							tooltipContent="Subtract 1m"
 						/>
 					{:else}
 						<PrimaryButton
 							icon="ph:plus"
-							on:click={() => addDuration(constants.MS_IN_MIN)}
+							on:click={() => timerTime.duration.add(constants.MS_IN_MIN)}
 							tooltipContent="Add 1m"
 						/>
 					{/if}
 				</div>
 				<div class="control-right">
-					{#if finished}
+					{#if timerStatus.finished}
 						<PrimaryButton
 							icon="ph:clock-counter-clockwise-bold"
-							on:click={reset}
+							on:click={timerTime.reset}
 							tooltipContent="Reset"
 						/>
-					{:else if paused}
+					{:else if timerStatus.paused}
 						<PrimaryButton
 							icon="ph:play-bold"
-							on:click={resume}
+							on:click={timerTime.resume}
 							tooltipContent="Resume"
 						/>
 					{:else}
 						<PrimaryButton
 							icon="ph:pause-bold"
-							on:click={pause}
+							on:click={timerTime.pause}
 							tooltipContent="Pause"
 						/>
 					{/if}
-					{#if fullscreen}
+					{#if fullscreen.isFullscreen}
 						<LightButton
 							icon="ph:corners-in"
-							on:click={disableFullscreen}
+							on:click={fullscreen.disable}
 							tooltipContent="Exit Fullscreen"
 						/>
 					{:else}
 						<LightButton
 							icon="ph:corners-out"
-							on:click={enableFullscreen}
+							on:click={fullscreen.enable}
 							tooltipContent="Fullscreen"
 						/>
 					{/if}
@@ -366,7 +390,7 @@
 
 		overflow: hidden;
 
-		// for the backdrop blur to scale according to the timer size
+		// backdrop blur and font size scale according to container size
 		container-type: size;
 
 		&[data-settings-progress-bar-type="background"] {
@@ -501,10 +525,5 @@
 			color: var(--c-error-on);
 			transition: none;
 		}
-	}
-
-	.overtime-timer {
-		color: var(--c-timer--countdown__finish-color);
-		font-variant-numeric: lining-nums tabular-nums;
 	}
 </style>

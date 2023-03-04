@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { convert } from "$lib/utils/timer_utils";
-import { parseInput as p, ValidationError } from "$lib/utils/time_parser";
+import { parseInput as p, ParseError } from "$lib/utils/time_parser";
 
 // quick functions to easily convert units to ms
 const d = convert.daysToMs;
@@ -13,34 +13,34 @@ function ms(ms: number) {
 
 describe("Rejects", () => {
 	test("Having both separators and letters", () => {
-		expect(() => p("1:34h")).toThrow(ValidationError);
+		expect(() => p("1:34h")).toThrow(ParseError);
 	});
 
 	test("Words that are not valid units", () => {
-		expect(() => p("1ha")).toThrow(ValidationError);
+		expect(() => p("1ha")).toThrow(ParseError);
 	});
 
 	test.each(["aa", "oaik", "an hour", "a bunch of text", "12@!"])(
 		"Random words/symbols",
 		(input) => {
-			expect(() => p(input)).toThrow(ValidationError);
+			expect(() => p(input)).toThrow(ParseError);
 		},
 	);
 
 	test("Invalid numbers", () => {
-		expect(() => p("3-5")).toThrow(ValidationError);
+		expect(() => p("3-5")).toThrow(ParseError);
 	});
 
 	test("Too many separators", () => {
-		expect(() => p("1:2:3:4:5")).toThrow(ValidationError);
+		expect(() => p("1:2:3:4:5")).toThrow(ParseError);
 	});
 
 	test("Cannot infer after milliseconds", () => {
-		expect(() => p("83ms24")).toThrow(ValidationError);
+		expect(() => p("83ms24")).toThrow(ParseError);
 	});
 
 	test("No input given", () => {
-		expect(() => p("")).toThrow(ValidationError);
+		expect(() => p("")).toThrow(ParseError);
 	});
 });
 

@@ -11,10 +11,10 @@ import {
 	type TimeAbbreviations,
 } from "./timer_utils";
 
-export class ValidationError extends Error {
+export class ParseError extends Error {
 	constructor(message: string) {
 		super(message);
-		this.name = "ValidationError";
+		this.name = "ParseError";
 	}
 }
 
@@ -91,7 +91,7 @@ export function parseInput(input: string) {
 		// throw error for strings like "10ms20"
 		// the "20" after "ms" has no valid units
 		if (currentUnit === "ms")
-			throw new ValidationError("No units smaller than ms accepted");
+			throw new ParseError("No units smaller than ms accepted");
 
 		// can't use `currentSeparatorUnitIndex` as this applies for
 		// both separators and letters
@@ -150,12 +150,12 @@ class TokenManager {
 		if (char === unitStrings.UNIT_SEPARATOR) return "separator";
 		else if (TokenManager.LETTER_TOKEN_REGEX.test(char)) return "letter";
 		else if (TokenManager.NUMBER_TOKEN_REGEX.test(char)) return "number";
-		else throw new ValidationError("Invalid input");
+		else throw new ParseError("Invalid input");
 	}
 }
 
 function parseInputTokens(input: string) {
-	if (input === "") throw new ValidationError("Please enter a time");
+	if (input === "") throw new ParseError("Please enter a time");
 
 	const noWhitespaceInput = input.replace(/\s/gm, "");
 	const manager = new TokenManager(noWhitespaceInput);
@@ -242,7 +242,7 @@ function validateTokenList(tokenList: TokenInfo[]) {
 		// numbers must be valid
 		if (token.type === "number") {
 			const number = +token.string;
-			if (isNaN(number)) throw new ValidationError("Invalid number");
+			if (isNaN(number)) throw new ParseError("Invalid number");
 			continue;
 		}
 
@@ -253,14 +253,14 @@ function validateTokenList(tokenList: TokenInfo[]) {
 		if (token.type === "separator") listInfo.separatorCount++;
 		// letters: ensure the units are valid
 		else if (!unitStrings.VALID_STRINGS.includes(token.string))
-			throw new ValidationError("Invalid units");
+			throw new ParseError("Invalid units");
 
 		if (listInfo.parsingMethod !== "singleNumber") {
 			// parsing method is already defined
 			// ensure that its the same parsing method
 			if (token.type === listInfo.parsingMethod) continue;
 			// different method: invalid
-			else throw new ValidationError("Cannot have multiple methods");
+			else throw new ParseError("Cannot have multiple methods");
 		}
 
 		// haven't established parsing method yet
@@ -274,9 +274,7 @@ function validateTokenList(tokenList: TokenInfo[]) {
 	// for 12:34:56:59.000
 	//     d  h  m  s
 	if (listInfo.separatorCount > 3)
-		throw new ValidationError(
-			`Too many separators "${unitStrings.UNIT_SEPARATOR}"`,
-		);
+		throw new ParseError(`Too many separators "${unitStrings.UNIT_SEPARATOR}"`);
 
 	return listInfo;
 }

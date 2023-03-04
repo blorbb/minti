@@ -54,6 +54,8 @@ type Settings = {
 	progressBarType: "line" | "background";
 	progressBarBackgroundBorder: number;
 	buttonScaleDuration: number;
+	/** distance in em to bump the countdown when changing timer duration */
+	countdownBumpAmount: number;
 };
 
 export const settings = writable<Settings>({
@@ -63,4 +65,5 @@ export const settings = writable<Settings>({
 	progressBarType: "background",
 	progressBarBackgroundBorder: 0,
 	buttonScaleDuration: 200,
+	countdownBumpAmount: 0.2,
 });
