@@ -5,6 +5,7 @@
 	import Progress from "$lib/components/Timer/Progress.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
+	import { formatRelativeTime } from "$lib/utils/date";
 	import { resetAnimation } from "$lib/utils/misc";
 	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
@@ -136,8 +137,7 @@
 		updateInterval: undefined as Maybe<NodeJS.Timer>,
 		update() {
 			// end time
-			const endUnixTime = Date.now() + tc.getTimeRemaining();
-			timerDisplay.endTime = timerDisplay.endTimeFormat(endUnixTime);
+			timerDisplay.endTime = formatRelativeTime(tc.getTimeRemaining());
 
 			// countdown
 			const timeRemaining = tc.getTimeRemaining();

@@ -56,6 +56,7 @@ type Settings = {
 	buttonScaleDuration: number;
 	/** distance in em to bump the countdown when changing timer duration */
 	countdownBumpAmount: number;
+	timeFormat: "12h" | "24h";
 };
 
 export const settings = writable<Settings>({
@@ -66,4 +67,5 @@ export const settings = writable<Settings>({
 	progressBarBackgroundBorder: 0,
 	buttonScaleDuration: 200,
 	countdownBumpAmount: 0.2,
+	timeFormat: "12h",
 });
