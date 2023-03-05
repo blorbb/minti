@@ -5,12 +5,12 @@
  */
 
 import { padMin, reverseMap } from "./misc";
-import type { TimeAbbreviations } from "./timer_controller";
 import {
 	constants,
 	convert,
 	order,
 	unitStrings,
+	type TimeAbbreviations,
 	type TimeStringsWithUnits,
 	type TimeWithUnits,
 	type UnitRange,
