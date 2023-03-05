@@ -134,7 +134,7 @@
 			hour: "numeric",
 			minute: "numeric",
 		}).format,
-		updateInterval: undefined as Maybe<NodeJS.Timer>,
+		updateInterval: undefined as Maybe<ReturnType<typeof setInterval>>,
 		update() {
 			// end time
 			timerDisplay.endTime = formatRelativeTime(tc.getTimeRemaining());
