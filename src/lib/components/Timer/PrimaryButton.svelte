@@ -29,12 +29,15 @@
 
 <style lang="scss">
 	.m-primary {
+		--s-size: 2rem;
 		background-color: var(--c-primary);
 		color: var(--c-primary-on);
 
-		width: 5rem;
-		height: 2rem;
+		height: var(--s-size);
+		aspect-ratio: 5 / 2;
 		border-radius: 5rem;
+
+		font-size: calc(var(--s-size) / 2);
 
 		filter: var(--shadow-2--drop);
 		transition: filter var(--t-transition);

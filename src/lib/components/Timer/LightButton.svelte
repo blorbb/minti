@@ -38,6 +38,9 @@
 		width: var(--s-size);
 		height: var(--s-size);
 		border-radius: 50%;
+
+		font-size: calc(var(--s-size) / 2);
+
 		transition: background-color var(--t-transition);
 
 		&:is(:hover, :focus-visible) {

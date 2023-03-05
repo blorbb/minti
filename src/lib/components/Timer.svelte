@@ -441,7 +441,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: max(0.1rem, 3cqh);
+		gap: max(0.25rem, 3cqh);
 
 		position: relative;
 
@@ -480,7 +480,7 @@
 
 	.countdown {
 		font-size: 1.5rem;
-		font-size: max(1.5rem, 10cqmin);
+		font-size: clamp(1.5rem, calc(10cqmin + 0.5rem), 4rem);
 		font-weight: 700;
 		text-align: center;
 		// fixed width numbers
@@ -491,7 +491,7 @@
 
 			border: none;
 			border-radius: 0.5rem;
-			width: max(15rem, 50%);
+			width: max(5rem, 70%);
 
 			font-weight: normal;
 			text-align: center;
@@ -507,6 +507,10 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: 3rem;
+
+		:global(button) {
+			--s-size: clamp(1.5rem, 5cqh + 1rem, 2rem);
+		}
 
 		> [class^="control"] {
 			display: flex;
