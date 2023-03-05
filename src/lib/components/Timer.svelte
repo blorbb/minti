@@ -171,7 +171,7 @@
 				$settings.timerUpdateInterval,
 			);
 
-			timerDisplay._stopEndTimeInterval();
+			timerDisplay.stopEndTimeInterval();
 		},
 		stopInterval() {
 			clearInterval(timerDisplay._updateInterval);
@@ -189,7 +189,7 @@
 		},
 		_startEndTimeInterval() {
 			if (timerDisplay._endTimeUpdateInterval)
-				timerDisplay._stopEndTimeInterval();
+				timerDisplay.stopEndTimeInterval();
 			// status should be updated which already calls an update
 			// shouldn't need, but uncomment if needed
 			// timerDisplay.updateEndTime();
@@ -198,7 +198,7 @@
 				2000,
 			);
 		},
-		_stopEndTimeInterval() {
+		stopEndTimeInterval() {
 			clearInterval(timerDisplay._endTimeUpdateInterval);
 			timerDisplay._endTimeUpdateInterval = undefined;
 		},
@@ -266,6 +266,7 @@
 	document.addEventListener("fullscreenchange", fullscreen.updateStatus);
 	onDestroy(() => {
 		timerDisplay.stopInterval();
+		timerDisplay.stopEndTimeInterval();
 		document.removeEventListener("fullscreenchange", fullscreen.updateStatus);
 	});
 </script>
