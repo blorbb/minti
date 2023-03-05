@@ -6,7 +6,6 @@
 
 	import { getCSSProp } from "$lib/utils/css";
 	import { resetAnimation } from "$lib/utils/misc";
-	import { Signal } from "$lib/utils/signal";
 	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
 	import {
@@ -16,7 +15,6 @@
 	} from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { ParseError, parseInput } from "$lib/utils/time_parser";
-	import { tooltip } from "$lib/utils/tippy";
 
 	import { onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
@@ -55,8 +53,6 @@
 
 				userInput.error.message = err.message;
 				userInput.error.invalid = true;
-				await tick();
-				userInput.error.signal.emit();
 				return;
 			}
 
@@ -132,8 +128,18 @@
 
 	const timerDisplay = {
 		timeArray: [] as [TimeAbbreviations, string][],
-		updateTimer: undefined as Maybe<NodeJS.Timer>,
+		endTime: "",
+		endTimeFormat: new Intl.DateTimeFormat(undefined, {
+			hour: "numeric",
+			minute: "numeric",
+		}).format,
+		updateInterval: undefined as Maybe<NodeJS.Timer>,
 		update() {
+			// end time
+			const endUnixTime = Date.now() + tc.getTimeRemaining();
+			timerDisplay.endTime = timerDisplay.endTimeFormat(endUnixTime);
+
+			// countdown
 			const timeRemaining = tc.getTimeRemaining();
 			const times = formatTimeToStrings(
 				timeRemaining,
@@ -158,16 +164,16 @@
 			timerDisplay.timeArray = timeArray;
 		},
 		startInterval() {
-			if (timerDisplay.updateTimer) timerDisplay.stopInterval();
+			if (timerDisplay.updateInterval) timerDisplay.stopInterval();
 			timerDisplay.update();
-			timerDisplay.updateTimer = setInterval(
+			timerDisplay.updateInterval = setInterval(
 				timerDisplay.update,
 				$settings.timerUpdateInterval,
 			);
 		},
 		stopInterval() {
-			clearInterval(timerDisplay.updateTimer);
-			timerDisplay.updateTimer = undefined;
+			clearInterval(timerDisplay.updateInterval);
+			timerDisplay.updateInterval = undefined;
 		},
 	};
 
@@ -208,7 +214,6 @@
 		error: {
 			message: "",
 			invalid: false,
-			signal: new Signal(),
 		},
 		updatePrevious() {
 			if (elements.input) userInput.previous = elements.input.value;
@@ -245,6 +250,7 @@
 	data-finished={timerStatus.finished}
 	data-running={timerStatus.running}
 	data-settings-progress-bar-type={$settings.progressBarType}
+	data-invalid-input={userInput.error.invalid}
 	bind:this={elements.timerBox}
 	transition:scale={{
 		duration: getCSSProp("--t-transition", "time") ?? 100,
@@ -257,6 +263,15 @@
 		started={timerStatus.started}
 	/>
 	<div class="c-timer-front">
+		<div class="extra-status">
+			{#if !timerStatus.started && userInput.error.invalid}
+				{userInput.error.message}
+			{:else if timerStatus.started}
+				<iconify-icon inline icon="ph:timer" />
+				{timerDisplay.endTime}
+			{/if}
+			&ZeroWidthSpace; <!-- keep the box -->
+		</div>
 		<div class="countdown" bind:this={elements.countdown}>
 			{#if !timerStatus.started}
 				<input
@@ -268,17 +283,6 @@
 					aria-required
 					on:keydown={elements.onInputKeydown}
 					on:blur={userInput.updatePrevious}
-					use:tooltip={{
-						text: userInput.error.message,
-						theme: "error",
-						enabled: userInput.error.invalid,
-						receivers: {
-							show: userInput.error.signal.newReceiver(),
-						},
-						tippy: {
-							hideOnClick: false,
-						},
-					}}
 				/>
 			{:else}
 				<Countdown times={timerDisplay.timeArray} />
@@ -408,6 +412,10 @@
 			color: var(--c-text--faded);
 		}
 
+		&[data-invalid-input="true"] .extra-status {
+			color: var(--c-error);
+		}
+
 		&:fullscreen {
 			border-radius: 0;
 		}
@@ -432,7 +440,9 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: space-evenly;
+		justify-content: center;
+		gap: max(0.1rem, 3cqh);
+
 		position: relative;
 
 		background-color: hsla(
@@ -462,9 +472,13 @@
 		}
 	}
 
-	.countdown {
-		height: 2.25rem;
+	.extra-status {
+		color: var(--c-timer--countdown__finish-color);
+		font-size: var(--l-font-size--small);
+		text-align: center;
+	}
 
+	.countdown {
 		font-size: 1.5rem;
 		font-size: max(1.5rem, 10cqmin);
 		font-weight: 700;
