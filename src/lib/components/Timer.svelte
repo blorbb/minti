@@ -28,6 +28,9 @@
 		paused: false,
 		running: false,
 		duration: 0,
+		/**
+		 * Updates all the statuses and recalculates the countdown and end times.
+		 */
 		update() {
 			timerStatus.finished = tc.isFinished();
 			timerStatus.started = tc.isStarted();
@@ -36,6 +39,7 @@
 			timerStatus.duration = tc.getTimerDuration();
 			// update whenever any status changes
 			timerDisplay.update();
+			timerDisplay.updateEndTime();
 		},
 	};
 	tc.onFinish(timerStatus.update);
@@ -66,15 +70,17 @@
 		resume() {
 			tc.resume();
 			timerStatus.update();
+			timerDisplay.startInterval();
 		},
 		pause() {
 			tc.pause();
 			timerStatus.update();
+			timerDisplay.stopInterval();
 		},
 		async reset() {
 			tc.reset();
-			timerDisplay.stopInterval();
 			timerStatus.update();
+			timerDisplay.stopInterval();
 			await tick();
 			if (!elements.input) return;
 			elements.input.value = userInput.previous;
@@ -129,16 +135,8 @@
 
 	const timerDisplay = {
 		timeArray: [] as [TimeAbbreviations, string][],
-		endTime: "",
-		endTimeFormat: new Intl.DateTimeFormat(undefined, {
-			hour: "numeric",
-			minute: "numeric",
-		}).format,
-		updateInterval: undefined as Maybe<ReturnType<typeof setInterval>>,
+		_updateInterval: undefined as Maybe<ReturnType<typeof setInterval>>,
 		update() {
-			// end time
-			timerDisplay.endTime = formatRelativeTime(tc.getTimeRemaining());
-
 			// countdown
 			const timeRemaining = tc.getTimeRemaining();
 			const times = formatTimeToStrings(
@@ -164,16 +162,45 @@
 			timerDisplay.timeArray = timeArray;
 		},
 		startInterval() {
-			if (timerDisplay.updateInterval) timerDisplay.stopInterval();
-			timerDisplay.update();
-			timerDisplay.updateInterval = setInterval(
+			if (timerDisplay._updateInterval) timerDisplay.stopInterval();
+			// status should be updated which already calls an update
+			// shouldn't need, but uncomment if needed
+			// timerDisplay.update();
+			timerDisplay._updateInterval = setInterval(
 				timerDisplay.update,
 				$settings.timerUpdateInterval,
 			);
+
+			timerDisplay._stopEndTimeInterval();
 		},
 		stopInterval() {
-			clearInterval(timerDisplay.updateInterval);
-			timerDisplay.updateInterval = undefined;
+			clearInterval(timerDisplay._updateInterval);
+			timerDisplay._updateInterval = undefined;
+
+			timerDisplay._startEndTimeInterval();
+		},
+		// end time
+		// when the timer starts counting down, stop refreshing the end time
+		// when time is paused, refresh end times
+		endTime: "",
+		_endTimeUpdateInterval: undefined as Maybe<ReturnType<typeof setInterval>>,
+		updateEndTime() {
+			timerDisplay.endTime = formatRelativeTime(tc.getTimeRemaining());
+		},
+		_startEndTimeInterval() {
+			if (timerDisplay._endTimeUpdateInterval)
+				timerDisplay._stopEndTimeInterval();
+			// status should be updated which already calls an update
+			// shouldn't need, but uncomment if needed
+			// timerDisplay.updateEndTime();
+			timerDisplay._endTimeUpdateInterval = setInterval(
+				timerDisplay.updateEndTime,
+				2000,
+			);
+		},
+		_stopEndTimeInterval() {
+			clearInterval(timerDisplay._endTimeUpdateInterval);
+			timerDisplay._endTimeUpdateInterval = undefined;
 		},
 	};
 
