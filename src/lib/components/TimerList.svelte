@@ -36,7 +36,7 @@
 		}
 
 		.timer-container {
-			min-height: 8rem;
+			min-height: 9rem;
 		}
 	}
 </style>

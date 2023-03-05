@@ -28,8 +28,6 @@
 	onMount(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
-				console.log(entries);
-
 				for (const entry of entries) {
 					const edge = (entry.target as HTMLElement).dataset["side"];
 					const shadowToShow =
