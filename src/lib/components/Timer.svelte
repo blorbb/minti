@@ -33,6 +33,13 @@
 		 */
 		update() {
 			timerStatus.finished = tc.isFinished();
+			// unpause the timer if its finished, so that
+			// the overtime timer continues
+			if (timerStatus.finished) {
+				tc.resume();
+				timerDisplay.startInterval();
+			}
+
 			timerStatus.started = tc.isStarted();
 			timerStatus.paused = tc.isPaused();
 			timerStatus.running = tc.isRunning();
