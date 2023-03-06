@@ -110,7 +110,7 @@
 
 				timerStatus.update();
 				// jump timer upward
-				elements.bumpCountdown("up");
+				elements.bumpCountdown("up", { removeOtherAnimations: true });
 			},
 			subtract(ms: number) {
 				// in case used the wrong function
@@ -205,6 +205,9 @@
 	};
 
 	type Maybe<T> = T | undefined;
+	type BumpAnimationOptions = {
+		removeOtherAnimations: boolean;
+	};
 	const elements = {
 		timerBox: undefined as Maybe<HTMLElement>,
 		countdown: undefined as Maybe<HTMLElement>,
@@ -218,8 +221,28 @@
 				elements.input.blur();
 			}
 		},
-		bumpCountdown(direction: "up" | "down") {
+		async bumpCountdown(
+			direction: "up" | "down",
+			options: BumpAnimationOptions = {
+				removeOtherAnimations: false,
+			},
+		) {
 			if (!elements.countdown) return;
+
+			// if time is added after the timer has finished,
+			// the move-down animation is triggered again
+			// due to the finish-flash animation being removed
+			// and the move-down animation then taking over
+			if (options.removeOtherAnimations) {
+				// start the move-down animation
+				await tick();
+				// remove it
+				elements.countdown
+					.getAnimations()
+					.forEach((animation) => animation.cancel());
+			}
+
+			// play the bump animation
 			const bumpDistance =
 				$settings.countdownBumpAmount * (direction === "up" ? -1 : 1);
 			elements.countdown.animate(
@@ -432,7 +455,12 @@
 			);
 		}
 
-		&[data-finished="true"] .countdown {
+		&:fullscreen {
+			border-radius: 0;
+		}
+
+		// extra selectors to have precedence
+		&[data-started="true"][data-finished="true"] .countdown {
 			animation: finish-flash 420ms steps(1, end) forwards;
 		}
 
@@ -444,8 +472,37 @@
 			color: var(--c-error);
 		}
 
-		&:fullscreen {
-			border-radius: 0;
+		// transitions to move the countdown up when there
+		// is no text above it
+		&[data-started="false"] .countdown {
+			animation: move-up var(--t-transition) ease forwards;
+		}
+		&[data-invalid-input="true"] .countdown {
+			animation: move-down var(--t-transition) ease;
+		}
+		&[data-started="true"] .countdown {
+			animation: move-down var(--t-transition) ease;
+		}
+	}
+
+	// needs to be separate animations so that the input
+	// moves down if there is an error (animation-name must change
+	// to reset the animation)
+	@keyframes move-up {
+		from {
+			transform: translateY(0);
+		}
+		to {
+			transform: translateY(-10cqh);
+		}
+	}
+
+	@keyframes move-down {
+		from {
+			transform: translateY(-10cqh);
+		}
+		to {
+			transform: translateY(0);
 		}
 	}
 
