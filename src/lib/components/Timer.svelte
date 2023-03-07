@@ -142,7 +142,7 @@
 
 	const timerDisplay = {
 		timeArray: [] as [TimeAbbreviations, string][],
-		_updateInterval: undefined as Maybe<ReturnType<typeof setInterval>>,
+		_updateInterval: undefined as Maybe<NodeJS.Timer>,
 		update() {
 			// countdown
 			const timeRemaining = tc.getTimeRemaining();
@@ -190,7 +190,7 @@
 		// when the timer starts counting down, stop refreshing the end time
 		// when time is paused, refresh end times
 		endTime: "",
-		_endTimeUpdateInterval: undefined as Maybe<ReturnType<typeof setInterval>>,
+		_endTimeUpdateInterval: undefined as Maybe<NodeJS.Timer>,
 		updateEndTime() {
 			timerDisplay.endTime = formatRelativeTime(tc.getTimeRemaining());
 		},
@@ -424,6 +424,13 @@
 </div>
 
 <style lang="scss">
+	///
+	/// `.c-timer-box` contains all the statuses.
+	///
+	/// Styles to fill the slot given by TimerList
+	/// and providing context for other elements
+	/// (positioning and container queries).
+	///
 	.c-timer-box {
 		display: flex;
 		position: relative;
@@ -432,10 +439,14 @@
 		border-radius: var(--l-timer-box__border-radius);
 
 		overflow: hidden;
-
-		// backdrop blur and font size scale according to container size
 		container-type: size;
 
+		///
+		/// Other box styles:
+		/// - add padding if using background style progress bar
+		/// - remove border radius if fullscreen so it fills up
+		///   the whole viewport
+		///
 		&[data-settings-progress-bar-type="background"] {
 			padding: calc(
 				var(--l-progress-bar--bg__padding) +
@@ -448,9 +459,20 @@
 		}
 	}
 
+	///
+	/// The lighter grey box that contains all the elements
+	/// on the timer. Does not contain the progress bar.
+	///
+	/// Custom properties are defined here to be able to
+	/// use the container query lengths.
+	///
 	.c-timer-front {
 		--s-status-font-size: clamp(var(--l-font-size--small), 0.3rem + 3cqh, 1rem);
+		--s-countdown-font-size: clamp(1.5rem, calc(10cqmin + 0.5rem), 4rem);
 		--s-flex-gap: max(0.25rem, 3cqh);
+		--s-hsl-front: var(--p-hsl-timer-front__bgc);
+		--s-a-front: var(--p-a-timer-front__bgc);
+		--s-button-height: clamp(1.25rem, 5cqh + 1rem, 2rem);
 
 		flex-grow: 1;
 
@@ -462,68 +484,70 @@
 
 		position: relative;
 
-		background-color: hsla(
-			var(--p-hsl-timer-front__bgc) / var(--p-a-timer-front__bgc)
-		);
+		background-color: hsla(var(--s-hsl-front) / var(--s-a-front));
 		color: var(--c-secondary-container-on);
 
 		border-radius: var(--l-timer-box__border-radius);
 
-		// fallback
-		backdrop-filter: blur(1rem);
 		backdrop-filter: blur(min(1.5cqw, 1rem));
 
 		// don't transition the backdrop filter
 		// makes weird artifacts
-		transition-property: background-color;
-		transition-duration: var(--t-transition);
-		transition-timing-function: ease-in-out;
+		transition: background-color var(--t-transition) ease-in-out;
 
 		&:is(:hover, :focus-within) {
 			background-color: hsla(
-				var(--p-hsl-timer-front__bgc) / calc(var(--p-a-timer-front__bgc) * 1.02)
+				var(--s-hsl-front) / calc(var(--s-a-front) * 1.02)
 			);
-
-			backdrop-filter: blur(1.25rem);
 			backdrop-filter: blur(min(2cqw, 1.25rem));
 		}
 	}
 
+	///
+	/// Part above the timer countdown. Used to show
+	/// the end time and any input errors.
+	///
 	.extra-status {
+		--s-block-height: calc(var(--s-status-font-size) * var(--line-height));
+
+		// 0px so that the countdown and controls are
+		// centered when there is no error or not started
 		height: 0px;
-		transition: height var(--t-transition);
-		overflow: hidden;
 
 		color: var(--c-timer--countdown__finish-color);
 		font-size: var(--s-status-font-size);
 		text-align: center;
-	}
-	// status changes
-	.c-timer-box {
-		&[data-started="true"] .extra-status {
-			height: calc(var(--s-status-font-size) * 1.5);
-		}
 
-		&[data-invalid-input="true"] .extra-status {
-			height: calc(var(--s-status-font-size) * 1.5);
-			color: var(--c-error);
-		}
+		transition: height var(--t-transition);
+
+		// make the text slide out when appearing instead
+		// of appearing then moving
+		overflow: hidden;
 	}
 
+	[data-started="true"] .extra-status {
+		height: var(--s-block-height);
+	}
+
+	[data-invalid-input="true"] .extra-status {
+		height: var(--s-block-height);
+		color: var(--c-error);
+	}
+
+	///
+	/// Main timer. Contains the input as well as the countdown.
+	///
 	.countdown {
-		font-size: 1.5rem;
-		font-size: clamp(1.5rem, calc(10cqmin + 0.5rem), 4rem);
+		font-size: var(--s-countdown-font-size);
 		font-weight: 700;
 		text-align: center;
 		// fixed width numbers
 		font-variant-numeric: lining-nums tabular-nums;
 
+		// for pause/unpause. doesn't affect the finish-flash animation
 		transition: color var(--t-transition);
 
 		input {
-			background-color: transparent;
-
-			border: none;
 			border-radius: 0.5rem;
 			width: max(5rem, 70%);
 
@@ -536,17 +560,21 @@
 			}
 		}
 	}
-	// status changes
-	.c-timer-box {
-		// extra selectors to have precedence
-		&[data-started="true"][data-finished="true"] .countdown {
-			animation: finish-flash 420ms steps(1, end) forwards;
-		}
 
-		&[data-paused="true"] .countdown {
-			color: var(--c-text--faded);
-		}
+	[data-paused="true"] .countdown {
+		color: var(--c-text--faded);
 	}
+
+	///
+	/// finish-flash animation
+	/// flash red without transition/fade
+	///
+	[data-finished="true"] .countdown {
+		animation: finish-flash 420ms steps(1, end) forwards;
+	}
+
+	// currently at 3 flashes
+	// add more with more percentages
 	@keyframes finish-flash {
 		0%,
 		50%,
@@ -560,16 +588,27 @@
 		}
 	}
 
+	///
+	/// Buttons below the timer countdown.
+	/// Split into left/right when the timer has started,
+	/// otherwise it is just one middle part.
+	///
 	.controls {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: 1fr 1fr;
 		gap: 3rem;
 
+		// add padding equal to the one created by the line height
+		// from the extra status
+		padding-block: calc(
+			(var(--s-status-font-size) * (var(--line-height) - 1)) / 2
+		);
+
 		:global(button) {
-			--s-size: clamp(1.25rem, 5cqh + 1rem, 2rem);
+			--s-size: var(--s-button-height);
 		}
 
-		> [class^="control"] {
+		> * {
 			display: flex;
 			align-items: center;
 			gap: 0.5rem;
@@ -585,6 +624,9 @@
 		}
 	}
 
+	///
+	/// Remove timer button.
+	///
 	:global(button.remove-timer.m-light) {
 		position: absolute;
 		top: 0rem;

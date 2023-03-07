@@ -1,3 +1,6 @@
+///
+/// Global variables.
+///
 :root {
 	//#region basic settings
 
@@ -123,6 +126,7 @@
 			hsl(165, 84%, 75%),
 			transparent
 		);
+	--line-height: 1.5;
 	--l-scrollbar__width: 0px;
 	--l-navbar__width: 3rem;
 	--navbar__background: rgba(0, 0, 0, 0.719);
@@ -148,14 +152,13 @@
 	//#endregion
 }
 
-// variables
 :root {
 	box-sizing: border-box;
 
 	background-color: var(--c-bg);
 	color: var(--c-text);
 
-	line-height: 1.5;
+	line-height: var(--line-height);
 
 	// font things
 	font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
@@ -184,11 +187,14 @@
 }
 
 body {
-	height: 100vh;
+	height: 100dvh;
 	overflow: hidden;
 	background: var(--background);
 }
 
+///
+/// Scrollbar related.
+///
 ::-webkit-scrollbar {
 	width: var(--l-scrollbar__width);
 	height: var(--l-scrollbar__width);
@@ -207,12 +213,18 @@ body {
 	background-color: transparent;
 }
 
+///
+/// Make button and input inherit most properties.
+///
 button,
 input {
-	outline: transparent;
-	// transition: outline-width var(--t-transition);
-	font: inherit;
+	background-color: transparent;
 	color: inherit;
+
+	border: none;
+	outline: transparent;
+
+	font: inherit;
 	line-height: inherit;
 
 	&:focus-visible {
@@ -221,7 +233,6 @@ input {
 }
 
 button {
-	border: none;
 	cursor: pointer;
 
 	&:focus-visible {
