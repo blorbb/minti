@@ -34,7 +34,7 @@
 	--c-secondary: #bfcbad;
 	--c-secondary-on: #2a331f;
 	--c-secondary-container: #404a34;
-	--c-seconary-container-on: #dbe7c8;
+	--c-secondary-container-on: #dbe7c8;
 
 	--c-tertiary: #a0cfcc;
 	--c-tertiary-on: #003735;
@@ -207,29 +207,24 @@ body {
 	background-color: transparent;
 }
 
-button {
-	border: none;
-	cursor: pointer;
-}
-
-input {
-	font: inherit;
-	color: inherit;
-	line-height: inherit;
-}
-
-// set outlines
-button:focus-visible,
-input:focus-visible {
-	outline: var(--c-outline) 2px solid;
-}
-
-button:focus-visible {
-	outline-offset: 0.25rem;
-}
-
 button,
 input {
 	outline: transparent;
 	// transition: outline-width var(--t-transition);
+	font: inherit;
+	color: inherit;
+	line-height: inherit;
+
+	&:focus-visible {
+		outline: var(--c-outline) 2px solid;
+	}
+}
+
+button {
+	border: none;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline-offset: 0.25em;
+	}
 }

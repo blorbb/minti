@@ -117,7 +117,7 @@
 
 				timerStatus.update();
 				// jump timer upward
-				elements.bumpCountdown("up", { removeOtherAnimations: true });
+				elements.bumpCountdown("up");
 			},
 			subtract(ms: number) {
 				// in case used the wrong function
@@ -212,9 +212,6 @@
 	};
 
 	type Maybe<T> = T | undefined;
-	type BumpAnimationOptions = {
-		removeOtherAnimations: boolean;
-	};
 	const elements = {
 		timerBox: undefined as Maybe<HTMLElement>,
 		countdown: undefined as Maybe<HTMLElement>,
@@ -228,26 +225,8 @@
 				elements.input.blur();
 			}
 		},
-		async bumpCountdown(
-			direction: "up" | "down",
-			options: BumpAnimationOptions = {
-				removeOtherAnimations: false,
-			},
-		) {
+		async bumpCountdown(direction: "up" | "down") {
 			if (!elements.countdown) return;
-
-			// if time is added after the timer has finished,
-			// the move-down animation is triggered again
-			// due to the finish-flash animation being removed
-			// and the move-down animation then taking over
-			if (options.removeOtherAnimations) {
-				// start the move-down animation
-				await tick();
-				// remove it
-				elements.countdown
-					.getAnimations()
-					.forEach((animation) => animation.cancel());
-			}
 
 			// play the bump animation
 			const bumpDistance =
@@ -467,75 +446,19 @@
 		&:fullscreen {
 			border-radius: 0;
 		}
-
-		// extra selectors to have precedence
-		&[data-started="true"][data-finished="true"] .countdown {
-			animation: finish-flash 420ms steps(1, end) forwards;
-		}
-
-		&[data-paused="true"] .countdown {
-			color: var(--c-text--faded);
-		}
-
-		&[data-invalid-input="true"] .extra-status {
-			color: var(--c-error);
-		}
-
-		// transitions to move the countdown up when there
-		// is no text above it
-		&[data-started="false"] .countdown {
-			animation: move-up var(--t-transition) ease forwards;
-		}
-		&[data-invalid-input="true"] .countdown {
-			animation: move-down var(--t-transition) ease;
-		}
-		&[data-started="true"] .countdown {
-			animation: move-down var(--t-transition) ease;
-		}
-	}
-
-	// needs to be separate animations so that the input
-	// moves down if there is an error (animation-name must change
-	// to reset the animation)
-	@keyframes move-up {
-		from {
-			transform: translateY(0);
-		}
-		to {
-			transform: translateY(-10cqh);
-		}
-	}
-
-	@keyframes move-down {
-		from {
-			transform: translateY(-10cqh);
-		}
-		to {
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes finish-flash {
-		0%,
-		50%,
-		100% {
-			color: var(--c-timer--countdown__finish-color);
-		}
-
-		25%,
-		75% {
-			color: var(--c-text);
-		}
 	}
 
 	.c-timer-front {
+		--s-status-font-size: clamp(var(--l-font-size--small), 0.3rem + 3cqh, 1rem);
+		--s-flex-gap: max(0.25rem, 3cqh);
+
 		flex-grow: 1;
 
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: max(0.25rem, 3cqh);
+		gap: var(--s-flex-gap);
 
 		position: relative;
 
@@ -567,9 +490,24 @@
 	}
 
 	.extra-status {
+		height: 0px;
+		transition: height var(--t-transition);
+		overflow: hidden;
+
 		color: var(--c-timer--countdown__finish-color);
-		font-size: var(--l-font-size--small);
+		font-size: var(--s-status-font-size);
 		text-align: center;
+	}
+	// status changes
+	.c-timer-box {
+		&[data-started="true"] .extra-status {
+			height: calc(var(--s-status-font-size) * 1.5);
+		}
+
+		&[data-invalid-input="true"] .extra-status {
+			height: calc(var(--s-status-font-size) * 1.5);
+			color: var(--c-error);
+		}
 	}
 
 	.countdown {
@@ -579,6 +517,8 @@
 		text-align: center;
 		// fixed width numbers
 		font-variant-numeric: lining-nums tabular-nums;
+
+		transition: color var(--t-transition);
 
 		input {
 			background-color: transparent;
@@ -596,6 +536,29 @@
 			}
 		}
 	}
+	// status changes
+	.c-timer-box {
+		// extra selectors to have precedence
+		&[data-started="true"][data-finished="true"] .countdown {
+			animation: finish-flash 420ms steps(1, end) forwards;
+		}
+
+		&[data-paused="true"] .countdown {
+			color: var(--c-text--faded);
+		}
+	}
+	@keyframes finish-flash {
+		0%,
+		50%,
+		100% {
+			color: var(--c-timer--countdown__finish-color);
+		}
+
+		25%,
+		75% {
+			color: var(--c-text);
+		}
+	}
 
 	.controls {
 		display: grid;
@@ -603,7 +566,7 @@
 		gap: 3rem;
 
 		:global(button) {
-			--s-size: clamp(1.5rem, 5cqh + 1rem, 2rem);
+			--s-size: clamp(1.25rem, 5cqh + 1rem, 2rem);
 		}
 
 		> [class^="control"] {

@@ -33,7 +33,6 @@
 	.m-light {
 		--s-size: 2rem;
 		background-color: transparent;
-		color: var(--c-text);
 
 		width: var(--s-size);
 		height: var(--s-size);

@@ -40,7 +40,8 @@
 		font-size: calc(var(--s-size) / 2);
 
 		filter: var(--shadow-2--drop);
-		transition: filter var(--t-transition);
+		transition-property: filter, transform;
+		transition-duration: var(--t-transition);
 
 		&:is(:hover, :focus-visible) {
 			filter: var(--shadow-3--drop);
@@ -48,6 +49,7 @@
 
 		&:active {
 			filter: none;
+			transform: scale(0.9);
 		}
 	}
 </style>
