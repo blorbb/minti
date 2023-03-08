@@ -65,6 +65,7 @@
 
 				userInput.error.message = err.message;
 				userInput.error.invalid = true;
+				elements.shakeInput();
 				return;
 			}
 
@@ -225,13 +226,11 @@
 				elements.input.blur();
 			}
 		},
-		async bumpCountdown(direction: "up" | "down") {
-			if (!elements.countdown) return;
-
+		bumpCountdown(direction: "up" | "down") {
 			// play the bump animation
 			const bumpDistance =
 				$settings.countdownBumpAmount * (direction === "up" ? -1 : 1);
-			elements.countdown.animate(
+			elements.countdown?.animate(
 				[
 					{ transform: "translateY(0px)" },
 					{ transform: `translateY(${bumpDistance}em)` },
@@ -241,6 +240,19 @@
 					duration: 100,
 					easing: "ease-out",
 				},
+			);
+		},
+		shakeInput() {
+			const shakeDistance = "0.25rem";
+			elements.input?.animate(
+				[
+					{ transform: "translateX(0)" },
+					{ transform: `translateX(${shakeDistance})` },
+					{ transform: `translateX(-${shakeDistance})` },
+					{ transform: `translateX(${shakeDistance})` },
+					{ transform: "translateX(0)" },
+				],
+				{ duration: 200, easing: "ease-out" },
 			);
 		},
 	};
