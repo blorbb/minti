@@ -21,7 +21,7 @@
 	--p-hsl-text: 60 20% 90%;
 	--c-text: hsla(var(--p-hsl-text) / 0.88);
 	--c-text--faded: hsla(var(--p-hsl-text) / 0.5);
-	--c-text--invert: hsla(240, 22%, 10%, 0.95);
+	--c-text--invert: hsla(240 22% 10% / 0.95);
 
 	--l-font-size--small: 0.8rem;
 
@@ -129,7 +129,7 @@
 	--line-height: 1.5;
 	--l-scrollbar__width: 0px;
 	--l-navbar__width: 3rem;
-	--navbar__background: rgba(0, 0, 0, 0.719);
+	--navbar__background: rgba(0 0 0 / 0.719);
 
 	// timer
 	// how far apart different timers are
@@ -138,7 +138,7 @@
 	// color
 	--p-hsl-timer-front__bgc: 0 0% 23%;
 	--p-a-timer-front__bgc: 0.93;
-	--c-timer--countdown__finish-color: hsl(9 81% 58%);
+	--c-timer--countdown__finish-color: hsl(9 95% 61%);
 
 	// progress bar
 	--c-progress-bar--value__color: var(--c-tertiary);
