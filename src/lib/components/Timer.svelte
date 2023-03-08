@@ -305,12 +305,14 @@
 		duration: getCSSProp("--t-transition", "time") ?? 100,
 	}}
 >
-	<Progress
-		duration={timerStatus.duration}
-		paused={timerStatus.paused}
-		finished={timerStatus.finished}
-		started={timerStatus.started}
-	/>
+	{#if $settings.progressBarType === "background"}
+		<Progress
+			duration={timerStatus.duration}
+			paused={timerStatus.paused}
+			finished={timerStatus.finished}
+			started={timerStatus.started}
+		/>
+	{/if}
 	<div class="c-timer-front">
 		<div class="extra-status">
 			{#if !timerStatus.started && userInput.error.invalid}
@@ -337,6 +339,14 @@
 				<Countdown times={timerDisplay.timeArray} />
 			{/if}
 		</div>
+		{#if $settings.progressBarType === "line"}
+			<Progress
+				duration={timerStatus.duration}
+				paused={timerStatus.paused}
+				finished={timerStatus.finished}
+				started={timerStatus.started}
+			/>
+		{/if}
 		<div class="controls">
 			{#if !timerStatus.started}
 				<div class="control-middle">

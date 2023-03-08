@@ -21,13 +21,12 @@
 
 <style lang="scss">
 	.c-progress-bar {
-		position: absolute;
-
 		background-color: var(--c-container);
 
 		border-radius: inherit;
 
 		&[data-type="background"] {
+			position: absolute;
 			inset: 0;
 			// to round the corners but not the progress value in the middle
 			overflow: hidden;
@@ -40,13 +39,10 @@
 		}
 
 		&[data-type="line"] {
-			top: 51%;
-			left: 2rem;
-			right: 2rem;
+			position: relative;
+			width: calc(100% - 4rem);
 
 			height: 2px;
-
-			z-index: 1;
 
 			.progress-value {
 				// ! don't use `inset` as the `right` value
