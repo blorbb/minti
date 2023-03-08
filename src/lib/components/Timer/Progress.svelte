@@ -23,8 +23,6 @@
 	.c-progress-bar {
 		background-color: var(--c-container);
 
-		border-radius: inherit;
-
 		&[data-type="background"] {
 			position: absolute;
 			inset: 0;
@@ -43,6 +41,7 @@
 			width: calc(100% - 4rem);
 
 			height: 2px;
+			border-radius: 1rem;
 
 			.progress-value {
 				// ! don't use `inset` as the `right` value

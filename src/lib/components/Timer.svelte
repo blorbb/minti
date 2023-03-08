@@ -19,6 +19,7 @@
 
 	import { onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
+	import FullscreenButton from "./Timer/FullscreenButton.svelte";
 
 	export let tc: TimerController;
 
@@ -268,27 +269,9 @@
 		},
 	};
 
-	const fullscreen = {
-		// if timerBoxElem is undefined, isFullscreen === false
-		isFullscreen: document.fullscreenElement === elements.timerBox,
-		enable() {
-			if (!elements.timerBox || !document.fullscreenEnabled) return;
-			elements.timerBox.requestFullscreen();
-		},
-		disable() {
-			document.exitFullscreen();
-		},
-		updateStatus() {
-			fullscreen.isFullscreen =
-				document.fullscreenElement === elements.timerBox;
-		},
-	};
-
-	document.addEventListener("fullscreenchange", fullscreen.updateStatus);
 	onDestroy(() => {
 		timerDisplay.stopInterval();
 		timerDisplay.stopEndTimeInterval();
-		document.removeEventListener("fullscreenchange", fullscreen.updateStatus);
 	});
 </script>
 
@@ -350,19 +333,7 @@
 		<div class="controls">
 			{#if !timerStatus.started}
 				<div class="control-middle">
-					{#if fullscreen.isFullscreen}
-						<LightButton
-							icon="ph:corners-in"
-							on:click={fullscreen.disable}
-							tooltipContent="Exit Fullscreen"
-						/>
-					{:else}
-						<LightButton
-							icon="ph:corners-out"
-							on:click={fullscreen.enable}
-							tooltipContent="Fullscreen"
-						/>
-					{/if}
+					<FullscreenButton targetElement={elements.timerBox} />
 					<PrimaryButton
 						class="start"
 						icon="ph:play-bold"
@@ -372,20 +343,8 @@
 				</div>
 			{:else}
 				<div class="control-left">
+					<FullscreenButton targetElement={elements.timerBox} />
 					{#if !timerStatus.finished}
-						{#if fullscreen.isFullscreen}
-							<LightButton
-								icon="ph:corners-in"
-								on:click={fullscreen.disable}
-								tooltipContent="Exit Fullscreen"
-							/>
-						{:else}
-							<LightButton
-								icon="ph:corners-out"
-								on:click={fullscreen.enable}
-								tooltipContent="Fullscreen"
-							/>
-						{/if}
 						<LightButton
 							icon="ph:plus"
 							on:click={() => timerTime.duration.add(constants.MS_IN_MIN)}
@@ -509,7 +468,7 @@
 		background-color: hsla(var(--s-hsl-front) / var(--s-a-front));
 		color: var(--c-secondary-container-on);
 
-		border-radius: var(--l-timer-box__border-radius);
+		border-radius: inherit;
 
 		backdrop-filter: blur(min(1.5cqw, 1rem));
 
@@ -654,7 +613,10 @@
 		top: 0rem;
 		right: 0rem;
 
-		border-radius: 0 0.5rem;
+		// don't round corner if fullscreen
+		border-radius: 0;
+		border-top-right-radius: inherit;
+		border-bottom-left-radius: var(--l-timer-box__border-radius);
 
 		transition-property: background-color, color;
 		transition-duration: var(--t-transition);
