@@ -304,7 +304,6 @@
 				<iconify-icon inline icon="ph:timer" />
 				{timerDisplay.endTime}
 			{/if}
-			&ZeroWidthSpace; <!-- keep the box -->
 		</div>
 		<div class="countdown" bind:this={elements.countdown}>
 			{#if !timerStatus.started}
