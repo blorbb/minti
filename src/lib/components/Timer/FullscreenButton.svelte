@@ -4,6 +4,8 @@
 
 	let isFullscreen = false;
 	export let targetElement: HTMLElement;
+	let className = "";
+	export { className as class };
 
 	function enableFullscreen() {
 		if (!document.fullscreenEnabled) return;
@@ -25,12 +27,14 @@
 
 {#if isFullscreen}
 	<LightButton
+		class={className}
 		icon="ph:corners-in"
 		on:click={disableFullscreen}
 		tooltipContent="Exit Fullscreen"
 	/>
 {:else}
 	<LightButton
+		class={className}
 		icon="ph:corners-out"
 		on:click={enableFullscreen}
 		tooltipContent="Fullscreen"

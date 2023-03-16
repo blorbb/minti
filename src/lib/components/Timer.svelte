@@ -329,7 +329,6 @@
 		<div class="controls">
 			{#if !timerStatus.started}
 				<div class="control-middle">
-					<FullscreenButton targetElement={elements.timerBox} />
 					<PrimaryButton
 						class="start"
 						icon="ph:play-bold"
@@ -339,7 +338,6 @@
 				</div>
 			{:else}
 				<div class="control-left">
-					<FullscreenButton targetElement={elements.timerBox} />
 					{#if !timerStatus.finished}
 						<DurationUpdater
 							type="add"
@@ -390,8 +388,12 @@
 				</div>
 			{/if}
 		</div>
+		<FullscreenButton
+			class="corner-button fullscreen"
+			targetElement={elements.timerBox}
+		/>
 		<LightButton
-			class="remove-timer"
+			class="corner-button remove-timer"
 			icon="ph:x"
 			on:click={() => {
 				timerControllerList.removeTimer(tc);
@@ -605,23 +607,41 @@
 	///
 	/// Remove timer button.
 	///
-	:global(button.remove-timer.m-light) {
-		position: absolute;
-		top: 0rem;
-		right: 0rem;
+	:global {
+		button.corner-button {
+			--s-border-radius: var(--l-timer-box__border-radius);
 
-		// don't round corner if fullscreen
-		border-radius: 0;
-		border-top-right-radius: inherit;
-		border-bottom-left-radius: var(--l-timer-box__border-radius);
+			// inset to be set depending on button
+			position: absolute;
 
-		transition-property: background-color, color;
-		transition-duration: var(--t-transition);
+			// remove default rounding from .m-light
+			border-radius: 0;
 
-		&:active {
-			background-color: var(--c-error);
-			color: var(--c-error-on);
-			transition: none;
+			transition-property: background-color, color;
+			transition-duration: var(--t-transition);
+
+			&.remove-timer {
+				top: 0rem;
+				right: 0rem;
+
+				// don't round corner if fullscreen
+				border-top-right-radius: inherit;
+				border-bottom-left-radius: var(--s-border-radius);
+
+				&:active {
+					background-color: var(--c-error);
+					color: var(--c-error-on);
+					transition: none;
+				}
+			}
+
+			&.fullscreen {
+				bottom: 0rem;
+				right: 0rem;
+
+				border-top-left-radius: var(--s-border-radius);
+				border-bottom-right-radius: inherit;
+			}
 		}
 	}
 </style>
