@@ -26,30 +26,3 @@
 >
 	<iconify-icon inline {icon} />
 </button>
-
-<style lang="scss">
-	.m-primary {
-		--s-size: 2rem;
-		background-color: var(--c-primary);
-		color: var(--c-primary-on);
-
-		height: var(--s-size);
-		aspect-ratio: 5 / 2;
-		border-radius: 5rem;
-
-		font-size: calc(var(--s-size) / 2);
-
-		filter: var(--shadow-2--drop);
-		transition-property: filter, transform;
-		transition-duration: var(--t-transition);
-
-		&:is(:hover, :focus-visible) {
-			filter: var(--shadow-3--drop);
-		}
-
-		&:active {
-			filter: none;
-			transform: scale(0.9);
-		}
-	}
-</style>
