@@ -3,23 +3,20 @@
 	import LightButton from "$lib/components/Timer/LightButton.svelte";
 	import PrimaryButton from "$lib/components/Timer/PrimaryButton.svelte";
 	import Progress from "$lib/components/Timer/Progress.svelte";
+	import DurationUpdater from "./Timer/DurationUpdater.svelte";
+	import FullscreenButton from "./Timer/FullscreenButton.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
 	import { formatRelativeTime } from "$lib/utils/date";
 	import { resetAnimation } from "$lib/utils/misc";
 	import { settings, timerControllerList } from "$lib/utils/stores";
 	import type { TimerController } from "$lib/utils/timer_controller";
-	import {
-		constants,
-		order,
-		type TimeAbbreviations,
-	} from "$lib/utils/timer_utils";
+	import { order, type TimeAbbreviations } from "$lib/utils/timer_utils";
 	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { ParseError, parseInput } from "$lib/utils/time_parser";
 
 	import { onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
-	import FullscreenButton from "./Timer/FullscreenButton.svelte";
 
 	export let tc: TimerController;
 
@@ -344,21 +341,22 @@
 				<div class="control-left">
 					<FullscreenButton targetElement={elements.timerBox} />
 					{#if !timerStatus.finished}
-						<LightButton
-							icon="ph:plus"
-							on:click={() => timerTime.duration.add(constants.MS_IN_MIN)}
-							tooltipContent="Add 1m"
+						<DurationUpdater
+							type="add"
+							on:submitupdate={(event) =>
+								timerTime.duration.add(event.detail.duration)}
 						/>
-						<LightButton
-							icon="ph:minus"
-							on:click={() => timerTime.duration.subtract(constants.MS_IN_MIN)}
-							tooltipContent="Subtract 1m"
+						<DurationUpdater
+							type="subtract"
+							on:submitupdate={(event) =>
+								timerTime.duration.subtract(event.detail.duration)}
 						/>
 					{:else}
-						<PrimaryButton
-							icon="ph:plus"
-							on:click={() => timerTime.duration.add(constants.MS_IN_MIN)}
-							tooltipContent="Add 1m"
+						<DurationUpdater
+							type="add"
+							style="primary"
+							on:submitupdate={(event) =>
+								timerTime.duration.add(event.detail.duration)}
 						/>
 					{/if}
 				</div>
@@ -585,7 +583,7 @@
 		);
 
 		:global(button) {
-			--s-size: var(--s-button-height);
+			--s-height: var(--s-button-height);
 		}
 
 		> * {
