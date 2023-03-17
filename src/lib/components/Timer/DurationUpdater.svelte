@@ -49,7 +49,15 @@
 	onDestroy(() => {
 		tippyInstance.destroy();
 	});
+
+	function handleMenuKeydown(event: KeyboardEvent) {
+		if (event.key === "Escape") {
+			tippyInstance.hide();
+		}
+	}
 </script>
+
+<svelte:window on:keydown={handleMenuKeydown} />
 
 <button
 	class={`duration-modifier m-${style}`}
