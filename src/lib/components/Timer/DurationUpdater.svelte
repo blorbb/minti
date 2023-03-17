@@ -51,76 +51,74 @@
 	});
 </script>
 
-<div class="modifier-wrapper">
+<button
+	class={`duration-modifier m-${style}`}
+	bind:this={buttonElem}
+	on:contextmenu|preventDefault
+	on:click={dispatchUpdateAmount}
+>
+	<iconify-icon inline icon={iconName} />
+	<span class="amount">
+		{selectedDuration.display}
+	</span>
+</button>
+<div class="duration-menu">
 	<button
-		class={`duration-modifier m-${style}`}
-		bind:this={buttonElem}
-		on:contextmenu|preventDefault
-		on:click={dispatchUpdateAmount}
+		class="wk-1"
+		data-time={convert.daysToMs(7)}
+		on:click={setUpdateAmount}
 	>
-		<iconify-icon inline icon={iconName} />
-		<span class="amount">
-			{selectedDuration.display}
-		</span>
+		1w
 	</button>
-	<div class="duration-menu">
-		<button
-			class="wk-1"
-			data-time={convert.daysToMs(7)}
-			on:click={setUpdateAmount}
-		>
-			1w
-		</button>
-		<button
-			class="day-1"
-			data-time={convert.daysToMs(1)}
-			on:click={setUpdateAmount}
-		>
-			1d
-		</button>
-		<button
-			class="hr-1"
-			data-time={convert.hoursToMs(1)}
-			on:click={setUpdateAmount}
-		>
-			1h
-		</button>
-		<button
-			class="min-30"
-			data-time={convert.minsToMs(30)}
-			on:click={setUpdateAmount}
-		>
-			30m
-		</button>
-		<button
-			class="min-10"
-			data-time={convert.minsToMs(10)}
-			on:click={setUpdateAmount}
-		>
-			10m
-		</button>
-		<button
-			class="min-1"
-			data-time={convert.minsToMs(1)}
-			on:click={setUpdateAmount}
-		>
-			1m
-		</button>
-		<button
-			class="sec-30"
-			data-time={convert.secsToMs(30)}
-			on:click={setUpdateAmount}
-		>
-			30s
-		</button>
-		<button
-			class="sec-10"
-			data-time={convert.secsToMs(10)}
-			on:click={setUpdateAmount}
-		>
-			10s
-		</button>
-	</div>
+	<button
+		class="day-1"
+		data-time={convert.daysToMs(1)}
+		on:click={setUpdateAmount}
+	>
+		1d
+	</button>
+	<button
+		class="hr-1"
+		data-time={convert.hoursToMs(1)}
+		on:click={setUpdateAmount}
+	>
+		1h
+	</button>
+	<button
+		class="min-30"
+		data-time={convert.minsToMs(30)}
+		on:click={setUpdateAmount}
+	>
+		30m
+	</button>
+	<button
+		class="min-10"
+		data-time={convert.minsToMs(10)}
+		on:click={setUpdateAmount}
+	>
+		10m
+	</button>
+	<button
+		class="min-1"
+		data-time={convert.minsToMs(1)}
+		on:click={setUpdateAmount}
+	>
+		1m
+	</button>
+	<button
+		class="sec-30"
+		data-time={convert.secsToMs(30)}
+		on:click={setUpdateAmount}
+	>
+		30s
+	</button>
+	<button
+		class="sec-10"
+		data-time={convert.secsToMs(10)}
+		on:click={setUpdateAmount}
+	>
+		10s
+	</button>
 </div>
 
 <style lang="scss">
