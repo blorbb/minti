@@ -41,3 +41,39 @@ export function resetAnimation(elem: HTMLElement) {
 	void elem.offsetWidth;
 	elem.style.animationName = prevAnimName;
 }
+
+/**
+ * Gets the modulus of a number.
+ *
+ * Different to the `%` operator as negative numbers are
+ * made positive or 0.
+ *
+ * e.g. `mod(-1, 8) === 7`, not -1.
+ *
+ * @param num
+ * @param mod
+ * @returns `num` modulo `mod`, always positive or 0.
+ */
+export function modulo(num: number, mod: number) {
+	return ((num % mod) + mod) % mod;
+}
+
+/**
+ * Gets the selector element closest to `target`. Intended to be used with
+ * `event.target` to more easily find the closest element.
+ * @param target Target element, usually `event.target`.
+ * @param selector The selector of the parent.
+ * @returns The closest element to `target`.
+ */
+export function closest(target: EventTarget | null, selector: string) {
+	if (target instanceof Element) {
+		return target.closest(selector);
+	} else if (target instanceof Node) {
+		const elem = target.parentElement?.closest(selector);
+		if (elem === undefined) {
+			return null;
+		}
+		return elem;
+	}
+	return null;
+}
