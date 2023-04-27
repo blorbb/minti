@@ -92,17 +92,7 @@
 			elements.input.value = userInput.previous;
 		},
 		duration: {
-			async add(ms: number) {
-				// in case used the wrong function
-				if (ms < 0) {
-					console.warn(
-						`Warning: Used a negative time (${ms}) in duration.add function. Calling duration.subtract instead. Stack trace below.`,
-					);
-					console.trace();
-					timerTime.duration.subtract(-ms);
-					return;
-				}
-
+			add(ms: number) {
 				// if already finished, reset to the ms specified
 				if (timerStatus.finished) {
 					const progressValue =
@@ -119,16 +109,6 @@
 				elements.bumpCountdown("up");
 			},
 			subtract(ms: number) {
-				// in case used the wrong function
-				if (ms < 0) {
-					console.warn(
-						`Warning: Used a negative time (${ms}) in duration.subtract function. Calling duration.add instead. Stack trace below.`,
-					);
-					console.trace();
-					timerTime.duration.add(-ms);
-					return;
-				}
-
 				// clamp so that it stops at 0 if subtracting time
 				ms = Math.min(tc.getTimeRemaining(), ms);
 				tc.addDuration(-ms);

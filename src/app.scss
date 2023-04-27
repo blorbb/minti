@@ -178,6 +178,8 @@
 *::before,
 *::after {
 	box-sizing: inherit;
+	// remove blue square when mobile device holds on an element
+	-webkit-tap-highlight-color: transparent;
 }
 
 @supports (font-variation-settings: normal) {
@@ -234,6 +236,7 @@ input {
 
 button {
 	cursor: pointer;
+	user-select: none;
 
 	&:focus-visible {
 		outline-offset: 0.25em;

@@ -63,7 +63,7 @@ export const settings = writable<Settings>({
 	timerUpdateInterval: 200,
 	autoTrimTimerDisplay: true,
 	timerUnitRange: ["s", "d"],
-	progressBarType: "line",
+	progressBarType: "background",
 	progressBarBackgroundBorder: 0,
 	buttonScaleDuration: 200,
 	countdownBumpAmount: 0.2,

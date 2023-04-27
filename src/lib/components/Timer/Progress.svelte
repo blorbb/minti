@@ -15,6 +15,7 @@
 	data-paused={paused}
 	data-finished={finished}
 	data-type={$settings.progressBarType}
+	aria-label="Time Elapsed"
 >
 	<div class="progress-value" style:animation-duration={duration + "ms"} />
 </div>
@@ -55,8 +56,15 @@
 			}
 		}
 
-		&:is([data-paused="true"], [data-finished="true"]) .progress-value {
+		&[data-paused="true"] .progress-value {
 			animation-play-state: paused;
+		}
+
+		// sometimes the duration and the amount of time elapsed is slightly
+		// off, when the user subtracts time to cause a finish.
+		// this ensures that the progress bar is always filled.
+		&[data-finished="true"] .progress-value {
+			animation-duration: 0ms !important;
 		}
 
 		// reset the animation when starting the timer
@@ -89,14 +97,11 @@
 
 	.progress-value {
 		position: absolute;
-
 		right: 100%;
 
 		background-color: var(--c-progress-bar--value__color);
 
-		animation-name: timer-progress-bar;
-		animation-timing-function: linear;
-		animation-fill-mode: forwards;
+		animation: timer-progress-bar linear forwards;
 	}
 
 	@keyframes timer-progress-bar {
