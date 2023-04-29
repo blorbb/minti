@@ -98,6 +98,8 @@
 	--shadow-3--inset: inset var(--shadow-3) inset;
 	--shadow-4--inset: inset var(--shadow-4) inset;
 	--shadow-5--inset: inset var(--shadow-5) inset;
+
+	--line-height: 1.5;
 	//#endregion
 
 	//#region component specific settings
@@ -126,7 +128,6 @@
 			hsl(165, 84%, 75%),
 			transparent
 		);
-	--line-height: 1.5;
 	--l-scrollbar__width: 0px;
 	--l-navbar__width: 3rem;
 	--navbar__background: rgba(0 0 0 / 0.719);

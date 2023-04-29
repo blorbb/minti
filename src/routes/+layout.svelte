@@ -1,21 +1,15 @@
 <script lang="ts">
-	import "tippy.js/dist/svg-arrow.css";
-	import "tippy.js/animations/scale.css";
-	import "tippy.js/dist/tippy.css";
-	import "../tippy.scss";
-	import "../app.scss";
 	import "normalize.css";
-
+	import "tippy.js/animations/scale.css";
+	import "tippy.js/dist/svg-arrow.css";
+	import "tippy.js/dist/tippy.css";
+	import "../app.scss";
+	import "../tippy.scss";
 	import "iconify-icon";
-	import NavBar from "$lib/components/NavBar.svelte";
-	import { setCSSProp } from "$lib/utils/css";
-	import { settings } from "$lib/utils/stores";
-	import { onMount } from "svelte";
 
-	setCSSProp(
-		"--l-progress-bar--bg__border-width",
-		$settings.progressBarBackgroundBorder.toString() + "px",
-	);
+	import NavBar from "$lib/components/NavBar.svelte";
+	import { createStyleSheet } from "$lib/utils/settings";
+	import { onMount } from "svelte";
 
 	// show an overflow shadow
 	// https://cushionapp.com/journal/overflow-shadows
@@ -26,6 +20,7 @@
 	let bottomEdge: HTMLDivElement;
 
 	onMount(() => {
+		// add gradient when there is stuff to scroll
 		const observer = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
@@ -46,6 +41,8 @@
 		);
 		observer.observe(topEdge);
 		observer.observe(bottomEdge);
+
+		createStyleSheet();
 	});
 </script>
 

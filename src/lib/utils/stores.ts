@@ -52,7 +52,6 @@ type Settings = {
 	autoTrimTimerDisplay: boolean;
 	timerUnitRange: UnitRange;
 	progressBarType: "line" | "background";
-	progressBarBackgroundBorder: number;
 	buttonScaleDuration: number;
 	/** distance in em to bump the countdown when changing timer duration */
 	countdownBumpAmount: number;
@@ -64,7 +63,6 @@ export const settings = writable<Settings>({
 	autoTrimTimerDisplay: true,
 	timerUnitRange: ["s", "d"],
 	progressBarType: "background",
-	progressBarBackgroundBorder: 0,
 	buttonScaleDuration: 200,
 	countdownBumpAmount: 0.2,
 	timeFormat: "12h",

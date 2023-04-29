@@ -19,9 +19,9 @@
 
 	<!-- todo: just filler for now -->
 	<div class="navbar-item">
-		<button class="timer">
+		<a href="/" class="timer">
 			<iconify-icon inline icon="ph:hourglass-high-fill" />
-		</button>
+		</a>
 	</div>
 	<div class="navbar-item">
 		<button class="stopwatch">
@@ -29,9 +29,9 @@
 		</button>
 	</div>
 	<div class="navbar-item">
-		<button class="settings">
+		<a href="/settings" class="settings">
 			<iconify-icon inline icon="ph:gear" />
-		</button>
+		</a>
 	</div>
 </nav>
 
@@ -60,6 +60,7 @@
 		}
 	}
 
+	a,
 	button {
 		--s-size: calc(var(--l-navbar__width) / 1.5);
 
@@ -73,6 +74,11 @@
 		&:is(:hover, :focus-visible) {
 			background-color: var(--c-overlay-light);
 		}
+	}
+
+	a {
+		display: grid;
+		place-items: center;
 	}
 
 	.circled {
