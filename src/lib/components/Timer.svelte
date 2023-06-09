@@ -7,47 +7,15 @@
 	import FullscreenButton from "./Timer/FullscreenButton.svelte";
 
 	import { getCSSProp } from "$lib/utils/css";
-	import { formatRelativeTime } from "$lib/utils/date";
 	import { resetAnimation } from "$lib/utils/misc";
 	import { settings, timerControllerList } from "$lib/utils/stores";
-	import type { TimerController } from "$lib/utils/timer_controller";
-	import { order, type TimeAbbreviations } from "$lib/utils/timer_utils";
-	import { formatTimeToStrings } from "$lib/utils/time_formatter";
 	import { ParseError, parseInput } from "$lib/utils/time_parser";
+	import type { TimerController } from "$lib/utils/timer_controller";
 
 	import { onDestroy, tick } from "svelte";
 	import { scale } from "svelte/transition";
 
 	export let tc: TimerController;
-
-	const timerStatus = {
-		finished: false,
-		started: false,
-		paused: false,
-		running: false,
-		duration: 0,
-		/**
-		 * Updates all the statuses and recalculates the countdown and end times.
-		 */
-		update() {
-			timerStatus.finished = tc.isFinished();
-			// unpause the timer if its finished, so that
-			// the overtime timer continues
-			if (timerStatus.finished) {
-				tc.resume();
-				timerDisplay.startInterval();
-			}
-
-			timerStatus.started = tc.isStarted();
-			timerStatus.paused = tc.isPaused();
-			timerStatus.running = tc.isRunning();
-			timerStatus.duration = tc.getTimerDuration();
-			// update whenever any status changes
-			timerDisplay.update();
-			timerDisplay.updateEndTime();
-		},
-	};
-	tc.onFinish(timerStatus.update);
 
 	const timerTime = {
 		async start() {
@@ -69,24 +37,13 @@
 
 			userInput.error.invalid = false;
 			userInput.previous = elements.input.value;
+			console.log("HERE", $status.started);
 			tc.reset(time).start();
-			timerStatus.update();
-			timerDisplay.startInterval();
 		},
-		resume() {
-			tc.resume();
-			timerStatus.update();
-			timerDisplay.startInterval();
-		},
-		pause() {
-			tc.pause();
-			timerStatus.update();
-			timerDisplay.stopInterval();
-		},
+		resume: () => tc.resume(),
+		pause: () => tc.pause(),
 		async reset() {
 			tc.reset();
-			timerStatus.update();
-			timerDisplay.stopInterval();
 			await tick();
 			if (!elements.input) return;
 			elements.input.value = userInput.previous;
@@ -94,7 +51,7 @@
 		duration: {
 			add(ms: number) {
 				// if already finished, reset to the ms specified
-				if (timerStatus.finished) {
+				if ($status.finished) {
 					const progressValue =
 						elements.timerBox?.querySelector(".progress-value");
 					if (!progressValue) return;
@@ -104,7 +61,6 @@
 					tc.addDuration(ms);
 				}
 
-				timerStatus.update();
 				// jump timer upward
 				elements.bumpCountdown("up");
 			},
@@ -112,81 +68,9 @@
 				// clamp so that it stops at 0 if subtracting time
 				ms = Math.min(tc.getTimeRemaining(), ms);
 				tc.addDuration(-ms);
-				timerStatus.update();
 				// jump timer downward
 				elements.bumpCountdown("down");
 			},
-		},
-	};
-
-	const timerDisplay = {
-		timeArray: [] as [TimeAbbreviations, string][],
-		_updateInterval: undefined as Maybe<NodeJS.Timer>,
-		update() {
-			// countdown
-			const timeRemaining = tc.getTimeRemaining();
-			const times = formatTimeToStrings(
-				timeRemaining,
-				$settings.timerUnitRange,
-				$settings.autoTrimTimerDisplay,
-			);
-
-			// don't format this as a string as there are different
-			// classes for the different parts of the time
-			let timeArray = Array.from(order.recordToMap(times)).reverse();
-
-			// check that all digits are 0
-			// if so, remove the negative 0
-			if (timeArray.every(([, timeStr]) => +timeStr == 0)) {
-				// omit the negative 0
-				let timeStr = timeArray[0][1];
-				if (timeStr[0] === "-") timeStr = timeStr.slice(1);
-
-				timeArray[0][1] = timeStr;
-			}
-
-			timerDisplay.timeArray = timeArray;
-		},
-		startInterval() {
-			if (timerDisplay._updateInterval) timerDisplay.stopInterval();
-			// status should be updated which already calls an update
-			// shouldn't need, but uncomment if needed
-			// timerDisplay.update();
-			timerDisplay._updateInterval = setInterval(
-				timerDisplay.update,
-				$settings.timerUpdateInterval,
-			);
-
-			timerDisplay.stopEndTimeInterval();
-		},
-		stopInterval() {
-			clearInterval(timerDisplay._updateInterval);
-			timerDisplay._updateInterval = undefined;
-
-			timerDisplay._startEndTimeInterval();
-		},
-		// end time
-		// when the timer starts counting down, stop refreshing the end time
-		// when time is paused, refresh end times
-		endTime: "",
-		_endTimeUpdateInterval: undefined as Maybe<NodeJS.Timer>,
-		updateEndTime() {
-			timerDisplay.endTime = formatRelativeTime(tc.getTimeRemaining());
-		},
-		_startEndTimeInterval() {
-			if (timerDisplay._endTimeUpdateInterval)
-				timerDisplay.stopEndTimeInterval();
-			// status should be updated which already calls an update
-			// shouldn't need, but uncomment if needed
-			// timerDisplay.updateEndTime();
-			timerDisplay._endTimeUpdateInterval = setInterval(
-				timerDisplay.updateEndTime,
-				2000,
-			);
-		},
-		stopEndTimeInterval() {
-			clearInterval(timerDisplay._endTimeUpdateInterval);
-			timerDisplay._endTimeUpdateInterval = undefined;
 		},
 	};
 
@@ -247,17 +131,22 @@
 	};
 
 	onDestroy(() => {
-		timerDisplay.stopInterval();
-		timerDisplay.stopEndTimeInterval();
+		tc.display.stopInterval();
+		tc.display.stopEndTimeInterval();
 	});
+
+	const status = tc.status;
+	const duration = tc.duration;
+	const timeDisplay = tc.display.timeArray;
+	const endTime = tc.display.endTime;
 </script>
 
 <div
 	class={`c-timer-box`}
-	data-paused={timerStatus.paused}
-	data-started={timerStatus.started}
-	data-finished={timerStatus.finished}
-	data-running={timerStatus.running}
+	data-paused={$status.paused}
+	data-started={$status.started}
+	data-finished={$status.finished}
+	data-running={$status.running}
 	data-settings-progress-bar-type={$settings.progressBarType}
 	data-invalid-input={userInput.error.invalid}
 	bind:this={elements.timerBox}
@@ -267,47 +156,47 @@
 >
 	{#if $settings.progressBarType === "background"}
 		<Progress
-			duration={timerStatus.duration}
-			paused={timerStatus.paused}
-			finished={timerStatus.finished}
-			started={timerStatus.started}
+			duration={$duration}
+			paused={$status.paused}
+			finished={$status.finished}
+			started={$status.started}
 		/>
 	{/if}
 	<div class="c-timer-front">
 		<div class="extra-status">
-			{#if !timerStatus.started && userInput.error.invalid}
+			{#if !$status.started && userInput.error.invalid}
 				{userInput.error.message}
-			{:else if timerStatus.started}
+			{:else if $status.started}
 				<iconify-icon inline icon="ph:timer" />
-				{timerDisplay.endTime}
+				{$endTime}
 			{/if}
 		</div>
 		<div class="countdown" bind:this={elements.countdown}>
-			{#if !timerStatus.started}
+			{#if !$status.started}
 				<input
 					type="text"
 					placeholder="Enter Time"
 					bind:this={elements.input}
-					class:finished={timerStatus.finished}
+					class:finished={$status.finished}
 					aria-invalid={userInput.error.invalid}
 					aria-required
 					on:keydown={elements.onInputKeydown}
 					on:blur={userInput.updatePrevious}
 				/>
 			{:else}
-				<Countdown times={timerDisplay.timeArray} />
+				<Countdown times={$timeDisplay} />
 			{/if}
 		</div>
 		{#if $settings.progressBarType === "line"}
 			<Progress
-				duration={timerStatus.duration}
-				paused={timerStatus.paused}
-				finished={timerStatus.finished}
-				started={timerStatus.started}
+				duration={$duration}
+				paused={$status.paused}
+				finished={$status.finished}
+				started={$status.started}
 			/>
 		{/if}
 		<div class="controls">
-			{#if !timerStatus.started}
+			{#if !$status.started}
 				<div class="control-middle">
 					<PrimaryButton
 						class="start"
@@ -318,7 +207,7 @@
 				</div>
 			{:else}
 				<div class="control-left">
-					{#if !timerStatus.finished}
+					{#if !$status.finished}
 						<DurationUpdater
 							type="add"
 							on:submitupdate={(event) =>
@@ -339,14 +228,14 @@
 					{/if}
 				</div>
 				<div class="control-right">
-					{#if timerStatus.finished}
+					{#if $status.finished}
 						<PrimaryButton
 							icon="ph:clock-counter-clockwise-bold"
 							on:click={timerTime.reset}
 							tooltipContent="Reset"
 						/>
 					{:else}
-						{#if timerStatus.paused}
+						{#if $status.paused}
 							<PrimaryButton
 								icon="ph:play-bold"
 								on:click={timerTime.resume}

@@ -4,6 +4,27 @@ import { getCSSProp } from "./css";
 import { TimerController } from "./timer_controller";
 import type { UnitRange } from "./timer_utils";
 
+type Settings = {
+	timerUpdateInterval: number;
+	autoTrimTimerDisplay: boolean;
+	timerUnitRange: UnitRange;
+	progressBarType: "line" | "background";
+	buttonScaleDuration: number;
+	/** distance in em to bump the countdown when changing timer duration */
+	countdownBumpAmount: number;
+	timeFormat: "12h" | "24h";
+};
+
+export const settings = writable<Settings>({
+	timerUpdateInterval: 200,
+	autoTrimTimerDisplay: true,
+	timerUnitRange: ["s", "d"],
+	progressBarType: "background",
+	buttonScaleDuration: 200,
+	countdownBumpAmount: 0.2,
+	timeFormat: "12h",
+});
+
 //#region timer list
 interface TimerControllerListStore extends Readable<TimerController[]> {
 	removeTimer: (timer: TimerController) => void;
@@ -44,26 +65,3 @@ function initTimerControllerList(): TimerControllerListStore {
 
 export const timerControllerList = initTimerControllerList();
 //#endregion
-
-// settings
-
-type Settings = {
-	timerUpdateInterval: number;
-	autoTrimTimerDisplay: boolean;
-	timerUnitRange: UnitRange;
-	progressBarType: "line" | "background";
-	buttonScaleDuration: number;
-	/** distance in em to bump the countdown when changing timer duration */
-	countdownBumpAmount: number;
-	timeFormat: "12h" | "24h";
-};
-
-export const settings = writable<Settings>({
-	timerUpdateInterval: 200,
-	autoTrimTimerDisplay: true,
-	timerUnitRange: ["s", "d"],
-	progressBarType: "background",
-	buttonScaleDuration: 200,
-	countdownBumpAmount: 0.2,
-	timeFormat: "12h",
-});
