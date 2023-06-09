@@ -1,3 +1,5 @@
 {
-	"conventionalCommits.scopes": ["ui", "logic"]
+  "emmet.includeLanguages": {
+    "rust": "html"
+  }
 }
