@@ -1,0 +1,44 @@
+:root {
+    --bg: var(--clr-neutral-800);
+    --clr-text: rgba(255 255 255 / 0.88);
+
+    // colors //
+
+    --par-lch-l: 71.7%;
+    --par-lch-c: 42.4;
+
+    --par-mix-50: in oklab, white 64%;
+    --par-mix-100: in oklab, white 48%;
+    --par-mix-200: in oklab, white 32%;
+    --par-mix-300: in oklab, white 16%;
+    --par-mix-500: in oklab, black 16%;
+    --par-mix-600: in oklab, black 32%;
+    --par-mix-700: in oklab, black 48%;
+    --par-mix-800: in oklab, black 64%;
+    --par-mix-900: in oklab, black 75%; // should be 80%?
+
+    --clr-red-400: lch(var(--par-lch-l) var(--par-lch-c) 22);
+    --clr-orange-400: lch(var(--par-lch-l) var(--par-lch-c) 50);
+    --clr-yellow-400: lch(var(--par-lch-l) var(--par-lch-c) 90);
+    --clr-green-400: lch(var(--par-lch-l) var(--par-lch-c) 150);
+    --clr-blue-400: lch(var(--par-lch-l) var(--par-lch-c) 260);
+    --clr-purple-400: lch(var(--par-lch-l) var(--par-lch-c) 330);
+    --clr-neutral-400: rgb(67, 72, 94);
+
+    // extra one for neutral color
+    --clr-neutral-20: color-mix(in oklab, white 90%, var(--clr-neutral-400));
+
+    // generate shades //
+
+    $shades: 50, 100, 200, 300, 500, 600, 700, 800, 900;
+    $colors: "red", "orange", "yellow", "green", "blue", "purple", "neutral";
+
+    @each $color in $colors {
+        @each $shade in $shades {
+            --clr-#{$color}-#{$shade}: color-mix(
+                var(--par-mix-#{$shade}),
+                var(--clr-#{$color}-400)
+            );
+        }
+    }
+}

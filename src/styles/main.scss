@@ -1,0 +1,26 @@
+@use "./variables.scss";
+@use "./duration.scss";
+@use "./timer.scss";
+
+:root {
+    background: var(--bg);
+    color: var(--clr-text);
+
+    font-family: Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
