@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local};
 use leptos::{create_rw_signal, RwSignal, Scope, SignalSet};
-use uuid::Uuid;
 use std::time::Duration;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct TimerList(pub Vec<UniqueTimer>);
@@ -16,16 +16,8 @@ impl TimerList {
     ///
     /// # Panics
     /// Panics if the id cannot be found.
-    pub fn timer_with_id(&self, id: Uuid) -> &Timer {
-        &self.0.iter().find(|t| t.id == id).unwrap().timer
-    }
-
-    /// Gets the timer with a specific id.
-    ///
-    /// # Panics
-    /// Panics if the id cannot be found.
-    pub fn timer_with_id_mut(&mut self, id: Uuid) -> &mut Timer {
-        &mut self.0.iter_mut().find(|t| t.id == id).unwrap().timer
+    pub fn timer_with_id(&self, id: Uuid) -> Timer {
+        (self.0.iter().find(|t| t.id == id).unwrap().timer)()
     }
 }
 
@@ -41,27 +33,18 @@ impl IntoIterator for TimerList {
 
 #[derive(Debug, Clone, Copy)]
 pub struct UniqueTimer {
-    id: Uuid,
-    timer: Timer,
+    pub id: Uuid,
+    pub timer: RwSignal<Timer>,
 }
 
 impl UniqueTimer {
     pub fn new(cx: Scope) -> Self {
         Self {
             id: Uuid::new_v4(),
-            timer: Timer::new(cx)
+            timer: create_rw_signal(cx, Timer::new(cx)),
         }
     }
-
-    pub fn id(&self) -> Uuid {
-        self.id
-    }
-
-    pub fn timer(&self) -> Timer {
-        self.timer
-    }
 }
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Timer {

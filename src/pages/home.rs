@@ -10,9 +10,9 @@ pub fn HomePage(cx: Scope) -> impl IntoView {
         <div>
             <For 
                 each=timers
-                key=|timer| timer.id()
+                key=|timer| timer.id
                 view=move |cx, timer| view! { cx,
-                    <TimerDisplay timer_id={timer.id()} />
+                    <TimerDisplay timer={timer.timer} />
                 }
             />
         </div>
