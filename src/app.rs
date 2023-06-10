@@ -7,7 +7,7 @@ pub fn App(cx: Scope) -> impl IntoView {
     let timers = create_rw_signal(cx, TimerList::new(cx, 1));
     create_effect(cx, move |_| {
         log!(
-            "{:?}",
+            "in app context provider {:?}",
             timers()
                 .0
                 .iter()

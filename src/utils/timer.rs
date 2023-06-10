@@ -1,5 +1,8 @@
 use chrono::{DateTime, Local};
-use leptos::{create_rw_signal, RwSignal, Scope, SignalSet};
+use leptos::{
+    create_rw_signal, create_signal,
+    ReadSignal, RwSignal, Scope, SignalGetUntracked, WriteSignal,
+};
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -48,39 +51,63 @@ impl UniqueTimer {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Timer {
-    pub duration: Duration,
-    start_time: DateTime<Local>,
-    pub started: RwSignal<bool>,
-    pub running: RwSignal<bool>,
-    pub paused: RwSignal<bool>,
+    pub duration: ReadSignal<Duration>,
+    set_duration: WriteSignal<Duration>,
+    start_time: ReadSignal<DateTime<Local>>,
+    set_start_time: WriteSignal<DateTime<Local>>,
+    pub started: ReadSignal<bool>,
+    set_started: WriteSignal<bool>,
+    pub running: ReadSignal<bool>,
+    set_running: WriteSignal<bool>,
+    pub paused: ReadSignal<bool>,
+    set_paused: WriteSignal<bool>,
     /// Whether the timer has reached 0. Updates after `time_remaining()` is called.
-    pub finished: RwSignal<bool>,
+    pub finished: ReadSignal<bool>,
+    set_finished: WriteSignal<bool>,
+    pub time_remaining: ReadSignal<Duration>,
+    set_time_remaining: WriteSignal<Duration>,
 }
 
 impl Timer {
     pub fn new(cx: Scope) -> Self {
+        let (duration, set_duration) = create_signal(cx, Duration::ZERO);
+        let (start_time, set_start_time) = create_signal(cx, Local::now());
+        let (started, set_started) = create_signal(cx, false);
+        let (running, set_running) = create_signal(cx, false);
+        let (paused, set_paused) = create_signal(cx, false);
+        let (finished, set_finished) = create_signal(cx, false);
+        let (time_remaining, set_time_remaining) = create_signal(cx, Duration::ZERO);
+
         Self {
-            duration: Duration::ZERO,
-            start_time: Local::now(),
-            started: create_rw_signal(cx, false),
-            running: create_rw_signal(cx, false),
-            paused: create_rw_signal(cx, false),
-            finished: create_rw_signal(cx, false),
+            duration,
+            set_duration,
+            start_time,
+            set_start_time,
+            started,
+            set_started,
+            running,
+            set_running,
+            paused,
+            set_paused,
+            finished,
+            set_finished,
+            time_remaining,
+            set_time_remaining,
         }
     }
 
-    pub fn reset_with_duration(&mut self, duration: Duration) -> &mut Self {
-        self.started.set(false);
-        self.running.set(false);
-        self.paused.set(false);
-        self.finished.set(false);
-        self.start_time = Local::now();
-        self.duration = duration;
-        self
+    pub fn reset_with_duration(&self, duration: Duration) {
+        (self.set_started)(false);
+        (self.set_running)(false);
+        (self.set_paused)(false);
+        (self.set_finished)(false);
+        (self.set_start_time)(Local::now());
+        (self.set_duration)(duration);
+        (self.set_time_remaining)(self.get_time_remaining());
     }
 
-    pub fn time_elapsed(&self) -> Duration {
-        let start_time = self.start_time.timestamp_millis();
+    fn get_time_elapsed(&self) -> Duration {
+        let start_time = self.start_time.get_untracked().timestamp_millis();
         let current_time = Local::now().timestamp_millis();
 
         // start time should be before current time
@@ -92,14 +119,23 @@ impl Timer {
     /// If the timer has finished, returns a zero duration.
     ///
     /// **Side effects:** Updates the `self.finished` property.
-    pub fn time_remaining(&self) -> Duration {
-        let time_remaining = self.duration.saturating_sub(self.time_elapsed());
-        self.finished.set(time_remaining.is_zero());
+    fn get_time_remaining(&self) -> Duration {
+        let time_remaining = self
+            .duration
+            .get_untracked()
+            .saturating_sub(self.get_time_elapsed());
+        if self.finished.get_untracked() != time_remaining.is_zero() {
+            (self.set_finished)(time_remaining.is_zero());
+        };
         time_remaining
     }
 
-    pub fn start(&mut self) {
-        self.start_time = Local::now();
-        self.started.set(true);
+    pub fn update_time_remaining(&self) {
+        (self.set_time_remaining)(self.get_time_remaining());
+    }
+
+    pub fn start(&self) {
+        (self.set_start_time)(Local::now());
+        (self.set_started)(true);
     }
 }
