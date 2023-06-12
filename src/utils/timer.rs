@@ -1,7 +1,6 @@
 use chrono::{DateTime, Local};
 use leptos::{
-    create_rw_signal, create_signal,
-    ReadSignal, RwSignal, Scope, SignalGetUntracked, WriteSignal,
+    create_rw_signal, create_signal, ReadSignal, RwSignal, Scope, SignalGetUntracked, WriteSignal,
 };
 use std::time::Duration;
 use uuid::Uuid;

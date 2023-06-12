@@ -11,9 +11,9 @@ pub fn App(cx: Scope) -> impl IntoView {
             timers()
                 .0
                 .iter()
-                .map(|t| (t.timer)().duration)
+                .map(|t| ((t.timer)().duration)())
                 .collect::<Vec<_>>()
-        )
+        );
     });
 
     provide_context(cx, timers);

@@ -15,7 +15,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let set_timer_duration = move |secs: u64| {
         timer.reset_with_duration(Duration::from_secs(secs));
         timer.start();
-        log!("inside update {:?}", (timer.duration)());
+        log!("inside update {:?}", (timer.duration).get_untracked());
     };
 
     view! { cx,
