@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use std::time::Duration;
 
-use crate::utils::parse::ParseError;
+use crate::utils::parse::errors::ParseError;
 
 use super::extras::DurationUtils;
 
