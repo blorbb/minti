@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use leptos::*;
 
-use crate::{components::duration::DurationDisplay, utils::timer::Timer};
+use crate::{
+    components::duration::DurationDisplay,
+    utils::{parse::parse_input, timer::Timer},
+};
 
 #[component]
 pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
@@ -12,10 +15,14 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
     set_interval(update_time_remaining, Duration::from_millis(200));
 
-    let set_timer_duration = move |secs: u64| {
-        timer.reset_with_duration(Duration::from_secs(secs));
-        timer.start();
-        log!("inside update {:?}", (timer.duration).get_untracked());
+    let set_timer_duration = move |input: String| {
+        let res = parse_input(&input);
+
+        if let Ok(duration) = res {
+            timer.reset_with_duration(duration);
+            timer.start();
+            log!("inside update {:?}", (timer.duration).get_untracked());
+        }
     };
 
     view! { cx,
@@ -27,11 +34,11 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     }
                     fallback=move |cx| view! { cx,
                         <input
-                            type="number"
+                            type="text"
                             on:keydown=move |ev| {
                                 // log!("key {}", ev.key());
                                 if ev.key() == "Enter" {
-                                    let value = event_target_value(&ev).parse::<u64>().unwrap();
+                                    let value = event_target_value(&ev);
                                     set_timer_duration(value);
                                 };
                             }
