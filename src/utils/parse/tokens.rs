@@ -83,7 +83,7 @@ pub(super) fn parse_tokens(
                 time_sections[0] = 0;
             };
             // 12pm stays as 12, everything else adds 12h
-            if meridiem == Some(Meridiem::Post) && !time_sections[0] == 12 {
+            if meridiem == Some(Meridiem::Post) && time_sections[0] != 12 {
                 time_sections[0] += 12;
             };
 

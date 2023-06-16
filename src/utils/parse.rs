@@ -89,12 +89,12 @@ mod tests {
         fn specific_12h_time() {
             assert_eq!(
                 parse_input("3pm").unwrap().as_secs(),
-                duration_until_time(NaiveTime::from_hms_opt(3, 0, 0).unwrap()).as_secs()
+                duration_until_time(NaiveTime::from_hms_opt(3 + 12, 0, 0).unwrap()).as_secs()
             );
 
             assert_eq!(
                 parse_input("3:12pm").unwrap().as_secs(),
-                duration_until_time(NaiveTime::from_hms_opt(3, 12, 0).unwrap()).as_secs()
+                duration_until_time(NaiveTime::from_hms_opt(3 + 12, 12, 0).unwrap()).as_secs()
             );
 
             assert_eq!(
