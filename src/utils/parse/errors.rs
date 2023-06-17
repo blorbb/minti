@@ -20,7 +20,9 @@ impl fmt::Display for ParseError {
             ParseError::InvalidCharacter(c) => write!(f, "Invalid character \"{c}\""),
             ParseError::InvalidNumber(n) => write!(f, "Invalid number \"{n}\""),
             ParseError::InvalidUnit(u) => write!(f, "Invalid unit \"{u}\""),
-            ParseError::SmallerThanMilli(n) => write!(f, "Value \"{n}\" is less than a millisecond"),
+            ParseError::SmallerThanMilli(n) => {
+                write!(f, "Value \"{n}\" is less than a millisecond")
+            }
             ParseError::ClashingFormats => write!(f, "Multiple formats detected"),
             ParseError::TooManySeparators => write!(f, "Maximum of 2 \":\"s allowed"),
             ParseError::Empty => write!(f, "Please include a number"),
