@@ -136,5 +136,6 @@ impl Timer {
     pub fn start(&self) {
         (self.set_start_time)(Local::now());
         (self.set_started)(true);
+        (self.set_running)(true);
     }
 }

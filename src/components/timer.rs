@@ -4,7 +4,7 @@ use chrono::{DateTime, Duration as ChronoDuration, Local};
 use leptos::*;
 
 use crate::{
-    components::{DurationDisplay, GrowingInput},
+    components::{DurationDisplay, GrowingInput, RelativeTime},
     utils::{parse, timer::Timer},
 };
 
@@ -12,12 +12,44 @@ use crate::{
 pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let time_remaining = timer.time_remaining;
     let update_time_remaining = move || timer.update_time_remaining();
-    create_effect(cx, move |_| log!("updated! {:?}", time_remaining()));
-
-    set_interval(update_time_remaining, Duration::from_millis(200));
 
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
     let (end_time, set_end_time) = create_signal(cx, None::<DateTime<Local>>);
+
+    let countdown_handle = create_rw_signal(
+        cx,
+        set_interval_with_handle(|| (), Duration::SECOND)
+            .expect("something went wrong with setting interval"),
+    );
+    let end_time_handle = create_rw_signal(
+        cx,
+        set_interval_with_handle(|| (), Duration::SECOND)
+            .expect("Something went wrong setting end time handle"),
+    );
+
+    create_effect(cx, move |_| {
+        log!("running {}", (timer.running)());
+        if (timer.running)() {
+            countdown_handle.get_untracked().clear();
+            end_time_handle.get_untracked().clear();
+            countdown_handle.set(
+                set_interval_with_handle(update_time_remaining, Duration::from_millis(200))
+                    .expect("something went wrong with setting interval"),
+            );
+        } else {
+            countdown_handle.get_untracked().clear();
+            if (timer.started)() {
+                end_time_handle.get_untracked().clear();
+                end_time_handle.set(
+                    set_interval_with_handle(
+                        move || set_end_time(Some(Local::now())),
+                        Duration::SECOND,
+                    )
+                    .expect("Something went wrong setting end time handle"),
+                )
+            }
+        }
+    });
 
     let set_timer_duration = move |input: String| {
         let res = parse::parse_input(&input);
@@ -40,7 +72,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         }
     };
 
-
     view! { cx,
         <div class="com-timer">
             <div class="heading">
@@ -57,7 +88,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     when=move || end_time().is_some()
                     fallback=|_| ()
                 >
-                    " | " <span class="end">{move || format!("{:?}", end_time())}</span>
+                    " | " <span class="end">
+                    <RelativeTime time=end_time />
+                    </span>
                 </Show>
             </div>
             <div class="duration">
