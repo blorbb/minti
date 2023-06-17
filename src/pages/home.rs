@@ -7,7 +7,7 @@ pub fn HomePage(cx: Scope) -> impl IntoView {
     let timers = expect_context::<RwSignal<TimerList>>(cx);
 
     view! { cx,
-        <div>
+        <div class="page-home">
             <For
                 each=timers
                 key=|timer| timer.id

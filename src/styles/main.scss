@@ -1,6 +1,7 @@
 @use "./variables.scss";
 @use "./duration.scss";
 @use "./timer.scss";
+@use "./pages/home.scss";
 
 :root {
     background: var(--bg);
@@ -23,4 +24,21 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+html, body, main {
+    height: 100%;
+}
+
+input, button {
+    font: inherit;
+    color: inherit;
+
+    border: none;
+    background-color: transparent;
+    outline: transparent;
+}
+
+input:focus-visible, button:focus-visible {
+    outline: var(--outline);
 }
