@@ -1,6 +1,6 @@
 use leptos::*;
 
-use crate::{pages::home::HomePage, utils::timer::TimerList};
+use crate::{pages::HomePage, utils::timer::TimerList};
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {

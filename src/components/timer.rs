@@ -4,8 +4,8 @@ use chrono::{DateTime, Duration as ChronoDuration, Local};
 use leptos::*;
 
 use crate::{
-    components::{duration::DurationDisplay, growing_input::GrowingInput},
-    utils::{parse::parse_input, timer::Timer},
+    components::{DurationDisplay, GrowingInput},
+    utils::{parse, timer::Timer},
 };
 
 #[component]
@@ -20,7 +20,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let (end_time, set_end_time) = create_signal(cx, None::<DateTime<Local>>);
 
     let set_timer_duration = move |input: String| {
-        let res = parse_input(&input);
+        let res = parse::parse_input(&input);
 
         match res {
             Ok(duration) => {
