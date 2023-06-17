@@ -24,7 +24,7 @@ pub fn DurationDisplay(cx: Scope, #[prop(into)] duration: Signal<Duration>) -> i
                 when=move || days() != 0
                 fallback=|_| ()
             >
-                <span class="value">{days}</span><span class="unit">"h"</span>" "
+                <span class="value">{days}</span><span class="unit">"d"</span>" "
             </Show>
             <Show
                 when=move || hours() != 0 || days() != 0
