@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Local};
+use chrono::{DateTime, Local};
 use leptos::*;
 
 #[component]
@@ -20,22 +20,20 @@ pub fn RelativeTime(
         let days_between = (target_day - current_day).num_days();
 
         let display_date = if days_between == 0 {
-            None
+            "".to_string()
         } else if days_between == 1 {
-            Some("tmr".to_string())
+            "tmr".to_string()
         } else if days_between < 7 {
-            let binding = time.weekday().to_string();
-            Some(binding)
+            // 3 letter weekday name
+            time.format("%a").to_string()
         } else {
-            Some(target_day.format("%F").to_string())
+            // yyyy-mm-dd format
+            target_day.format("%F").to_string()
         };
 
         let end_time = time.format("%l:%M %P");
 
-        match display_date {
-            None => format!("{end_time}"),
-            Some(s) => format!("{s} {end_time}"),
-        }
+        format!("{} {}", display_date, end_time).trim().to_string()
     });
 
     view! { cx,
