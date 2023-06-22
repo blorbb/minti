@@ -1,6 +1,9 @@
-use super::errors::ParseError;
+use super::{
+    errors::ParseError,
+    structs::{UnparsedToken, UnparsedTokenType},
+};
 
-pub(super) fn build_str_tokens(input: &str) -> Result<Vec<UnparsedToken>, ParseError> {
+pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, ParseError> {
     let input = input.to_lowercase().replace(' ', "");
 
     let mut token_list: Vec<UnparsedToken> = vec![];
@@ -34,35 +37,6 @@ pub(super) fn build_str_tokens(input: &str) -> Result<Vec<UnparsedToken>, ParseE
     Ok(token_list)
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub(super) enum UnparsedTokenType {
-    Number,
-    Text,
-    Separator,
-}
-
-impl TryFrom<char> for UnparsedTokenType {
-    type Error = ParseError;
-
-    fn try_from(value: char) -> Result<Self, Self::Error> {
-        if value.is_ascii_alphabetic() {
-            Ok(UnparsedTokenType::Text)
-        } else if value.is_ascii_digit() || value == '.' {
-            Ok(UnparsedTokenType::Number)
-        } else if value == ':' {
-            Ok(UnparsedTokenType::Separator)
-        } else {
-            Err(ParseError::InvalidCharacter(value))
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub(super) struct UnparsedToken {
-    pub variant: UnparsedTokenType,
-    pub string: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,7 +44,7 @@ mod tests {
     #[test]
     fn separate_time_unit() {
         assert_eq!(
-            build_str_tokens("1d"),
+            build_unparsed_tokens("1d"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -83,7 +57,7 @@ mod tests {
             ])
         );
         assert_eq!(
-            build_str_tokens("1.3 h"),
+            build_unparsed_tokens("1.3 h"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -96,7 +70,7 @@ mod tests {
             ])
         );
         assert_eq!(
-            build_str_tokens("3M "),
+            build_unparsed_tokens("3M "),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -109,7 +83,7 @@ mod tests {
             ])
         );
         assert_eq!(
-            build_str_tokens("94 ms"),
+            build_unparsed_tokens("94 ms"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -126,7 +100,7 @@ mod tests {
     #[test]
     fn separate_multiple_time_unit() {
         assert_eq!(
-            build_str_tokens("1d3h"),
+            build_unparsed_tokens("1d3h"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -147,7 +121,7 @@ mod tests {
             ])
         );
         assert_eq!(
-            build_str_tokens("5h 92m 1ms"),
+            build_unparsed_tokens("5h 92m 1ms"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -180,7 +154,7 @@ mod tests {
     #[test]
     fn separate_separators() {
         assert_eq!(
-            build_str_tokens("3:4:7"),
+            build_unparsed_tokens("3:4:7"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,
@@ -205,7 +179,7 @@ mod tests {
             ])
         );
         assert_eq!(
-            build_str_tokens("1::2"),
+            build_unparsed_tokens("1::2"),
             Ok(vec![
                 UnparsedToken {
                     variant: UnparsedTokenType::Number,

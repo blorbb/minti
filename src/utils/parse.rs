@@ -1,19 +1,24 @@
 pub mod errors;
-mod tokens;
+mod parse_tokens;
+mod structs;
 mod unparsed_tokens;
 
 use std::time::Duration;
 
-use self::errors::ParseError;
+use self::{errors::ParseError, structs::Token};
 
 pub fn parse_input(input: &str) -> Result<Duration, ParseError> {
-    let tokens = unparsed_tokens::build_str_tokens(input)?;
-    let tokens = tokens::parse_str_tokens(tokens)?;
+    let tokens = unparsed_tokens::build_unparsed_tokens(input)?;
+    let tokens: Vec<Token> = tokens
+        .into_iter()
+        .map(Token::try_from)
+        .collect::<Result<_, _>>()?;
+
     if tokens.is_empty() {
         return Err(ParseError::Empty);
     };
-    let format = tokens::get_tokens_format(&tokens);
-    tokens::parse_tokens(&tokens, &format)
+
+    parse_tokens::parse_tokens(&tokens)
 }
 
 #[cfg(test)]
@@ -106,17 +111,6 @@ mod tests {
 
     mod errors {
         use super::*;
-
-        fn all_errors_with(error: ParseError, values: &[&str]) {
-            for value in values {
-                assert_eq!(
-                    parse_input(value),
-                    Err(error.clone()),
-                    "{value} should have been an Empty Err"
-                )
-            }
-        }
-
         fn all_errors(values: &[&str]) {
             for value in values {
                 assert!(
@@ -127,13 +121,17 @@ mod tests {
         }
 
         #[test]
-        fn no_numbers() {
-            all_errors_with(ParseError::Empty, &["", "h"]);
-        }
-
-        #[test]
-        fn some_error() {
-            all_errors(&["3.24x", "abc", "3:5:6:2:1"])
+        fn raises_error() {
+            all_errors(&[
+                "3.24x",
+                "abc",
+                "3:5:6:2:1",
+                "",
+                "h",
+                "10s 300ms 10",
+                "13:0:0am",
+                "3pm 10",
+            ])
         }
     }
 }
