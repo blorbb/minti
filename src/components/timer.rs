@@ -55,12 +55,15 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     )
                     .expect("Something went wrong setting end time handle"),
                 )
+            } else {
+                set_end_time(None);
             }
         }
     });
+    let (input_value, set_input_value) = create_signal(cx, String::new());
 
-    let set_timer_duration = move |input: String| {
-        let res = parse::parse_input(&input);
+    let set_timer_duration = move || {
+        let res = parse::parse_input(&input_value.get_untracked());
 
         match res {
             Ok(duration) => {
@@ -108,11 +111,11 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     fallback=move |cx| view! { cx,
                         <input
                             type="text"
+                            on:input=move |ev| set_input_value(event_target_value(&ev))
                             on:keydown=move |ev| {
                                 // log!("key {}", ev.key());
                                 if ev.key() == "Enter" {
-                                    let value = event_target_value(&ev);
-                                    set_timer_duration(value);
+                                    set_timer_duration();
                                 };
                             }
                         />
@@ -122,16 +125,24 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 </Show>
             </div>
             <div class="controls">
-                <button
-                    on:click=move |_| timer.pause()
+                <Show
+                    when=timer.started
+                    fallback=move |cx| view! { cx,
+                        <button on:click=move |_| set_timer_duration()>
+                            "Start"
+                        </button>
+                    }
                 >
-                    "Pause"
-                </button>
-                <button
-                    on:click=move |_| timer.resume()
-                >
-                    "Resume"
-                </button>
+                    <button on:click=move |_| timer.pause()>
+                        "Pause"
+                    </button>
+                    <button on:click=move |_| timer.resume()>
+                        "Resume"
+                    </button>
+                    <button on:click=move |_| timer.reset()>
+                        "Reset"
+                    </button>
+                </Show>
             </div>
         </div>
     }

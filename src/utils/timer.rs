@@ -1,6 +1,6 @@
 use chrono::{DateTime, Local};
 use leptos::{
-    create_rw_signal, create_signal, ReadSignal, RwSignal, Scope, SignalGetUntracked,
+    create_rw_signal, create_signal, log, ReadSignal, RwSignal, Scope, SignalGetUntracked,
     SignalSet, SignalSetUntracked, SignalUpdateUntracked, WriteSignal,
 };
 use std::time::Duration;
@@ -51,7 +51,7 @@ impl UniqueTimer {
 
 // TODO use typestate?
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Timer {
     pub duration: ReadSignal<Duration>,
     set_duration: WriteSignal<Duration>,
@@ -76,6 +76,15 @@ pub struct Timer {
     /// The total amount of time that has been paused.
     total_paused_duration: RwSignal<Duration>,
 }
+
+impl Clone for Timer {
+    fn clone(&self) -> Self {
+        log!("deep cloned");
+        *self
+    }
+}
+
+impl Copy for Timer {}
 
 impl Timer {
     pub fn new(cx: Scope) -> Self {
@@ -103,16 +112,6 @@ impl Timer {
             last_pause_time: create_rw_signal(cx, None),
             total_paused_duration: create_rw_signal(cx, Duration::ZERO),
         }
-    }
-
-    pub fn reset_with_duration(&self, duration: Duration) {
-        (self.set_started)(false);
-        (self.set_running)(false);
-        (self.set_paused)(false);
-        (self.set_finished)(false);
-        (self.set_duration)(duration);
-        (self.set_time_remaining)(self.get_time_remaining());
-        self.start_time.set_untracked(None);
     }
 
     fn get_time_elapsed(&self) -> Duration {
@@ -148,6 +147,20 @@ impl Timer {
 
     pub fn update_time_remaining(&self) {
         (self.set_time_remaining)(self.get_time_remaining());
+    }
+
+    pub fn reset_with_duration(&self, duration: Duration) {
+        (self.set_started)(false);
+        (self.set_running)(false);
+        (self.set_paused)(false);
+        (self.set_finished)(false);
+        (self.set_duration)(duration);
+        (self.set_time_remaining)(self.get_time_remaining());
+        self.start_time.set_untracked(None);
+    }
+
+    pub fn reset(&self) {
+        self.reset_with_duration(Duration::ZERO);
     }
 
     pub fn start(&self) {
