@@ -11,10 +11,16 @@ use crate::{
 #[component]
 pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let time_remaining = timer.time_remaining;
-    let update_time_remaining = move || timer.update_time_remaining();
-
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
     let (end_time, set_end_time) = create_signal(cx, None::<DateTime<Local>>);
+
+    let update_time_remaining = move || timer.update_time_remaining();
+    let update_end_time = move |time_remaining: Duration| {
+        let now = Local::now();
+        let time_to_end = ChronoDuration::from_std(time_remaining).unwrap();
+        let end_time = now + time_to_end;
+        set_end_time(Some(end_time))
+    };
 
     let countdown_handle = create_rw_signal(
         cx,
@@ -30,6 +36,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     create_effect(cx, move |_| {
         log!("running {}", (timer.running)());
         if (timer.running)() {
+            // update the countdown if the timer is running
             countdown_handle.get_untracked().clear();
             end_time_handle.get_untracked().clear();
             countdown_handle.set(
@@ -37,12 +44,13 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     .expect("something went wrong with setting interval"),
             );
         } else {
+            // update the end time if the timer is paused
             countdown_handle.get_untracked().clear();
             if (timer.started)() {
                 end_time_handle.get_untracked().clear();
                 end_time_handle.set(
                     set_interval_with_handle(
-                        move || set_end_time(Some(Local::now())),
+                        move || update_end_time(time_remaining.get_untracked()),
                         Duration::SECOND,
                     )
                     .expect("Something went wrong setting end time handle"),
@@ -59,12 +67,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 timer.reset_with_duration(duration);
                 timer.start();
                 set_error_message(None);
-
-                let now = Local::now();
-                let time_to_end = ChronoDuration::from_std(duration).unwrap();
-                set_end_time(Some(now + time_to_end));
-
-                log!("inside update {:?}", (timer.duration).get_untracked());
+                update_end_time(duration);
             }
             Err(e) => {
                 set_error_message(Some(e.to_string()));
@@ -73,24 +76,28 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     };
 
     view! { cx,
-        <div class="com-timer">
+        <div class="com-timer"
+            data-started={move || (timer.started)().to_string()}
+            data-paused={move || (timer.paused)().to_string()}
+            data-running={move || (timer.running)().to_string()}
+        >
             <div class="heading">
                 <span class="title">
                     <GrowingInput placeholder="Enter a title"/>
                 </span>
+
                 <Show
                     when=move || error_message().is_some()
                     fallback=|_| ()
                 >
                     " | " <span class="error">{error_message}</span>
                 </Show>
+
                 <Show
                     when=move || end_time().is_some()
                     fallback=|_| ()
                 >
-                    " | " <span class="end">
-                    <RelativeTime time=end_time />
-                    </span>
+                    " | " <span class="end"><RelativeTime time=end_time /></span>
                 </Show>
             </div>
             <div class="duration">
@@ -113,6 +120,18 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 >
                     <DurationDisplay duration={time_remaining} />
                 </Show>
+            </div>
+            <div class="controls">
+                <button
+                    on:click=move |_| timer.pause()
+                >
+                    "Pause"
+                </button>
+                <button
+                    on:click=move |_| timer.resume()
+                >
+                    "Resume"
+                </button>
             </div>
         </div>
     }
