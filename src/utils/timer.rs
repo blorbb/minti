@@ -114,7 +114,7 @@ impl Timer {
         }
     }
 
-    fn get_time_elapsed(&self) -> Duration {
+    pub fn get_time_elapsed(&self) -> Duration {
         let start_time = match (self.start_time).get_untracked() {
             Some(t) => t,
             None => return Duration::ZERO,
@@ -122,8 +122,9 @@ impl Timer {
 
         let end_time = self.last_pause_time.get_untracked().unwrap_or(Local::now());
         (end_time - start_time)
+            .clamp(chrono::Duration::zero(), chrono::Duration::max_value())
             .to_std()
-            .expect("Start time to be before now")
+            .expect("Clamped duration is non-negative")
             - self.total_paused_duration.get_untracked()
     }
 
@@ -132,7 +133,7 @@ impl Timer {
     /// If the timer has finished, returns a zero duration.
     ///
     /// **Side effects:** Updates the `self.finished` property.
-    fn get_time_remaining(&self) -> Duration {
+    pub fn get_time_remaining(&self) -> Duration {
         let time_remaining = self
             .duration
             .get_untracked()
@@ -157,6 +158,7 @@ impl Timer {
         (self.set_duration)(duration);
         (self.set_time_remaining)(self.get_time_remaining());
         self.start_time.set_untracked(None);
+        self.total_paused_duration.set_untracked(Duration::ZERO);
     }
 
     pub fn reset(&self) {
