@@ -16,6 +16,9 @@
     --fs-800: clamp(1.81rem, calc(1.35rem + 2.34vw), 3.16rem);
     --fs-900: clamp(2.18rem, calc(1.47rem + 3.53vw), 4.21rem);
 
+    --time-transition: 200ms;
+    --time-transition-short: 80ms;
+
     // colors //
 
     --par-lch-l: 71.7%;

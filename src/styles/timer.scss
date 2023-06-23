@@ -53,6 +53,27 @@
             height: 2rem;
             aspect-ratio: 3 / 1;
             border-radius: 20rem;
+
+            transition: transform var(--time-transition-short) ease-out;
+            animation: scale-in var(--time-transition-short) ease-out;
+
+            &:hover {
+                transform: scale(1.05);
+            }
+
+            &:active {
+                transform: scale(0.9);
+            }
         }
+    }
+}
+
+@keyframes scale-in {
+    from {
+        scale: 0;
+    }
+
+    to {
+        scale: 1;
     }
 }

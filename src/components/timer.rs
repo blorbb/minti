@@ -60,6 +60,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             }
         }
     });
+
     let (input_value, set_input_value) = create_signal(cx, String::new());
 
     let set_timer_duration = move || {
@@ -84,6 +85,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             data-paused={move || (timer.paused)().to_string()}
             data-running={move || (timer.running)().to_string()}
         >
+            // stuff above the input with extra info
             <div class="heading">
                 <span class="title">
                     <GrowingInput placeholder="Enter a title"/>
@@ -103,6 +105,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     " | " <span class="end"><RelativeTime time=end_time /></span>
                 </Show>
             </div>
+
+            // main timer display, showing either the countdown
+            // or the input to enter a time
             <div class="duration">
                 <Show
                     when=move || {
@@ -111,6 +116,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     fallback=move |cx| view! { cx,
                         <input
                             type="text"
+                            prop:value=input_value // set to old value when reset timer
                             on:input=move |ev| set_input_value(event_target_value(&ev))
                             on:keydown=move |ev| {
                                 // log!("key {}", ev.key());
@@ -124,6 +130,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     <DurationDisplay duration={time_remaining} />
                 </Show>
             </div>
+
             <div class="controls">
                 <Show
                     when=timer.started
@@ -135,11 +142,25 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         </button>
                     }
                 >
-                    <button on:click=move |_| timer.pause()>
-                        <Icon inline=true icon="ph:pause-bold"/>
-                    </button>
-                    <button on:click=move |_| timer.resume()>
-                        <Icon inline=true icon="ph:play-bold"/>
+                    // switch between resume and pause button
+                    <button
+                        on:click=move |_| if (timer.paused)() {
+                            timer.resume()
+                        } else {
+                            timer.pause()
+                        }
+                    >
+                        <Icon
+                            inline=true
+                            icon=Signal::derive(
+                                cx,
+                                move || if (timer.paused)() {
+                                    "ph:play-bold"
+                                } else {
+                                    "ph:pause-bold"
+                                }
+                            )
+                        />
                     </button>
                     <button on:click=move |_| timer.reset()>
                         <Icon inline=true icon="ph:clock-counter-clockwise-bold"/>

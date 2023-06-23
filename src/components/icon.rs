@@ -3,11 +3,15 @@ use leptos::*;
 const BASE_URL: &str = "https://api.iconify.design";
 
 #[component]
-pub fn Icon(cx: Scope, icon: &'static str, #[prop(default = false)] inline: bool) -> impl IntoView {
-    let icon_svg: Resource<(), Option<String>> = create_local_resource(
+pub fn Icon(
+    cx: Scope,
+    #[prop(into)] icon: MaybeSignal<&'static str>,
+    #[prop(default = false)] inline: bool,
+) -> impl IntoView {
+    let icon_svg: Resource<_, Option<String>> = create_local_resource(
         cx,
-        || (),
-        move |_| async move {
+        icon,
+        move |icon| async move {
             let (prefix, name) = icon.split_once(':')?;
 
             let body = reqwest::get(format!("{}/{}/{}.svg", BASE_URL, prefix, name))
