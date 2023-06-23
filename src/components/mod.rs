@@ -6,3 +6,5 @@ pub mod growing_input;
 pub use growing_input::GrowingInput;
 pub mod relative_time;
 pub use relative_time::RelativeTime;
+pub mod icon;
+pub use icon::Icon;

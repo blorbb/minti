@@ -1,0 +1,7 @@
+.com-icon {
+    display: inline;
+
+    &[data-inline="true"] {
+        vertical-align: -0.125em;
+    }
+}

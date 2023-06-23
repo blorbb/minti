@@ -4,7 +4,7 @@ use chrono::{DateTime, Duration as ChronoDuration, Local};
 use leptos::*;
 
 use crate::{
-    components::{DurationDisplay, GrowingInput, RelativeTime},
+    components::{DurationDisplay, GrowingInput, Icon, RelativeTime},
     utils::{parse, timer::Timer},
 };
 
@@ -129,18 +129,20 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     when=timer.started
                     fallback=move |cx| view! { cx,
                         <button on:click=move |_| set_timer_duration()>
-                            "Start"
+                            // TODO: this creates a warning that a signal is updated
+                            // after being disposed.
+                            <Icon inline=true icon="ph:play-fill"/>
                         </button>
                     }
                 >
                     <button on:click=move |_| timer.pause()>
-                        "Pause"
+                        <Icon inline=true icon="ph:pause-bold"/>
                     </button>
                     <button on:click=move |_| timer.resume()>
-                        "Resume"
+                        <Icon inline=true icon="ph:play-bold"/>
                     </button>
                     <button on:click=move |_| timer.reset()>
-                        "Reset"
+                        <Icon inline=true icon="ph:clock-counter-clockwise-bold"/>
                     </button>
                 </Show>
             </div>
