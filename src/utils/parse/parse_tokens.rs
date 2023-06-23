@@ -1,7 +1,5 @@
 use std::time::Duration;
 
-use chrono::NaiveTime;
-
 use crate::utils::{
     duration::extras::DurationUtils,
     time::{
@@ -77,15 +75,26 @@ fn parse_time_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
         }
     }
 
-    let end_time = match meridiem {
-        Some(meri) => {
-            meridiem::new_12h_time(time_sections[0], time_sections[1], time_sections[2], meri)
-        }
-        None => NaiveTime::from_hms_opt(time_sections[0], time_sections[1], time_sections[2]),
-    }
-    .ok_or(ParseError::Unknown)?;
+    let [h, m, s] = time_sections;
 
-    Ok(relative::duration_until_time(end_time))
+    let duration = match meridiem {
+        Some(meri) => relative::duration_until_time(
+            meridiem::new_12h_time(h, m, s, meri).ok_or(ParseError::Unknown)?,
+        ),
+        None => {
+            // find the one that is closest to now
+            let am_time =
+                meridiem::new_12h_time(h, m, s, Meridiem::Ante).ok_or(ParseError::Unknown)?;
+            let pm_time =
+                meridiem::new_12h_time(h, m, s, Meridiem::Post).ok_or(ParseError::Unknown)?;
+            Duration::min(
+                relative::duration_until_time(am_time),
+                relative::duration_until_time(pm_time),
+            )
+        }
+    };
+
+    Ok(duration)
 }
 
 /// Tries to parse a token list as a duration with units.
