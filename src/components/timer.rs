@@ -102,7 +102,10 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     when=move || end_time().is_some()
                     fallback=|_| ()
                 >
-                    " | " <span class="end"><RelativeTime time=end_time /></span>
+                    " | " <span class="end">
+                        <Icon inline=true icon="ph:timer-bold" />" "
+                        <RelativeTime time=end_time />
+                    </span>
                 </Show>
             </div>
 
