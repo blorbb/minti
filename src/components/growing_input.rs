@@ -25,15 +25,15 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
                 ref=title_input_ref
                 on:input=move |_| resize_to_fit(
                     title_input_ref().unwrap(),
-                    size_ref().unwrap()
+                    &size_ref().unwrap()
                 )
             />
         </span>
     }
 }
 
-pub fn resize_to_fit(input: HtmlElement<html::Input>, size_ref: HtmlElement<html::Span>) {
-    set_size_ref(&input, &size_ref);
+pub fn resize_to_fit(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
+    set_size_ref(&input, size_ref);
     set_input_size(input, size_ref);
 }
 
@@ -46,7 +46,7 @@ pub fn resize_to_fit_with_timeout(
     // need to wait for DOM to update
     // for some reason this isn't needed on the input event
     // but is on element load
-    set_timeout(move || set_input_size(input, size_ref), Duration::ZERO);
+    set_timeout(move || set_input_size(input, &size_ref), Duration::ZERO);
 }
 
 fn set_size_ref(input: &HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
@@ -60,7 +60,7 @@ fn set_size_ref(input: &HtmlElement<html::Input>, size_ref: &HtmlElement<html::S
     }
 }
 
-fn set_input_size(input: HtmlElement<html::Input>, size_ref: HtmlElement<html::Span>) {
+fn set_input_size(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
     let width = size_ref.offset_width();
     input.style("width", format!("{width}px"));
 }

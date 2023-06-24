@@ -77,6 +77,7 @@ pub struct Timer {
     total_paused_duration: RwSignal<Duration>,
 }
 
+#[expect(clippy::expl_impl_clone_on_copy, reason = "logging")]
 impl Clone for Timer {
     fn clone(&self) -> Self {
         log!("deep cloned");
@@ -115,12 +116,12 @@ impl Timer {
     }
 
     pub fn get_time_elapsed(&self) -> Duration {
-        let start_time = match (self.start_time).get_untracked() {
-            Some(t) => t,
-            None => return Duration::ZERO,
-        };
+        let Some(start_time) = (self.start_time).get_untracked() else { return Duration::ZERO };
 
-        let end_time = self.last_pause_time.get_untracked().unwrap_or(Local::now());
+        let end_time = self
+            .last_pause_time
+            .get_untracked()
+            .unwrap_or_else(Local::now);
         (end_time - start_time)
             .clamp(chrono::Duration::zero(), chrono::Duration::max_value())
             .to_std()
@@ -158,6 +159,7 @@ impl Timer {
         (self.set_duration)(duration);
         (self.set_time_remaining)(self.get_time_remaining());
         self.start_time.set_untracked(None);
+        self.last_pause_time.set_untracked(None);
         self.total_paused_duration.set_untracked(Duration::ZERO);
     }
 
@@ -181,6 +183,10 @@ impl Timer {
         (self.set_running)(false);
     }
 
+    #[expect(
+        clippy::missing_panics_doc,
+        reason = "last_pause_time should be defined if timer is not running"
+    )]
     pub fn resume(&self) {
         if self.running.get_untracked() {
             return;
@@ -189,7 +195,7 @@ impl Timer {
         self.total_paused_duration.update_untracked(|v| {
             *v += (Local::now() - self.last_pause_time.get_untracked().unwrap())
                 .to_std()
-                .unwrap()
+                .unwrap();
         });
         self.last_pause_time.set_untracked(None);
         (self.set_paused)(false);

@@ -8,6 +8,7 @@ use crate::{
     utils::{parse, timer::Timer},
 };
 
+#[expect(clippy::too_many_lines, reason = "idk how make smaller")]
 #[component]
 pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let time_remaining = timer.time_remaining;
@@ -19,7 +20,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         let now = Local::now();
         let time_to_end = ChronoDuration::from_std(time_remaining).unwrap();
         let end_time = now + time_to_end;
-        set_end_time(Some(end_time))
+        set_end_time(Some(end_time));
     };
 
     let countdown_handle = create_rw_signal(
@@ -35,9 +36,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
     create_effect(cx, move |_| {
         log!("running {}", (timer.running)());
+        countdown_handle.get_untracked().clear();
         if (timer.running)() {
             // update the countdown if the timer is running
-            countdown_handle.get_untracked().clear();
             end_time_handle.get_untracked().clear();
             countdown_handle.set(
                 set_interval_with_handle(update_time_remaining, Duration::from_millis(200))
@@ -45,7 +46,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             );
         } else {
             // update the end time if the timer is paused
-            countdown_handle.get_untracked().clear();
             if (timer.started)() {
                 end_time_handle.get_untracked().clear();
                 end_time_handle.set(
@@ -54,7 +54,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         Duration::SECOND,
                     )
                     .expect("Something went wrong setting end time handle"),
-                )
+                );
             } else {
                 set_end_time(None);
             }
@@ -145,9 +145,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     // switch between resume and pause button
                     <button
                         on:click=move |_| if (timer.paused)() {
-                            timer.resume()
+                            timer.resume();
                         } else {
-                            timer.pause()
+                            timer.pause();
                         }
                     >
                         <Icon

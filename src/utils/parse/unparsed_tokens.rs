@@ -23,7 +23,7 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
                 string: ch.to_string(),
             });
 
-            prev_token_type = curr_token_type
+            prev_token_type = curr_token_type;
         } else {
             // add to last token
             token_list

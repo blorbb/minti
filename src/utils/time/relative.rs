@@ -2,6 +2,10 @@ use std::time::Duration;
 
 use chrono::{prelude::*, Days};
 
+#[expect(
+    clippy::missing_panics_doc,
+    reason = "NaiveTime components should not panic when used in with_*"
+)]
 pub fn get_next_occurrence(target_time: NaiveTime) -> DateTime<Local> {
     let current_time = Local::now().time();
 

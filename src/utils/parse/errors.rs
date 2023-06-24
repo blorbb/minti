@@ -16,29 +16,29 @@ pub enum ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ParseError::NaN => {
+            Self::NaN => {
                 write!(f, "Unknown number")
             }
-            ParseError::InvalidCharacter(c) => {
+            Self::InvalidCharacter(c) => {
                 write!(f, "Invalid character \"{c}\"")
             }
-            ParseError::InvalidNumber(n) => {
+            Self::InvalidNumber(n) => {
                 write!(f, "Invalid number \"{n}\"")
             }
-            ParseError::InvalidUnit(u) => {
+            Self::InvalidUnit(u) => {
                 write!(f, "Invalid unit \"{u}\"")
             }
-            ParseError::SmallerThanMilli(n) => {
+            Self::SmallerThanMilli(n) => {
                 write!(f, "Value \"{n}\" is less than a millisecond")
             }
-            ParseError::ClashingFormats => {
+            Self::ClashingFormats => {
                 write!(f, "Multiple formats detected")
             }
-            ParseError::TooManySeparators => {
+            Self::TooManySeparators => {
                 write!(f, "Maximum of 2 \":\"s allowed")
             }
-            ParseError::Empty => write!(f, "Please include a number"),
-            ParseError::Unknown => {
+            Self::Empty => write!(f, "Please include a number"),
+            Self::Unknown => {
                 write!(f, "Invalid input")
             }
         }

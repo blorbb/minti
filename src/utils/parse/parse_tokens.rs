@@ -13,7 +13,7 @@ use super::{
     structs::{Token, TokensFormat},
 };
 
-pub(super) fn parse_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
+pub(super) fn parse_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
     let format = get_tokens_format(tokens);
 
     match format {
@@ -24,7 +24,7 @@ pub(super) fn parse_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> 
 }
 
 /// Tries to find the input format of the given list of tokens.
-fn get_tokens_format(tokens: &Vec<Token>) -> TokensFormat {
+fn get_tokens_format(tokens: &[Token]) -> TokensFormat {
     if tokens.len() == 1 {
         TokensFormat::SingleNumber
     } else if tokens.contains(&Token::Separator)
@@ -37,7 +37,7 @@ fn get_tokens_format(tokens: &Vec<Token>) -> TokensFormat {
 }
 
 /// Tries to parse a token list as a single number.
-fn parse_single_number_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
+fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
     let Token::Number(n) = tokens[0] else {
         return Err(ParseError::Empty);
     };
@@ -46,7 +46,7 @@ fn parse_single_number_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseErro
 
 /// Tries to parse a token list as a specific time,
 /// in 12h or 24h format.
-fn parse_time_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
+fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
     let mut meridiem: Option<Meridiem> = None;
     let mut time_sections = [0, 0, 0];
     // 0 = hour, 1 = min, 2 = sec
@@ -59,6 +59,7 @@ fn parse_time_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
             return Err(ParseError::Unknown);
         };
 
+        #[expect(clippy::match_wildcard_for_single_variants)]
         match token {
             Token::Separator => {
                 current_unit += 1;
@@ -77,28 +78,26 @@ fn parse_time_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
 
     let [h, m, s] = time_sections;
 
-    let duration = match meridiem {
-        Some(meri) => relative::duration_until_time(
+    let duration = if let Some(meri) = meridiem {
+        relative::duration_until_time(
             meridiem::new_12h_time(h, m, s, meri).ok_or(ParseError::Unknown)?,
-        ),
-        None => {
-            // find the one that is closest to now
-            let am_time =
-                meridiem::new_12h_time(h, m, s, Meridiem::Ante).ok_or(ParseError::Unknown)?;
-            let pm_time =
-                meridiem::new_12h_time(h, m, s, Meridiem::Post).ok_or(ParseError::Unknown)?;
-            Duration::min(
-                relative::duration_until_time(am_time),
-                relative::duration_until_time(pm_time),
-            )
-        }
+        )
+    } else {
+        // find the one that is closest to now
+        let am_time = meridiem::new_12h_time(h, m, s, Meridiem::Ante).ok_or(ParseError::Unknown)?;
+        let pm_time = meridiem::new_12h_time(h, m, s, Meridiem::Post).ok_or(ParseError::Unknown)?;
+
+        Duration::min(
+            relative::duration_until_time(am_time),
+            relative::duration_until_time(pm_time),
+        )
     };
 
     Ok(duration)
 }
 
 /// Tries to parse a token list as a duration with units.
-fn parse_unit_tokens(tokens: &Vec<Token>) -> Result<Duration, ParseError> {
+fn parse_unit_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
     let mut total_duration = Duration::ZERO;
     let mut current_number = 0.0;
 

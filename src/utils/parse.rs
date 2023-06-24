@@ -7,6 +7,48 @@ use std::time::Duration;
 
 use self::{errors::ParseError, structs::Token};
 
+/// Tries to parse a user inputted string as a duration.
+///
+/// There are 2 main formats:
+/// - A duration, specified with units like "1h 30m".
+///     - The units accepted are days, hours, minutes, seconds and
+///       milliseconds. Several different ways of writing each are accepted
+///       (e.g. "h", "hrs", "hours").
+///     - If no units are given, minutes is assumed.
+///     - If the string ends in a number with no unit, it is assumed to be one
+///       unit smaller than the previous (e.g. "2m 30" is the same as "2m 30s").
+///     - Decimals are accepted, like "3.5h".
+/// - A specific time, like "5:30pm". Finds the duration until the next
+///   occurrence of the specified time.
+///     - If "am" or "pm" is added, the duration until the next occurrence of
+///       that time is returned.
+///     - If no "am" or "pm" is added, it will be interpreted as the closest one
+///       (e.g. at 2pm, "3:30" is the same as "3:30pm" and "1:30" is the same
+///       as "1:30am").
+///     - A no-meridiem time with only the hour time can be inputted by adding
+///       a ":" (e.g. "3" is interpreted as 3 minutes while "3:" is interpreted
+///       as 3 am/pm, whichever is closest).
+///
+/// # Errors
+/// Errors if the input does not match any of the above formats.
+///
+/// The error reason will try to be given, however it may be inconsistent
+/// and change if the implementation is modified.
+///
+/// # Examples
+/// ```rust
+/// use std::time::Duration;
+/// use minti_ui::utils::duration::extras::DurationUtils;
+/// # use minti_ui::utils::parse::parse_input;
+///
+/// assert_eq!(parse_input("3"), Ok(Duration::from_mins(3)));
+/// assert_eq!(
+///     parse_input("3h 20m 10"),
+///     Ok(Duration::from_hours(3)
+///         + Duration::from_mins(20)
+///         + Duration::from_secs(10))
+///     );
+/// ```
 pub fn parse_input(input: &str) -> Result<Duration, ParseError> {
     let tokens = unparsed_tokens::build_unparsed_tokens(input)?;
     let tokens: Vec<Token> = tokens

@@ -36,7 +36,7 @@ impl FromStr for Meridiem {
 /// but the `hour` also cannot be greater than 12.
 ///
 /// Returns `None` on invalid hour, minute and/or second.
-pub fn new_12h_time(hour: u32, min: u32, sec: u32, meridiem: Meridiem) -> Option<NaiveTime> {
+pub const fn new_12h_time(hour: u32, min: u32, sec: u32, meridiem: Meridiem) -> Option<NaiveTime> {
     let hour_12 = match meridiem {
         _ if hour > 12 => return None,
         // 12am becomes 00:00

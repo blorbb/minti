@@ -8,10 +8,8 @@ pub fn Icon(
     #[prop(into)] icon: MaybeSignal<&'static str>,
     #[prop(default = false)] inline: bool,
 ) -> impl IntoView {
-    let icon_svg: Resource<_, Option<String>> = create_local_resource(
-        cx,
-        icon,
-        move |icon| async move {
+    let icon_svg: Resource<_, Option<String>> =
+        create_local_resource(cx, icon, move |icon| async move {
             let (prefix, name) = icon.split_once(':')?;
 
             let body = reqwest::get(format!("{}/{}/{}.svg", BASE_URL, prefix, name))
@@ -27,8 +25,7 @@ pub fn Icon(
             } else {
                 Some(body)
             }
-        },
-    );
+        });
 
     move || match icon_svg.read(cx) {
         None => view! { cx,

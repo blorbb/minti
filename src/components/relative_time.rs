@@ -8,7 +8,7 @@ pub fn RelativeTime(
 ) -> impl IntoView {
     let string = create_memo(cx, move |_| {
         if time().is_none() {
-            return "".to_string();
+            return String::new();
         };
         let time = time().unwrap();
 
@@ -20,7 +20,7 @@ pub fn RelativeTime(
         let days_between = (target_day - current_day).num_days();
 
         let display_date = if days_between == 0 {
-            "".to_string()
+            String::new()
         } else if days_between == 1 {
             "tmr".to_string()
         } else if days_between < 7 {

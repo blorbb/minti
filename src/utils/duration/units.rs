@@ -37,17 +37,17 @@ impl TimeUnit {
     pub const HOUR_TOKENS: [&str; 5] = ["h", "hr", "hrs", "hour", "hours"];
     pub const DAY_TOKENS: [&str; 3] = ["d", "day", "days"];
 
-    pub fn numeric_value(&self) -> u8 {
+    pub const fn numeric_value(&self) -> u8 {
         match self {
-            TimeUnit::Milli => 0,
-            TimeUnit::Sec => 1,
-            TimeUnit::Min => 2,
-            TimeUnit::Hour => 3,
-            TimeUnit::Day => 4,
+            Self::Milli => 0,
+            Self::Sec => 1,
+            Self::Min => 2,
+            Self::Hour => 3,
+            Self::Day => 4,
         }
     }
 
-    pub fn number_to_variant(num: u8) -> Option<Self> {
+    pub const fn number_to_variant(num: u8) -> Option<Self> {
         if num == 0 {
             Some(Self::Milli)
         } else if num == 1 {
@@ -63,21 +63,21 @@ impl TimeUnit {
         }
     }
 
-    pub fn larger_unit(&self) -> Option<Self> {
+    pub const fn larger_unit(&self) -> Option<Self> {
         Self::number_to_variant(self.numeric_value().saturating_add(1))
     }
 
-    pub fn smaller_unit(&self) -> Option<Self> {
+    pub const fn smaller_unit(&self) -> Option<Self> {
         Self::number_to_variant(self.numeric_value().wrapping_sub(1))
     }
 
     pub fn to_duration(&self, value: f64) -> Duration {
         match self {
-            TimeUnit::Milli => Duration::from_millis_f64(value),
-            TimeUnit::Sec => Duration::from_secs_f64(value),
-            TimeUnit::Min => Duration::from_mins_f64(value),
-            TimeUnit::Hour => Duration::from_hours_f64(value),
-            TimeUnit::Day => Duration::from_days_f64(value),
+            Self::Milli => Duration::from_millis_f64(value),
+            Self::Sec => Duration::from_secs_f64(value),
+            Self::Min => Duration::from_mins_f64(value),
+            Self::Hour => Duration::from_hours_f64(value),
+            Self::Day => Duration::from_days_f64(value),
         }
     }
 }

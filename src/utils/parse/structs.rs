@@ -14,11 +14,11 @@ impl TryFrom<char> for UnparsedTokenType {
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         if value.is_ascii_alphabetic() {
-            Ok(UnparsedTokenType::Text)
+            Ok(Self::Text)
         } else if value.is_ascii_digit() || value == '.' {
-            Ok(UnparsedTokenType::Number)
+            Ok(Self::Number)
         } else if value == ':' {
-            Ok(UnparsedTokenType::Separator)
+            Ok(Self::Separator)
         } else {
             Err(ParseError::InvalidCharacter(value))
         }
@@ -69,16 +69,16 @@ impl TryFrom<UnparsedToken> for Token {
                 if num.is_nan() || num.is_infinite() {
                     return Err(ParseError::InvalidNumber(string));
                 }
-                Token::Number(num)
+                Self::Number(num)
             }
             UnparsedTokenType::Text => {
                 if let Ok(n) = string.parse::<TimeUnit>() {
-                    Token::Unit(n)
+                    Self::Unit(n)
                 } else {
-                    Token::Meridiem(string.parse::<Meridiem>()?)
+                    Self::Meridiem(string.parse::<Meridiem>()?)
                 }
             }
-            UnparsedTokenType::Separator => Token::Separator,
+            UnparsedTokenType::Separator => Self::Separator,
         })
     }
 }
