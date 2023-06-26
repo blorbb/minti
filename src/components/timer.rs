@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use chrono::{DateTime, Duration as ChronoDuration, Local};
 use leptos::*;
 
 use crate::{
@@ -9,19 +8,12 @@ use crate::{
 };
 
 #[expect(clippy::too_many_lines, reason = "idk how make smaller")]
+#[expect(clippy::large_types_passed_by_value, reason = "can't be reference")]
 #[component]
 pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let time_remaining = timer.time_remaining;
+    let end_time = timer.end_time;
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
-    let (end_time, set_end_time) = create_signal(cx, None::<DateTime<Local>>);
-
-    let update_time_remaining = move || timer.update_time_remaining();
-    let update_end_time = move |time_remaining: Duration| {
-        let now = Local::now();
-        let time_to_end = ChronoDuration::from_std(time_remaining).unwrap();
-        let end_time = now + time_to_end;
-        set_end_time(Some(end_time));
-    };
 
     let countdown_handle = create_rw_signal(
         cx,
@@ -34,44 +26,41 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             .expect("Something went wrong setting end time handle"),
     );
 
+    // updates the countdown and end times when the timer's `running` status changes.
     create_effect(cx, move |_| {
         log!("running {}", (timer.running)());
         countdown_handle.get_untracked().clear();
+        end_time_handle.get_untracked().clear();
+
+        // update the countdown if the timer is running
+        // update the end time otherwise
         if (timer.running)() {
-            // update the countdown if the timer is running
-            end_time_handle.get_untracked().clear();
+            timer.update_time_remaining();
             countdown_handle.set(
-                set_interval_with_handle(update_time_remaining, Duration::from_millis(200))
-                    .expect("something went wrong with setting interval"),
+                set_interval_with_handle(
+                    move || timer.update_time_remaining(),
+                    Duration::from_millis(200),
+                )
+                .expect("something went wrong with setting interval"),
             );
         } else {
-            // update the end time if the timer is paused
-            if (timer.started)() {
-                end_time_handle.get_untracked().clear();
-                end_time_handle.set(
-                    set_interval_with_handle(
-                        move || update_end_time(time_remaining.get_untracked()),
-                        Duration::SECOND,
-                    )
+            timer.update_end_time();
+            end_time_handle.set(
+                set_interval_with_handle(move || timer.update_end_time(), Duration::SECOND)
                     .expect("Something went wrong setting end time handle"),
-                );
-            } else {
-                set_end_time(None);
-            }
+            );
         }
     });
 
-    let (input_value, set_input_value) = create_signal(cx, String::new());
-
     let set_timer_duration = move || {
-        let res = parse::parse_input(&input_value.get_untracked());
+        let res = parse::parse_input(&timer.input.get_untracked());
 
         match res {
             Ok(duration) => {
                 timer.reset_with_duration(duration);
                 timer.start();
                 set_error_message(None);
-                update_end_time(duration);
+                timer.update_end_time();
             }
             Err(e) => {
                 set_error_message(Some(e.to_string()));
@@ -119,8 +108,8 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     fallback=move |cx| view! { cx,
                         <input
                             type="text"
-                            prop:value=input_value // set to old value when reset timer
-                            on:input=move |ev| set_input_value(event_target_value(&ev))
+                            prop:value=timer.input // set to old value when reset timer
+                            on:input=move |ev| (timer.set_input)(event_target_value(&ev))
                             on:keydown=move |ev| {
                                 // log!("key {}", ev.key());
                                 if ev.key() == "Enter" {

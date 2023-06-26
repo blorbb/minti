@@ -1,18 +1,30 @@
+pub mod serialize;
+
 use chrono::{DateTime, Local};
 use leptos::{
-    create_rw_signal, create_signal, log, ReadSignal, RwSignal, Scope, SignalGetUntracked,
-    SignalSet, SignalSetUntracked, SignalUpdateUntracked, WriteSignal,
+    create_effect, create_rw_signal, create_signal, ReadSignal, RwSignal, Scope,
+    SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdateUntracked, SignalWith,
+    WriteSignal,
 };
 use std::time::Duration;
 use uuid::Uuid;
 
+/// A list of timers.
+///
+/// There will always be at least one timer. A new one is pushed
+/// if the vector is empty.
+///
+/// `cx` should be the largest possible context (App).
 #[derive(Debug, Clone)]
-pub struct TimerList(pub Vec<UniqueTimer>);
+pub struct TimerList {
+    vec: Vec<UniqueTimer>,
+    cx: Scope,
+}
 
 impl TimerList {
     pub fn new(cx: Scope, length: usize) -> Self {
         let vec = (0..length).map(|_| UniqueTimer::new(cx)).collect();
-        Self(vec)
+        Self { vec, cx }
     }
 
     /// Gets the timer with a specific id.
@@ -20,7 +32,44 @@ impl TimerList {
     /// # Panics
     /// Panics if the id cannot be found.
     pub fn timer_with_id(&self, id: Uuid) -> Timer {
-        (self.0.iter().find(|t| t.id == id).unwrap().timer)()
+        (self.vec.iter().find(|t| t.id == id).unwrap().timer)()
+    }
+
+    pub fn from_timers(cx: Scope, timers: Vec<Timer>) -> Self {
+        let vec = timers
+            .into_iter()
+            .map(|timer| UniqueTimer::from_timer(cx, timer))
+            .collect();
+        Self { vec, cx }
+    }
+
+    pub fn push_new(&mut self) {
+        self.vec.push(UniqueTimer::new(self.cx));
+    }
+
+    pub fn remove(&mut self, index: usize) -> UniqueTimer {
+        let removed_timer = self.vec.remove(index);
+        if self.is_empty() {
+            self.push_new();
+        };
+        removed_timer
+    }
+
+    pub fn clear(&mut self) {
+        self.vec.clear();
+        self.push_new();
+    }
+
+    pub const fn as_vec(&self) -> &Vec<UniqueTimer> {
+        &self.vec
+    }
+
+    pub fn len(&self) -> usize {
+        self.vec.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.vec.is_empty()
     }
 }
 
@@ -30,7 +79,7 @@ impl IntoIterator for TimerList {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.vec.into_iter()
     }
 }
 
@@ -47,11 +96,18 @@ impl UniqueTimer {
             timer: create_rw_signal(cx, Timer::new(cx)),
         }
     }
+
+    pub fn from_timer(cx: Scope, timer: Timer) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            timer: create_rw_signal(cx, timer),
+        }
+    }
 }
 
 // TODO use typestate?
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Timer {
     pub duration: ReadSignal<Duration>,
     set_duration: WriteSignal<Duration>,
@@ -66,6 +122,10 @@ pub struct Timer {
     set_finished: WriteSignal<bool>,
     pub time_remaining: ReadSignal<Duration>,
     set_time_remaining: WriteSignal<Duration>,
+    pub end_time: ReadSignal<Option<DateTime<Local>>>,
+    set_end_time: WriteSignal<Option<DateTime<Local>>>,
+    pub input: ReadSignal<String>,
+    pub set_input: WriteSignal<String>,
     // internal timekeeping stuff
     // using signals to mutate without needing `mut` and keeping `Copy`.
     // TODO change this to something else? RefCell does not impl `Copy`.
@@ -75,17 +135,10 @@ pub struct Timer {
     last_pause_time: RwSignal<Option<DateTime<Local>>>,
     /// The total amount of time that has been paused.
     total_paused_duration: RwSignal<Duration>,
+    /// Notifies subscribers when any of the statuses (start, pause, finish)
+    /// have changed. Get notified using `timer.state_change.track()`.
+    pub state_change: RwSignal<()>,
 }
-
-#[expect(clippy::expl_impl_clone_on_copy, reason = "logging")]
-impl Clone for Timer {
-    fn clone(&self) -> Self {
-        log!("deep cloned");
-        *self
-    }
-}
-
-impl Copy for Timer {}
 
 impl Timer {
     pub fn new(cx: Scope) -> Self {
@@ -95,6 +148,14 @@ impl Timer {
         let (paused, set_paused) = create_signal(cx, false);
         let (finished, set_finished) = create_signal(cx, false);
         let (time_remaining, set_time_remaining) = create_signal(cx, Duration::ZERO);
+        let (input, set_input) = create_signal(cx, String::new());
+        let (end_time, set_end_time) = create_signal(cx, None);
+
+        let state_change = create_rw_signal(cx, ());
+        create_effect(cx, move |_| {
+            input.track();
+            state_change.set(());
+        });
 
         Self {
             duration,
@@ -109,10 +170,19 @@ impl Timer {
             set_finished,
             time_remaining,
             set_time_remaining,
+            end_time,
+            set_end_time,
+            input,
+            set_input,
             start_time: create_rw_signal(cx, None),
             last_pause_time: create_rw_signal(cx, None),
             total_paused_duration: create_rw_signal(cx, Duration::ZERO),
+            state_change: create_rw_signal(cx, ()),
         }
+    }
+
+    pub fn notify_state_change(&self) {
+        self.state_change.set(());
     }
 
     pub fn get_time_elapsed(&self) -> Duration {
@@ -142,6 +212,7 @@ impl Timer {
 
         if self.finished.get_untracked() != time_remaining.is_zero() {
             (self.set_finished)(time_remaining.is_zero());
+            self.notify_state_change();
         };
 
         time_remaining
@@ -149,6 +220,20 @@ impl Timer {
 
     pub fn update_time_remaining(&self) {
         (self.set_time_remaining)(self.get_time_remaining());
+    }
+
+    #[expect(clippy::missing_panics_doc, reason = "it won't (hopefully)")]
+    pub fn get_end_time(&self) -> Option<DateTime<Local>> {
+        if !self.started.get_untracked() {
+            return None;
+        }
+        let now = Local::now();
+        let duration_to_end = chrono::Duration::from_std(self.get_time_remaining()).unwrap();
+        Some(now + duration_to_end)
+    }
+
+    pub fn update_end_time(&self) {
+        (self.set_end_time)(self.get_end_time());
     }
 
     pub fn reset_with_duration(&self, duration: Duration) {
@@ -161,6 +246,7 @@ impl Timer {
         self.start_time.set_untracked(None);
         self.last_pause_time.set_untracked(None);
         self.total_paused_duration.set_untracked(Duration::ZERO);
+        self.notify_state_change();
     }
 
     pub fn reset(&self) {
@@ -171,6 +257,7 @@ impl Timer {
         self.start_time.set_untracked(Some(Local::now()));
         (self.set_started)(true);
         (self.set_running)(true);
+        self.notify_state_change();
     }
 
     pub fn pause(&self) {
@@ -181,6 +268,7 @@ impl Timer {
         self.last_pause_time.set(Some(Local::now()));
         (self.set_paused)(true);
         (self.set_running)(false);
+        self.notify_state_change();
     }
 
     #[expect(
@@ -200,5 +288,6 @@ impl Timer {
         self.last_pause_time.set_untracked(None);
         (self.set_paused)(false);
         (self.set_running)(true);
+        self.notify_state_change();
     }
 }

@@ -1,0 +1,95 @@
+use std::time::Duration;
+
+use chrono::{Local, TimeZone};
+use leptos::{Scope, SignalGetUntracked, SignalSetUntracked};
+use serde::{Deserialize, Serialize};
+
+use super::{Timer, TimerList};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TimerJson {
+    /// The total duration (ms) of the timer.
+    duration: u64,
+    /// The unix timestamp (ms) of when the timer started.
+    /// Defined if the timer has started.
+    start: Option<i64>,
+    /// The unix timestamp (ms) of when the timer was last paused.
+    /// Defined if the timer is currently paused.
+    last_pause: Option<i64>,
+    /// The total duration (ms) that the timer has been paused for, excluding
+    /// the current pause (if timer is paused).
+    acc_pause_duration: u64,
+    /// The string that was inputted for this timer.
+    duration_input: String,
+}
+
+impl From<Timer> for TimerJson {
+    fn from(value: Timer) -> Self {
+        Self {
+            duration: value.duration.get_untracked().as_millis() as u64,
+            start: value
+                .start_time
+                .get_untracked()
+                .map(|time| time.timestamp_millis()),
+            last_pause: value
+                .last_pause_time
+                .get_untracked()
+                .map(|time| time.timestamp_millis()),
+            acc_pause_duration: value.total_paused_duration.get_untracked().as_millis() as u64,
+            duration_input: value.input.get_untracked(),
+        }
+    }
+}
+
+pub fn stringify_timers(timers: TimerList) -> String {
+    let timers: Vec<TimerJson> = timers
+        .into_iter()
+        .map(|timer| timer.timer.get_untracked().into())
+        .collect();
+    serde_json::to_string(&timers).expect("Failed to convert timers to JSON")
+}
+
+pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
+    let timers: Vec<TimerJson> = serde_json::from_str(json).ok()?;
+    let timers: Vec<Timer> = timers
+        .into_iter()
+        .filter_map(|unparsed| {
+            let timer = Timer::new(cx);
+            (timer.set_input)(unparsed.duration_input);
+            timer.reset_with_duration(Duration::from_millis(unparsed.duration));
+
+            // timer control methods (start, pause) set their respective properties to now.
+            // must override the times after calling these methods.
+
+            if let Some(start_time) = unparsed.start {
+                timer.start();
+                timer
+                    .start_time
+                    .set_untracked(Some(Local.timestamp_millis_opt(start_time).single()?));
+            };
+
+            if let Some(last_pause_time) = unparsed.last_pause {
+                // timer must also be started for it to be paused
+                if !timer.started.get_untracked() {
+                    return None;
+                }
+
+                timer.pause();
+                timer
+                    .last_pause_time
+                    .set_untracked(Some(Local.timestamp_millis_opt(last_pause_time).single()?));
+            }
+
+            timer
+                .total_paused_duration
+                .set_untracked(Duration::from_millis(unparsed.acc_pause_duration));
+
+            timer.update_time_remaining();
+            timer.update_end_time();
+
+            Some(timer)
+        })
+        .collect();
+
+    Some(TimerList::from_timers(cx, timers))
+}
