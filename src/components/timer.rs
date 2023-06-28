@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use leptos::*;
+use leptos::{leptos_dom::helpers::IntervalHandle, *};
 
 use crate::{
     components::{DurationDisplay, GrowingInput, Icon, RelativeTime},
@@ -15,41 +15,33 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let end_time = timer.end_time;
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
 
-    let countdown_handle = create_rw_signal(
+    // update the time remaining when the timer is running
+    repeat_while(
         cx,
-        set_interval_with_handle(|| (), Duration::SECOND)
-            .expect("something went wrong with setting interval"),
-    );
-    let end_time_handle = create_rw_signal(
-        cx,
-        set_interval_with_handle(|| (), Duration::SECOND)
-            .expect("Something went wrong setting end time handle"),
-    );
-
-    // updates the countdown and end times when the timer's `running` status changes.
-    create_effect(cx, move |_| {
-        log!("running {}", (timer.running)());
-        countdown_handle.get_untracked().clear();
-        end_time_handle.get_untracked().clear();
-
-        // update the countdown if the timer is running
-        // update the end time otherwise
-        if (timer.running)() {
+        timer.running,
+        move || {
+            log!("updating time rem");
             timer.update_time_remaining();
-            countdown_handle.set(
-                set_interval_with_handle(
-                    move || timer.update_time_remaining(),
-                    Duration::from_millis(200),
-                )
-                .expect("something went wrong with setting interval"),
-            );
-        } else {
+        },
+        Duration::from_millis(200),
+    );
+
+    // update the end time when the timer is paused (started and not running)
+    repeat_while(
+        cx,
+        timer.paused,
+        move || {
+            log!("updating end");
             timer.update_end_time();
-            end_time_handle.set(
-                set_interval_with_handle(move || timer.update_end_time(), Duration::SECOND)
-                    .expect("Something went wrong setting end time handle"),
-            );
-        }
+        },
+        Duration::SECOND,
+    );
+    // also need to update when the timer resets,
+    // so that the end time component is removed
+    create_effect(cx, move |_| {
+        if !(timer.started)() {
+            timer.update_end_time();
+        };
     });
 
     let set_timer_duration = move || {
@@ -161,4 +153,33 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             </div>
         </div>
     }
+}
+
+/// Runs a callback and repeats it while `when` is true.
+fn repeat_while(
+    cx: Scope,
+    when: impl Fn() -> bool + 'static,
+    callback: impl Fn() + Clone + 'static,
+    duration: Duration,
+) {
+    // needs double Option as the outer one is None on first run,
+    // but needs to be None if when() is false.
+    #[expect(clippy::option_option, reason = "required")]
+    create_effect(cx, move |prev_handle: Option<Option<IntervalHandle>>| {
+        // cancel the previous handle if it exists
+        if let Some(prev_handle) = prev_handle.flatten() {
+            prev_handle.clear();
+        };
+
+        if when() {
+            callback();
+            Some(
+                set_interval_with_handle(callback.clone(), duration)
+                    .expect("Could not create interval"),
+            )
+        } else {
+            None
+        }
+        // return handle so that next call can access it
+    });
 }
