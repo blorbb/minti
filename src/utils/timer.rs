@@ -22,9 +22,11 @@ pub struct TimerList {
 }
 
 impl TimerList {
-    pub fn new(cx: Scope, length: usize) -> Self {
-        let vec = (0..length).map(|_| UniqueTimer::new(cx)).collect();
-        Self { vec, cx }
+    pub fn new(cx: Scope) -> Self {
+        Self {
+            vec: vec![UniqueTimer::new(cx)],
+            cx,
+        }
     }
 
     /// Gets the timer with a specific id.
@@ -67,6 +69,13 @@ impl TimerList {
 
     pub fn is_empty(&self) -> bool {
         self.vec.is_empty()
+    }
+
+    /// Returns whether this timer list is unchanged from initialisation.
+    ///
+    /// Checks that there is 1 timer with no input.
+    pub fn is_initial(&self) -> bool {
+        self.len() == 1 && self.as_vec()[0].timer.input.get_untracked().is_empty()
     }
 }
 

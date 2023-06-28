@@ -7,17 +7,17 @@ use crate::{
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
-    let timers = create_rw_signal(cx, TimerList::new(cx, 1));
+    let timers = create_rw_signal(cx, TimerList::new(cx));
 
     // store the timers into local storage when any of their statuses change
     create_effect(cx, move |_| {
-        timers()
-            .as_vec()
-            .iter()
-            .for_each(|timer| timer.timer.state_change.track());
-        // don't set storage if the timer list is from the signal creation.
-        // checking there is one input and it's empty.
-        if timers().len() == 1 && !(timers().as_vec()[0].timer.input)().is_empty() {
+        timers().as_vec().iter().for_each(|timer| {
+            timer.timer.state_change.track();
+            timer.timer.input.track();
+        });
+
+        // don't set storage if the timer list is from the signal creation above.
+        if !timers().is_initial() {
             let _ = store_timers(timers());
         }
     });
