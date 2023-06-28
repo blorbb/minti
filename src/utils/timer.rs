@@ -32,14 +32,11 @@ impl TimerList {
     /// # Panics
     /// Panics if the id cannot be found.
     pub fn timer_with_id(&self, id: Uuid) -> Timer {
-        (self.vec.iter().find(|t| t.id == id).unwrap().timer)()
+        self.vec.iter().find(|t| t.id == id).unwrap().timer
     }
 
     pub fn from_timers(cx: Scope, timers: Vec<Timer>) -> Self {
-        let vec = timers
-            .into_iter()
-            .map(|timer| UniqueTimer::from_timer(cx, timer))
-            .collect();
+        let vec = timers.into_iter().map(UniqueTimer::from_timer).collect();
         Self { vec, cx }
     }
 
@@ -86,21 +83,21 @@ impl IntoIterator for TimerList {
 #[derive(Debug, Clone, Copy)]
 pub struct UniqueTimer {
     pub id: Uuid,
-    pub timer: RwSignal<Timer>,
+    pub timer: Timer,
 }
 
 impl UniqueTimer {
     pub fn new(cx: Scope) -> Self {
         Self {
             id: Uuid::new_v4(),
-            timer: create_rw_signal(cx, Timer::new(cx)),
+            timer: Timer::new(cx),
         }
     }
 
-    pub fn from_timer(cx: Scope, timer: Timer) -> Self {
+    pub fn from_timer(timer: Timer) -> Self {
         Self {
             id: Uuid::new_v4(),
-            timer: create_rw_signal(cx, timer),
+            timer,
         }
     }
 }

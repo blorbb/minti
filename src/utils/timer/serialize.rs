@@ -42,10 +42,7 @@ impl From<Timer> for TimerJson {
 }
 
 pub fn stringify_timers(timers: TimerList) -> String {
-    let timers: Vec<TimerJson> = timers
-        .into_iter()
-        .map(|timer| timer.timer.get_untracked().into())
-        .collect();
+    let timers: Vec<TimerJson> = timers.into_iter().map(|timer| timer.timer.into()).collect();
     serde_json::to_string(&timers).expect("Failed to convert timers to JSON")
 }
 

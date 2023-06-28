@@ -14,10 +14,10 @@ pub fn App(cx: Scope) -> impl IntoView {
         timers()
             .as_vec()
             .iter()
-            .for_each(|timer| (timer.timer)().state_change.track());
+            .for_each(|timer| timer.timer.state_change.track());
         // don't set storage if the timer list is from the signal creation.
         // checking there is one input and it's empty.
-        if timers().len() == 1 && !((timers().as_vec()[0].timer)().input)().is_empty() {
+        if timers().len() == 1 && !(timers().as_vec()[0].timer.input)().is_empty() {
             let _ = store_timers(timers());
         }
     });
