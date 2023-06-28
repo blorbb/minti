@@ -1,6 +1,6 @@
 use leptos::*;
 
-use crate::{components::TimerDisplay, utils::timer::TimerList};
+use crate::{components::TimerDisplay, utils::timer::{TimerList, Timer}};
 
 #[component]
 pub fn HomePage(cx: Scope) -> impl IntoView {
@@ -10,9 +10,9 @@ pub fn HomePage(cx: Scope) -> impl IntoView {
         <div class="page-home">
             <For
                 each=timers
-                key=|timer| timer.id
+                key=Timer::id
                 view=move |cx, timer| view! { cx,
-                    <TimerDisplay timer=timer.timer />
+                    <TimerDisplay timer=timer />
                 }
             />
         </div>

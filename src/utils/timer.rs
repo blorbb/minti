@@ -17,36 +17,32 @@ use uuid::Uuid;
 /// `cx` should be the largest possible context (App).
 #[derive(Debug, Clone)]
 pub struct TimerList {
-    vec: Vec<UniqueTimer>,
+    vec: Vec<Timer>,
     cx: Scope,
 }
 
 impl TimerList {
     pub fn new(cx: Scope) -> Self {
         Self {
-            vec: vec![UniqueTimer::new(cx)],
+            vec: vec![Timer::new(cx)],
             cx,
         }
     }
 
     /// Gets the timer with a specific id.
-    ///
-    /// # Panics
-    /// Panics if the id cannot be found.
-    pub fn timer_with_id(&self, id: Uuid) -> Timer {
-        self.vec.iter().find(|t| t.id == id).unwrap().timer
+    pub fn timer_with_id(&self, id: Uuid) -> Option<&Timer> {
+        self.vec.iter().find(|t| t.id() == id)
     }
 
     pub fn from_timers(cx: Scope, timers: Vec<Timer>) -> Self {
-        let vec = timers.into_iter().map(UniqueTimer::from_timer).collect();
-        Self { vec, cx }
+        Self { vec: timers, cx }
     }
 
     pub fn push_new(&mut self) {
-        self.vec.push(UniqueTimer::new(self.cx));
+        self.vec.push(Timer::new(self.cx));
     }
 
-    pub fn remove(&mut self, index: usize) -> UniqueTimer {
+    pub fn remove(&mut self, index: usize) -> Timer {
         let removed_timer = self.vec.remove(index);
         if self.is_empty() {
             self.push_new();
@@ -59,7 +55,7 @@ impl TimerList {
         self.push_new();
     }
 
-    pub const fn as_vec(&self) -> &Vec<UniqueTimer> {
+    pub const fn as_vec(&self) -> &Vec<Timer> {
         &self.vec
     }
 
@@ -75,39 +71,17 @@ impl TimerList {
     ///
     /// Checks that there is 1 timer with no input.
     pub fn is_initial(&self) -> bool {
-        self.len() == 1 && self.as_vec()[0].timer.input.get_untracked().is_empty()
+        self.len() == 1 && self.as_vec()[0].input.get_untracked().is_empty()
     }
 }
 
 impl IntoIterator for TimerList {
-    type Item = UniqueTimer;
+    type Item = Timer;
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.vec.into_iter()
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct UniqueTimer {
-    pub id: Uuid,
-    pub timer: Timer,
-}
-
-impl UniqueTimer {
-    pub fn new(cx: Scope) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            timer: Timer::new(cx),
-        }
-    }
-
-    pub fn from_timer(timer: Timer) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            timer,
-        }
     }
 }
 
@@ -144,6 +118,7 @@ pub struct Timer {
     /// Notifies subscribers when any of the statuses (start, pause, finish)
     /// have changed. Get notified using `timer.state_change.track()`.
     pub state_change: RwSignal<()>,
+    id: Uuid,
 }
 
 impl Timer {
@@ -184,6 +159,7 @@ impl Timer {
             last_pause_time: create_rw_signal(cx, None),
             total_paused_duration: create_rw_signal(cx, Duration::ZERO),
             state_change: create_rw_signal(cx, ()),
+            id: Uuid::new_v4(),
         }
     }
 
@@ -295,5 +271,9 @@ impl Timer {
         (self.set_paused)(false);
         (self.set_running)(true);
         self.notify_state_change();
+    }
+
+    pub const fn id(&self) -> Uuid {
+        self.id
     }
 }

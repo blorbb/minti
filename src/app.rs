@@ -12,8 +12,8 @@ pub fn App(cx: Scope) -> impl IntoView {
     // store the timers into local storage when any of their statuses change
     create_effect(cx, move |_| {
         timers().as_vec().iter().for_each(|timer| {
-            timer.timer.state_change.track();
-            timer.timer.input.track();
+            timer.state_change.track();
+            timer.input.track();
         });
 
         // don't set storage if the timer list is from the signal creation above.
