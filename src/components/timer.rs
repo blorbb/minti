@@ -62,9 +62,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
     view! { cx,
         <div class="com-timer"
-            data-started={move || (timer.started)().to_string()}
-            data-paused={move || (timer.paused)().to_string()}
-            data-running={move || (timer.running)().to_string()}
+            data-started=reactive::as_attr(timer.started)
+            data-paused=reactive::as_attr(timer.paused)
+            data-running=reactive::as_attr(timer.running)
         >
             // stuff above the input with extra info
             <div class="heading">
