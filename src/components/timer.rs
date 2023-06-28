@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use leptos::{leptos_dom::helpers::IntervalHandle, *};
+use leptos::*;
 
 use crate::{
     components::{DurationDisplay, GrowingInput, Icon, RelativeTime},
-    utils::{parse, timer::Timer},
+    utils::{parse, reactive, timer::Timer},
 };
 
 #[expect(clippy::too_many_lines, reason = "idk how make smaller")]
@@ -16,7 +16,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
 
     // update the time remaining when the timer is running
-    repeat_while(
+    reactive::repeat_while(
         cx,
         timer.running,
         move || {
@@ -27,7 +27,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     );
 
     // update the end time when the timer is paused (started and not running)
-    repeat_while(
+    reactive::repeat_while(
         cx,
         timer.paused,
         move || {
@@ -153,33 +153,4 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             </div>
         </div>
     }
-}
-
-/// Runs a callback and repeats it while `when` is true.
-fn repeat_while(
-    cx: Scope,
-    when: impl Fn() -> bool + 'static,
-    callback: impl Fn() + Clone + 'static,
-    duration: Duration,
-) {
-    // needs double Option as the outer one is None on first run,
-    // but needs to be None if when() is false.
-    #[expect(clippy::option_option, reason = "required")]
-    create_effect(cx, move |prev_handle: Option<Option<IntervalHandle>>| {
-        // cancel the previous handle if it exists
-        if let Some(prev_handle) = prev_handle.flatten() {
-            prev_handle.clear();
-        };
-
-        if when() {
-            callback();
-            Some(
-                set_interval_with_handle(callback.clone(), duration)
-                    .expect("Could not create interval"),
-            )
-        } else {
-            None
-        }
-        // return handle so that next call can access it
-    });
 }
