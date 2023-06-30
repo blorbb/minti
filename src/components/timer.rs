@@ -42,9 +42,8 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     // also need to update when the timer resets,
     // so that the end time component is removed
     create_effect(cx, move |_| {
-        if !(timer.started)() {
-            timer.update_end_time();
-        };
+        timer.started.track();
+        timer.update_end_time();
     });
 
     let set_timer_duration = move || {
@@ -55,7 +54,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 timer.reset_with_duration(duration);
                 timer.start();
                 set_error_message(None);
-                timer.update_end_time();
             }
             Err(e) => {
                 set_error_message(Some(e.to_string()));
