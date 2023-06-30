@@ -42,12 +42,25 @@ impl TimerList {
         self.vec.push(Timer::new(self.cx));
     }
 
-    pub fn remove(&mut self, index: usize) -> Timer {
+    pub fn remove_index(&mut self, index: usize) -> Timer {
         let removed_timer = self.vec.remove(index);
         if self.is_empty() {
             self.push_new();
         };
         removed_timer
+    }
+
+    /// Removes the timer with the specified id.
+    /// 
+    /// # Panics
+    /// Panics if no timer with the given id is found.
+    pub fn remove_id(&mut self, id: Uuid) -> Timer {
+        let index = self
+            .vec
+            .iter()
+            .position(|t| t.id() == id)
+            .expect("Could not find timer with specified id.");
+        self.remove_index(index)
     }
 
     pub fn clear(&mut self) {

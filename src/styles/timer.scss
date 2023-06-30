@@ -70,6 +70,25 @@
             }
         }
     }
+
+    button.delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 2rem;
+        aspect-ratio: 1;
+
+        color: var(--clr-red-400);
+
+        transition-property: color, background-color;
+        transition-duration: var(--time-transition-short);
+        transition-timing-function: linear;
+
+        &:hover {
+            color: var(--clr-red-800);
+            background-color: var(--clr-red-400);
+        }
+    }
 }
 
 @keyframes scale-in {

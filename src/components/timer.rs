@@ -4,7 +4,10 @@ use leptos::*;
 
 use crate::{
     components::{DurationDisplay, GrowingInput, Icon, RelativeTime},
-    utils::{parse, reactive, timer::Timer},
+    utils::{
+        parse, reactive,
+        timer::{Timer, TimerList},
+    },
 };
 
 #[expect(clippy::too_many_lines, reason = "idk how make smaller")]
@@ -151,6 +154,20 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     </button>
                 </Show>
             </div>
+
+            <button
+                class="delete"
+                on:click=move |_| remove_self(cx, timer)
+            >
+                <Icon inline=true icon="ph:x-bold"/>
+            </button>
         </div>
     }
+}
+
+fn remove_self(cx: Scope, timer: Timer) {
+    let timers = expect_context::<RwSignal<TimerList>>(cx);
+    timers.update(|t| {
+        t.remove_id(timer.id());
+    });
 }
