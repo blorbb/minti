@@ -1,5 +1,4 @@
-use std::time::Duration;
-
+use std::time::Duration as StdDuration;
 use leptos::*;
 
 use crate::{
@@ -26,7 +25,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             log!("updating time rem");
             timer.update_time_remaining();
         },
-        Duration::from_millis(200),
+        StdDuration::from_millis(200),
     );
 
     // update the end time when the timer is paused (started and not running)
@@ -37,7 +36,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             log!("updating end");
             timer.update_end_time();
         },
-        Duration::SECOND,
+        StdDuration::SECOND,
     );
     // also need to update when the timer resets,
     // so that the end time component is removed

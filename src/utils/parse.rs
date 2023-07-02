@@ -3,8 +3,7 @@ mod parse_tokens;
 mod structs;
 mod unparsed_tokens;
 
-use std::time::Duration;
-
+use time::Duration;
 use self::{errors::ParseError, structs::Token};
 
 /// Tries to parse a user inputted string as a duration.
@@ -37,17 +36,14 @@ use self::{errors::ParseError, structs::Token};
 ///
 /// # Examples
 /// ```rust
-/// use std::time::Duration;
-/// use minti_ui::utils::duration::extras::DurationUtils;
+/// use time::{Duration, ext::NumericalDuration};
 /// # use minti_ui::utils::parse::parse_input;
 ///
-/// assert_eq!(parse_input("3"), Ok(Duration::from_mins(3)));
+/// assert_eq!(parse_input("3").unwrap(), 3.minutes());
 /// assert_eq!(
-///     parse_input("3h 20m 10"),
-///     Ok(Duration::from_hours(3)
-///         + Duration::from_mins(20)
-///         + Duration::from_secs(10))
-///     );
+///     parse_input("3h 20m 10").unwrap(),
+///     3.hours() + 20.minutes() + 10.seconds()
+/// );
 /// ```
 pub fn parse_input(input: &str) -> Result<Duration, ParseError> {
     let tokens = unparsed_tokens::build_unparsed_tokens(input)?;
@@ -65,16 +61,14 @@ pub fn parse_input(input: &str) -> Result<Duration, ParseError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::duration::extras::DurationUtils;
-    use std::time::Duration;
-
     use super::*;
+    use time::ext::NumericalDuration;
 
     #[test]
     fn plain_int_as_mins() {
-        assert_eq!(parse_input("23"), Ok(Duration::from_mins(23)));
-        assert_eq!(parse_input("938"), Ok(Duration::from_mins(938)));
-        assert_eq!(parse_input("0"), Ok(Duration::from_mins(0)));
+        assert_eq!(parse_input("23").unwrap(), 23.minutes());
+        assert_eq!(parse_input("938").unwrap(), 938.minutes());
+        assert_eq!(parse_input("0").unwrap(), 0.minutes());
     }
 
     mod units {
@@ -82,71 +76,57 @@ mod tests {
 
         #[test]
         fn single_units() {
-            assert_eq!(parse_input("3h"), Ok(Duration::from_hours(3)));
-            assert_eq!(parse_input("10 h"), Ok(Duration::from_hours(10)));
-            assert_eq!(parse_input("1.61 h"), Ok(Duration::from_hours_f64(1.61)));
-            assert_eq!(parse_input("2 hours"), Ok(Duration::from_hours_f64(2.0)));
+            assert_eq!(parse_input("3h").unwrap(), 3.hours());
+            assert_eq!(parse_input("10 h").unwrap(), 10.hours());
+            assert_eq!(parse_input("1.61 h").unwrap(), 1.61.hours());
+            assert_eq!(parse_input("2 hours").unwrap(), 2.hours());
 
-            assert_eq!(parse_input("3m"), Ok(Duration::from_mins(3)));
-            assert_eq!(parse_input("49ms"), Ok(Duration::from_millis(49)));
+            assert_eq!(parse_input("3m").unwrap(), 3.minutes());
+            assert_eq!(parse_input("49ms").unwrap(), 49.milliseconds());
         }
 
         #[test]
         fn multiple_units() {
-            assert_eq!(
-                parse_input("3h21m"),
-                Ok(Duration::from_hours(3) + Duration::from_mins(21))
-            );
+            assert_eq!(parse_input("3h21m").unwrap(), 3.hours() + 21.minutes());
 
             assert_eq!(
-                parse_input("8d 23h 12m 5s 91ms"),
-                Ok(Duration::from_days(8)
-                    + Duration::from_hours(23)
-                    + Duration::from_mins(12)
-                    + Duration::from_secs(5)
-                    + Duration::from_millis(91))
+                parse_input("8d 23h 12m 5s 91ms").unwrap(),
+                8.days() + 23.hours() + 12.minutes() + 5.seconds() + 91.milliseconds()
             )
         }
 
         #[test]
         fn trailing_number() {
-            assert_eq!(
-                parse_input("3h4"),
-                Ok(Duration::from_hours(3) + Duration::from_mins(4))
-            );
+            assert_eq!(parse_input("3h4").unwrap(), 3.hours() + 4.minutes());
 
             assert_eq!(
-                parse_input("3d 23h 12.3m 2"),
-                Ok(Duration::from_days(3)
-                    + Duration::from_hours(23)
-                    + Duration::from_mins_f64(12.3)
-                    + Duration::from_secs(2))
+                parse_input("3d 23h 12.3m 2").unwrap(),
+                3.days() + 23.hours() + 12.3.minutes() + 2.seconds()
             )
         }
     }
 
-    mod time {
-        use chrono::NaiveTime;
-
+    mod times {
         use crate::utils::time::relative::duration_until_time;
+        use time::Time;
 
         use super::*;
 
         #[test]
         fn specific_12h_time() {
             assert_eq!(
-                parse_input("3pm").unwrap().as_secs(),
-                duration_until_time(NaiveTime::from_hms_opt(3 + 12, 0, 0).unwrap()).as_secs()
+                parse_input("3pm").unwrap().whole_seconds(),
+                duration_until_time(Time::from_hms(3 + 12, 0, 0).unwrap()).whole_seconds()
             );
 
             assert_eq!(
-                parse_input("3:12pm").unwrap().as_secs(),
-                duration_until_time(NaiveTime::from_hms_opt(3 + 12, 12, 0).unwrap()).as_secs()
+                parse_input("3:12pm").unwrap().whole_seconds(),
+                duration_until_time(Time::from_hms(3 + 12, 12, 0).unwrap()).whole_seconds()
             );
 
             assert_eq!(
-                parse_input("5:12:30 am").unwrap().as_secs(),
-                duration_until_time(NaiveTime::from_hms_opt(5, 12, 30).unwrap()).as_secs()
+                parse_input("5:12:30 am").unwrap().whole_seconds(),
+                duration_until_time(Time::from_hms(5, 12, 30).unwrap()).whole_seconds()
             );
         }
     }

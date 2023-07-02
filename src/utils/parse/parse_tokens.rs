@@ -1,7 +1,6 @@
-use std::time::Duration;
+use time::{Duration, ext::NumericalDuration};
 
 use crate::utils::{
-    duration::extras::DurationUtils,
     time::{
         meridiem::{self, Meridiem},
         relative,
@@ -41,14 +40,14 @@ fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration, ParseError> 
     let Token::Number(n) = tokens[0] else {
         return Err(ParseError::Empty);
     };
-    Ok(Duration::from_mins_f64(n))
+    Ok(n.minutes())
 }
 
 /// Tries to parse a token list as a specific time,
 /// in 12h or 24h format.
 fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
     let mut meridiem: Option<Meridiem> = None;
-    let mut time_sections = [0, 0, 0];
+    let mut time_sections: [u8; 3] = [0, 0, 0];
     // 0 = hour, 1 = min, 2 = sec
     let mut current_unit = 0;
 
@@ -69,7 +68,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
                 }
             }
             // only allow times with integers
-            Token::Number(n) if n.fract() == 0.0 => time_sections[current_unit] = *n as u32,
+            Token::Number(n) if n.fract() == 0.0 => time_sections[current_unit] = *n as u8,
             Token::Number(n) => return Err(ParseError::InvalidNumber(n.to_string())),
             Token::Meridiem(m) => meridiem = Some(*m),
             _ => return Err(ParseError::ClashingFormats),

@@ -1,8 +1,9 @@
-use std::time::Duration;
+use time::Duration;
 
-use chrono::{Local, TimeZone};
 use leptos::{Scope, SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
+
+use crate::utils::time::timestamp;
 
 use super::{Timer, TimerList};
 
@@ -26,16 +27,19 @@ pub struct TimerJson {
 impl From<Timer> for TimerJson {
     fn from(value: Timer) -> Self {
         Self {
-            duration: value.duration.get_untracked().as_millis() as u64,
+            duration: value.duration.get_untracked().whole_milliseconds() as u64,
             start: value
                 .start_time
                 .get_untracked()
-                .map(|time| time.timestamp_millis()),
+                .map(timestamp::to_unix_millis),
             last_pause: value
                 .last_pause_time
                 .get_untracked()
-                .map(|time| time.timestamp_millis()),
-            acc_pause_duration: value.total_paused_duration.get_untracked().as_millis() as u64,
+                .map(timestamp::to_unix_millis),
+            acc_pause_duration: value
+                .total_paused_duration
+                .get_untracked()
+                .whole_milliseconds() as u64,
             duration_input: value.input.get_untracked(),
         }
     }
@@ -53,7 +57,7 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
         .filter_map(|unparsed| {
             let timer = Timer::new(cx);
             (timer.set_input)(unparsed.duration_input);
-            timer.reset_with_duration(Duration::from_millis(unparsed.duration));
+            timer.reset_with_duration(Duration::milliseconds(unparsed.duration as i64));
 
             // timer control methods (start, pause) set their respective properties to now.
             // must override the times after calling these methods.
@@ -62,7 +66,7 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
                 timer.start();
                 timer
                     .start_time
-                    .set_untracked(Some(Local.timestamp_millis_opt(start_time).single()?));
+                    .set_untracked(Some(timestamp::from_unix_millis(start_time).ok()?));
             };
 
             if let Some(last_pause_time) = unparsed.last_pause {
@@ -74,12 +78,12 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
                 timer.pause();
                 timer
                     .last_pause_time
-                    .set_untracked(Some(Local.timestamp_millis_opt(last_pause_time).single()?));
+                    .set_untracked(Some(timestamp::from_unix_millis(last_pause_time).ok()?));
             }
 
             timer
                 .total_paused_duration
-                .set_untracked(Duration::from_millis(unparsed.acc_pause_duration));
+                .set_untracked(Duration::milliseconds(unparsed.acc_pause_duration as i64));
 
             timer.update_time_remaining();
             timer.update_end_time();

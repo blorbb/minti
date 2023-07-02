@@ -1,12 +1,11 @@
 pub mod serialize;
 
-use chrono::{DateTime, Local};
 use leptos::{
     create_effect, create_rw_signal, create_signal, ReadSignal, RwSignal, Scope,
     SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdateUntracked, SignalWith,
     WriteSignal,
 };
-use std::time::Duration;
+use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
 /// A list of timers.
@@ -51,7 +50,7 @@ impl TimerList {
     }
 
     /// Removes the timer with the specified id.
-    /// 
+    ///
     /// # Panics
     /// Panics if no timer with the given id is found.
     pub fn remove_id(&mut self, id: Uuid) -> Timer {
@@ -115,17 +114,17 @@ pub struct Timer {
     set_finished: WriteSignal<bool>,
     pub time_remaining: ReadSignal<Duration>,
     set_time_remaining: WriteSignal<Duration>,
-    pub end_time: ReadSignal<Option<DateTime<Local>>>,
-    set_end_time: WriteSignal<Option<DateTime<Local>>>,
+    pub end_time: ReadSignal<Option<OffsetDateTime>>,
+    set_end_time: WriteSignal<Option<OffsetDateTime>>,
     pub input: ReadSignal<String>,
     pub set_input: WriteSignal<String>,
     // internal timekeeping stuff
     // using signals to mutate without needing `mut` and keeping `Copy`.
     // TODO change this to something else? RefCell does not impl `Copy`.
     // cannot use Instant as it doesn't work in wasm.
-    start_time: RwSignal<Option<DateTime<Local>>>,
+    start_time: RwSignal<Option<OffsetDateTime>>,
     /// The time of the last pause. Is `None` if the timer is not paused.
-    last_pause_time: RwSignal<Option<DateTime<Local>>>,
+    last_pause_time: RwSignal<Option<OffsetDateTime>>,
     /// The total amount of time that has been paused.
     total_paused_duration: RwSignal<Duration>,
     /// Notifies subscribers when any of the statuses (start, pause, finish)
@@ -186,12 +185,8 @@ impl Timer {
         let end_time = self
             .last_pause_time
             .get_untracked()
-            .unwrap_or_else(Local::now);
-        (end_time - start_time)
-            .clamp(chrono::Duration::zero(), chrono::Duration::max_value())
-            .to_std()
-            .expect("Clamped duration is non-negative")
-            - self.total_paused_duration.get_untracked()
+            .unwrap_or_else(|| OffsetDateTime::now_local().unwrap());
+        (end_time - start_time) - self.total_paused_duration.get_untracked()
     }
 
     /// Returns the time remaining in this timer.
@@ -218,12 +213,12 @@ impl Timer {
     }
 
     #[expect(clippy::missing_panics_doc, reason = "it won't (hopefully)")]
-    pub fn get_end_time(&self) -> Option<DateTime<Local>> {
+    pub fn get_end_time(&self) -> Option<OffsetDateTime> {
         if !self.started.get_untracked() {
             return None;
         }
-        let now = Local::now();
-        let duration_to_end = chrono::Duration::from_std(self.get_time_remaining()).unwrap();
+        let now = OffsetDateTime::now_local().unwrap();
+        let duration_to_end = self.get_time_remaining();
         Some(now + duration_to_end)
     }
 
@@ -249,7 +244,8 @@ impl Timer {
     }
 
     pub fn start(&self) {
-        self.start_time.set_untracked(Some(Local::now()));
+        self.start_time
+            .set_untracked(Some(OffsetDateTime::now_local().unwrap()));
         (self.set_started)(true);
         (self.set_running)(true);
         self.notify_state_change();
@@ -260,7 +256,8 @@ impl Timer {
             return;
         }
 
-        self.last_pause_time.set(Some(Local::now()));
+        self.last_pause_time
+            .set(Some(OffsetDateTime::now_local().unwrap()));
         (self.set_paused)(true);
         (self.set_running)(false);
         self.notify_state_change();
@@ -276,9 +273,8 @@ impl Timer {
         }
 
         self.total_paused_duration.update_untracked(|v| {
-            *v += (Local::now() - self.last_pause_time.get_untracked().unwrap())
-                .to_std()
-                .unwrap();
+            *v += OffsetDateTime::now_local().unwrap()
+                - self.last_pause_time.get_untracked().unwrap()
         });
         self.last_pause_time.set_untracked(None);
         (self.set_paused)(false);

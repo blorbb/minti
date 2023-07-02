@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use chrono::NaiveTime;
+use time::Time;
 
 use crate::utils::parse::errors::ParseError;
 
@@ -32,11 +32,11 @@ impl FromStr for Meridiem {
 /// - 12pm becomes 12:00:00.
 /// - All other times are as expected.
 ///
-/// Follows the same restrictions as `NaiveTime::from_hms_opt`,
+/// Follows the same restrictions as `Time::from_hms_opt`,
 /// but the `hour` also cannot be greater than 12.
 ///
 /// Returns `None` on invalid hour, minute and/or second.
-pub const fn new_12h_time(hour: u32, min: u32, sec: u32, meridiem: Meridiem) -> Option<NaiveTime> {
+pub fn new_12h_time(hour: u8, min: u8, sec: u8, meridiem: Meridiem) -> Option<Time> {
     let hour_12 = match meridiem {
         _ if hour > 12 => return None,
         // 12am becomes 00:00
@@ -46,5 +46,5 @@ pub const fn new_12h_time(hour: u32, min: u32, sec: u32, meridiem: Meridiem) -> 
         Meridiem::Post if hour == 12 => 12,
         Meridiem::Post => hour + 12,
     };
-    NaiveTime::from_hms_opt(hour_12, min, sec)
+    Time::from_hms(hour_12, min, sec).ok()
 }

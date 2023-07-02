@@ -1,40 +1,24 @@
-use std::time::Duration;
+use std::ops::Add;
 
-use chrono::{prelude::*, Days};
+use time::{ext::NumericalDuration, Duration, OffsetDateTime, Time};
 
-#[expect(
-    clippy::missing_panics_doc,
-    reason = "NaiveTime components should not panic when used in with_*"
-)]
-pub fn get_next_occurrence(target_time: NaiveTime) -> DateTime<Local> {
-    let current_time = Local::now().time();
+pub fn get_next_occurrence(target_time: Time) -> OffsetDateTime {
+    let current_time = OffsetDateTime::now_local().unwrap().time();
 
     if current_time < target_time {
         // same day
-        Local::now()
-            .with_hour(target_time.hour())
+        OffsetDateTime::now_local()
             .unwrap()
-            .with_minute(target_time.minute())
-            .unwrap()
-            .with_second(target_time.second())
-            .unwrap()
+            .replace_time(target_time)
     } else {
         // next day
-        Local::now()
-            .checked_add_days(Days::new(1))
+        OffsetDateTime::now_local()
             .unwrap()
-            .with_hour(target_time.hour())
-            .unwrap()
-            .with_minute(target_time.minute())
-            .unwrap()
-            .with_second(target_time.second())
-            .unwrap()
+            .add(1.days())
+            .replace_time(target_time)
     }
 }
 
-pub fn duration_until_time(target_time: NaiveTime) -> Duration {
-    let chrono_duration = get_next_occurrence(target_time) - Local::now();
-    chrono_duration
-        .to_std()
-        .expect("Next occurrence is always after now")
+pub fn duration_until_time(target_time: Time) -> Duration {
+    get_next_occurrence(target_time) - OffsetDateTime::now_local().unwrap()
 }
