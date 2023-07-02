@@ -2,7 +2,7 @@ use time::Duration;
 
 use leptos::*;
 
-use crate::utils::duration::units;
+use crate::utils::time::units;
 
 #[component]
 pub fn DurationDisplay(cx: Scope, #[prop(into)] duration: Signal<Duration>) -> impl IntoView {

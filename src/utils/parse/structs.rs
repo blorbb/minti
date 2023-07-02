@@ -1,4 +1,4 @@
-use crate::utils::{duration::units::TimeUnit, time::meridiem::Meridiem};
+use crate::utils::{time::units::TimeUnit, time::meridiem::Meridiem};
 
 use super::errors::ParseError;
 

@@ -1,10 +1,7 @@
 use std::str::FromStr;
-
-use std::time::Duration;
+use time::{ext::NumericalDuration, Duration};
 
 use crate::utils::parse::errors::ParseError;
-
-use super::extras::DurationUtils;
 
 pub const MILLIS_IN_SEC: u64 = 1000;
 pub const SECS_IN_MIN: u64 = 60;
@@ -73,11 +70,11 @@ impl TimeUnit {
 
     pub fn to_duration(&self, value: f64) -> Duration {
         match self {
-            Self::Milli => Duration::from_millis_f64(value),
-            Self::Sec => Duration::from_secs_f64(value),
-            Self::Min => Duration::from_mins_f64(value),
-            Self::Hour => Duration::from_hours_f64(value),
-            Self::Day => Duration::from_days_f64(value),
+            Self::Milli => value.milliseconds(),
+            Self::Sec => value.seconds(),
+            Self::Min => value.minutes(),
+            Self::Hour => value.hours(),
+            Self::Day => value.days(),
         }
     }
 }
