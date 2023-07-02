@@ -1,7 +1,8 @@
-use time::Duration;
+use az::SaturatingAs;
 
 use leptos::{Scope, SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
+use time::Duration;
 
 use crate::utils::time::timestamp;
 
@@ -27,7 +28,11 @@ pub struct TimerJson {
 impl From<Timer> for TimerJson {
     fn from(value: Timer) -> Self {
         Self {
-            duration: value.duration.get_untracked().whole_milliseconds() as u64,
+            duration: value
+                .duration
+                .get_untracked()
+                .whole_milliseconds()
+                .saturating_as::<u64>(),
             start: value
                 .start_time
                 .get_untracked()
@@ -39,7 +44,8 @@ impl From<Timer> for TimerJson {
             acc_pause_duration: value
                 .total_paused_duration
                 .get_untracked()
-                .whole_milliseconds() as u64,
+                .whole_milliseconds()
+                .saturating_as::<u64>(),
             duration_input: value.input.get_untracked(),
         }
     }
@@ -57,7 +63,9 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
         .filter_map(|unparsed| {
             let timer = Timer::new(cx);
             (timer.set_input)(unparsed.duration_input);
-            timer.reset_with_duration(Duration::milliseconds(unparsed.duration as i64));
+            timer.reset_with_duration(Duration::milliseconds(
+                unparsed.duration.saturating_as::<i64>(),
+            ));
 
             // timer control methods (start, pause) set their respective properties to now.
             // must override the times after calling these methods.
@@ -83,7 +91,9 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
 
             timer
                 .total_paused_duration
-                .set_untracked(Duration::milliseconds(unparsed.acc_pause_duration as i64));
+                .set_untracked(Duration::milliseconds(
+                    unparsed.acc_pause_duration.saturating_as::<i64>(),
+                ));
 
             timer.update_time_remaining();
             timer.update_end_time();
