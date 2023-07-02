@@ -10,6 +10,7 @@
     clippy::cast_precision_loss,
     clippy::bool_to_int_with_if,
     clippy::similar_names,
+    clippy::missing_panics_doc,
     // nursery
     clippy::option_if_let_else,
 )]

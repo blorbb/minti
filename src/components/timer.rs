@@ -1,5 +1,5 @@
-use std::time::Duration as StdDuration;
 use leptos::*;
+use std::time::Duration as StdDuration;
 
 use crate::{
     components::{DurationDisplay, GrowingInput, Icon, RelativeTime},
@@ -154,7 +154,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
             <button
                 class="delete"
-                on:click=move |_| remove_self(cx, timer)
+                on:click=move |_| remove_self(cx, &timer)
             >
                 <Icon inline=true icon="ph:x-bold"/>
             </button>
@@ -162,7 +162,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     }
 }
 
-fn remove_self(cx: Scope, timer: Timer) {
+fn remove_self(cx: Scope, timer: &Timer) {
     let timers = expect_context::<RwSignal<TimerList>>(cx);
     timers.update(|t| {
         t.remove_id(timer.id());

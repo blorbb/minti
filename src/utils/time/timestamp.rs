@@ -7,6 +7,7 @@ pub fn to_unix_millis(date: OffsetDateTime) -> i64 {
     (date.unix_timestamp_nanos() / NANOS_IN_MILLI).saturating_as::<i64>()
 }
 
-pub fn from_unix_millis(millis: i64) -> Result<OffsetDateTime, time::error::ComponentRange> {
-    OffsetDateTime::from_unix_timestamp_nanos(i128::from(millis) * NANOS_IN_MILLI)
+// TODO figure out when this panics
+pub fn from_unix_millis(millis: i64) -> OffsetDateTime {
+    OffsetDateTime::from_unix_timestamp_nanos(i128::from(millis) * NANOS_IN_MILLI).unwrap()
 }

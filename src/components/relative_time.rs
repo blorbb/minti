@@ -1,9 +1,10 @@
 use leptos::*;
-use time::{OffsetDateTime, macros::format_description, format_description::FormatItem};
+use time::{format_description::FormatItem, macros::format_description, OffsetDateTime};
 
 const WEEKDAY_FORMAT: &[FormatItem<'_>] = format_description!("[weekday repr:short]");
 const FULL_DATE_FORMAT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");
-const TIME_FORMAT: &[FormatItem<'_>] = format_description!("[hour repr:12 padding:none]:[minute] [period case:lower]");
+const TIME_FORMAT: &[FormatItem<'_>] =
+    format_description!("[hour repr:12 padding:none]:[minute] [period case:lower]");
 
 #[component]
 pub fn RelativeTime(
@@ -19,7 +20,6 @@ pub fn RelativeTime(
         let current_day = OffsetDateTime::now_local().unwrap().date();
         let target_day = time.date();
         let days_between = (target_day - current_day).whole_days();
-
 
         let display_date = if days_between == 0 {
             String::new()

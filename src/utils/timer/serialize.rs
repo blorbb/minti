@@ -74,7 +74,7 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
                 timer.start();
                 timer
                     .start_time
-                    .set_untracked(Some(timestamp::from_unix_millis(start_time).ok()?));
+                    .set_untracked(Some(timestamp::from_unix_millis(start_time)));
             };
 
             if let Some(last_pause_time) = unparsed.last_pause {
@@ -86,7 +86,7 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
                 timer.pause();
                 timer
                     .last_pause_time
-                    .set_untracked(Some(timestamp::from_unix_millis(last_pause_time).ok()?));
+                    .set_untracked(Some(timestamp::from_unix_millis(last_pause_time)));
             }
 
             timer

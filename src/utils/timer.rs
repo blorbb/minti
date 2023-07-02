@@ -274,7 +274,7 @@ impl Timer {
 
         self.total_paused_duration.update_untracked(|v| {
             *v += OffsetDateTime::now_local().unwrap()
-                - self.last_pause_time.get_untracked().unwrap()
+                - self.last_pause_time.get_untracked().unwrap();
         });
         self.last_pause_time.set_untracked(None);
         (self.set_paused)(false);

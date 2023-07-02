@@ -3,8 +3,8 @@ mod parse_tokens;
 mod structs;
 mod unparsed_tokens;
 
-use time::Duration;
 use self::{errors::ParseError, structs::Token};
+use time::Duration;
 
 /// Tries to parse a user inputted string as a duration.
 ///

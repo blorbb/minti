@@ -68,7 +68,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
             }
             // only allow times with integers
             Token::Number(n) if n.fract() == 0.0 => {
-                time_sections[current_unit] = (*n).saturating_as::<u8>()
+                time_sections[current_unit] = (*n).saturating_as::<u8>();
             }
             Token::Number(n) => return Err(ParseError::InvalidNumber(n.to_string())),
             Token::Meridiem(m) => meridiem = Some(*m),
