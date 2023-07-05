@@ -1,9 +1,8 @@
 pub mod serialize;
 
 use leptos::{
-    create_effect, create_rw_signal, create_signal, ReadSignal, RwSignal, Scope,
-    SignalGetUntracked, SignalSet, SignalSetUntracked, SignalUpdateUntracked, SignalWith,
-    WriteSignal,
+    create_memo, create_rw_signal, create_signal, Memo, ReadSignal, RwSignal, Scope,
+    SignalGetUntracked, SignalSet, SignalUpdate, SignalWith, WriteSignal,
 };
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
@@ -116,19 +115,15 @@ pub struct Timer {
     pub duration: ReadSignal<Duration>,
     set_duration: WriteSignal<Duration>,
     /// Whether the timer has been started.
-    pub started: ReadSignal<bool>,
-    set_started: WriteSignal<bool>,
+    pub started: Memo<bool>,
     /// Whether the timer is counting down - started and not paused.
-    pub running: ReadSignal<bool>,
-    set_running: WriteSignal<bool>,
+    pub running: Memo<bool>,
     /// Whether the timer is paused.
-    pub paused: ReadSignal<bool>,
-    set_paused: WriteSignal<bool>,
+    pub paused: Memo<bool>,
     /// Whether the timer has reached 0.
     ///
-    /// Updates after `get_time_remaining` or `update_time_remaining` is called.
-    pub finished: ReadSignal<bool>,
-    set_finished: WriteSignal<bool>,
+    /// Updates after `update_time_remaining` is called.
+    pub finished: Memo<bool>,
     /// A signal that stores the duration remaining.
     ///
     /// Updates when `update_time_remaining` is called. This should be used
@@ -156,9 +151,6 @@ pub struct Timer {
     pub set_input: WriteSignal<String>,
 
     // internal timekeeping stuff
-    // using signals to mutate without needing `mut` and keeping `Copy`.
-    // TODO change this to something else? RefCell does not impl `Copy`.
-    // cannot use Instant as it doesn't work in wasm.
     /// The time at which the timer was started.
     start_time: RwSignal<Option<OffsetDateTime>>,
     /// The time of the last pause. Is `None` if the timer is not paused.
@@ -170,7 +162,7 @@ pub struct Timer {
     acc_paused_duration: RwSignal<Duration>,
     /// Notifies subscribers when any of the statuses (start, pause, finish)
     /// have changed. Get notified using `timer.state_change.track()`.
-    pub state_change: RwSignal<()>,
+    pub state_change: Memo<()>,
     /// An id for the timer. Only to be used to distingush between different
     /// timers - this id is not stored in localstorage and will change if
     /// the timer is refetched from localstorage.
@@ -186,51 +178,45 @@ impl Timer {
     /// disposing the signals.
     pub fn new(cx: Scope) -> Self {
         let (duration, set_duration) = create_signal(cx, Duration::ZERO);
-        let (started, set_started) = create_signal(cx, false);
-        let (running, set_running) = create_signal(cx, false);
-        let (paused, set_paused) = create_signal(cx, false);
-        let (finished, set_finished) = create_signal(cx, false);
-        let (time_remaining, set_time_remaining) = create_signal(cx, Duration::ZERO);
-        let (input, set_input) = create_signal(cx, String::new());
-        let (end_time, set_end_time) = create_signal(cx, None);
+        let start_time = create_rw_signal(cx, None);
+        let last_pause_time = create_rw_signal(cx, None);
+        let acc_paused_duration = create_rw_signal(cx, Duration::ZERO);
 
-        let state_change = create_rw_signal(cx, ());
-        create_effect(cx, move |_| {
-            input.track();
-            state_change.set(());
+        let (time_remaining, set_time_remaining) = create_signal(cx, Duration::ZERO);
+        let (end_time, set_end_time) = create_signal(cx, None);
+        let (input, set_input) = create_signal(cx, String::new());
+
+        let started = create_memo(cx, move |_| start_time().is_some());
+        let paused = create_memo(cx, move |_| started() && last_pause_time().is_some());
+        let running = create_memo(cx, move |_| started() && !paused());
+        let finished = create_memo(cx, move |_| !time_remaining().is_positive());
+
+        let state_change = create_memo(cx, move |_| {
+            started.track();
+            paused.track();
+            running.track();
+            finished.track();
         });
 
         Self {
             duration,
             set_duration,
             started,
-            set_started,
             running,
-            set_running,
             paused,
-            set_paused,
             finished,
-            set_finished,
             time_remaining,
             set_time_remaining,
             end_time,
             set_end_time,
             input,
             set_input,
-            start_time: create_rw_signal(cx, None),
-            last_pause_time: create_rw_signal(cx, None),
-            acc_paused_duration: create_rw_signal(cx, Duration::ZERO),
-            state_change: create_rw_signal(cx, ()),
+            start_time,
+            last_pause_time,
+            acc_paused_duration,
+            state_change,
             id: Uuid::new_v4(),
         }
-    }
-
-    /// Pushes an update to subscribers of the `state_change` property.
-    ///
-    /// This should only be used when the timer is started, resumed, paused or
-    /// finished.
-    fn notify_state_change(&self) {
-        self.state_change.set(());
     }
 
     /// Calculates the time elapsed as of now.
@@ -253,20 +239,8 @@ impl Timer {
     ///
     /// If the timer has not started, returns the total duration (usually 0).
     /// If the timer is finished, a negative duration will be returned.
-    ///
-    /// **Side effects:** Updates the `finished` signal.
     pub fn get_time_remaining(&self) -> Duration {
-        let time_remaining = self
-            .duration
-            .get_untracked()
-            .saturating_sub(self.get_time_elapsed());
-
-        if self.finished.get_untracked() != time_remaining.is_zero() {
-            (self.set_finished)(time_remaining.is_zero());
-            self.notify_state_change();
-        };
-
-        time_remaining
+        self.duration.get_untracked() - self.get_time_elapsed()
     }
 
     /// Updates the `time_remaining` signal.
@@ -306,16 +280,11 @@ impl Timer {
     ///
     /// Triggers `state_change`.
     pub fn reset_with_duration(&self, duration: Duration) {
-        (self.set_started)(false);
-        (self.set_running)(false);
-        (self.set_paused)(false);
-        (self.set_finished)(false);
         (self.set_duration)(duration);
         (self.set_time_remaining)(self.get_time_remaining());
-        self.start_time.set_untracked(None);
-        self.last_pause_time.set_untracked(None);
-        self.acc_paused_duration.set_untracked(Duration::ZERO);
-        self.notify_state_change();
+        self.start_time.set(None);
+        self.last_pause_time.set(None);
+        self.acc_paused_duration.set(Duration::ZERO);
     }
 
     /// Resets the timer to as if a new one was created.
@@ -331,10 +300,7 @@ impl Timer {
     /// Also triggers `state_change`.
     pub fn start(&self) {
         self.start_time
-            .set_untracked(Some(OffsetDateTime::now_local().unwrap()));
-        (self.set_started)(true);
-        (self.set_running)(true);
-        self.notify_state_change();
+            .set(Some(OffsetDateTime::now_local().unwrap()));
     }
 
     /// Pauses the timer.
@@ -350,9 +316,6 @@ impl Timer {
 
         self.last_pause_time
             .set(Some(OffsetDateTime::now_local().unwrap()));
-        (self.set_paused)(true);
-        (self.set_running)(false);
-        self.notify_state_change();
     }
 
     /// Resumes the timer.
@@ -362,18 +325,15 @@ impl Timer {
     ///
     /// Does not do anything if the timer is already running or isn't started.
     pub fn resume(&self) {
-        if self.running.get_untracked() || !self.started.get_untracked() {
+        if !self.paused.get_untracked() {
             return;
         }
 
-        self.acc_paused_duration.update_untracked(|v| {
+        self.acc_paused_duration.update(|v| {
             *v += OffsetDateTime::now_local().unwrap()
                 - self.last_pause_time.get_untracked().unwrap();
         });
-        self.last_pause_time.set_untracked(None);
-        (self.set_paused)(false);
-        (self.set_running)(true);
-        self.notify_state_change();
+        self.last_pause_time.set(None);
     }
 
     /// Gets the id for the timer.
