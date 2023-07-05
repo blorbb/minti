@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use leptos::{
-    create_effect, leptos_dom::helpers::IntervalHandle, set_interval_with_handle, MaybeSignal,
-    Scope,
+    create_effect, create_rw_signal, leptos_dom::helpers::IntervalHandle, on_cleanup,
+    set_interval_with_handle, MaybeSignal, Scope, SignalSet,
 };
 
 /// Runs a callback and repeats it while `when` is true.
@@ -12,6 +12,12 @@ pub fn repeat_while(
     callback: impl Fn() + Clone + 'static,
     duration: Duration,
 ) {
+    // while the effect will be stopped when `cx` is disposed, the interval
+    // is not destroyed.
+    // Extra signal to stop the interval when `cx` is disposed.
+    let stop = create_rw_signal(cx, false);
+    on_cleanup(cx, move || stop.set(true));
+
     // needs double Option as the outer one is None on first run,
     // but needs to be None if when() is false.
     #[expect(clippy::option_option, reason = "required")]
@@ -22,7 +28,7 @@ pub fn repeat_while(
         };
 
         // return handle so that next call can access it
-        if when() {
+        if when() && !stop() {
             callback();
             Some(
                 set_interval_with_handle(callback.clone(), duration)
