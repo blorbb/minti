@@ -245,7 +245,7 @@ impl Timer {
 
     /// Updates the `time_remaining` signal.
     ///
-    /// **Side effects:** Updates the `finished` signal.
+    /// **Side effects:** Only way to update the `finished` signal.
     pub fn update_time_remaining(&self) {
         (self.set_time_remaining)(self.get_time_remaining());
     }
@@ -256,8 +256,6 @@ impl Timer {
     /// is resumed now.
     ///
     /// Returns `None` if the timer hasn't started.
-    ///
-    /// Does not update any signals.
     pub fn get_end_time(&self) -> Option<OffsetDateTime> {
         if !self.started.get_untracked() {
             return None;
@@ -277,8 +275,6 @@ impl Timer {
     /// Resets the timer with a duration set.
     ///
     /// All statuses are set to `false`.
-    ///
-    /// Triggers `state_change`.
     pub fn reset_with_duration(&self, duration: Duration) {
         (self.set_duration)(duration);
         (self.set_time_remaining)(self.get_time_remaining());
@@ -288,25 +284,17 @@ impl Timer {
     }
 
     /// Resets the timer to as if a new one was created.
-    ///
-    /// Triggers `state_change`.
     pub fn reset(&self) {
         self.reset_with_duration(Duration::ZERO);
     }
 
     /// Starts the timer.
-    ///
-    /// Sets the `started` and `running` signals to `true`.
-    /// Also triggers `state_change`.
     pub fn start(&self) {
         self.start_time
             .set(Some(OffsetDateTime::now_local().unwrap()));
     }
 
     /// Pauses the timer.
-    ///
-    /// Sets the signals `paused` to `true` and `running` to `false`.
-    /// Also triggers `state_change`.
     ///
     /// Does not do anything if the timer is already paused.
     pub fn pause(&self) {
@@ -320,10 +308,7 @@ impl Timer {
 
     /// Resumes the timer.
     ///
-    /// Sets the signals `paused` to `false` and `running` to `true`.
-    /// Also triggers `state_change`.
-    ///
-    /// Does not do anything if the timer is already running or isn't started.
+    /// Does not do anything if the timer is not paused.
     pub fn resume(&self) {
         if !self.paused.get_untracked() {
             return;
