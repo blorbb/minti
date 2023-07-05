@@ -11,19 +11,21 @@ use super::{
 /// Errors if any character could not be parsed into a token.
 /// Characters `[A-Za-z0-9.:]` are the only accepted characters.
 pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, ParseError> {
-    let input = input.to_lowercase().replace(' ', "");
+    // only ascii is parsed anyways
+    let input = input.to_ascii_lowercase().replace(' ', "");
 
-    let mut token_list: Vec<UnparsedToken> = vec![];
+    let mut token_list: Vec<UnparsedToken> = Vec::new();
     let mut prev_token_type = UnparsedTokenType::Separator; // will be overwritten
 
     for ch in input.chars() {
         let curr_token_type = UnparsedTokenType::try_from(ch)?;
 
-        if curr_token_type != prev_token_type
-            || token_list.is_empty()
-            || curr_token_type == UnparsedTokenType::Separator
         // Always new token if its a separator
-        {
+        let is_new_token = curr_token_type != prev_token_type
+            || token_list.is_empty()
+            || curr_token_type == UnparsedTokenType::Separator;
+
+        if is_new_token {
             // create new token: add to the vec
             token_list.push(UnparsedToken {
                 variant: curr_token_type,
