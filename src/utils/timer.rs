@@ -1,7 +1,7 @@
 pub mod serialize;
 
 use leptos::{
-    create_memo, create_rw_signal, create_signal, Memo, ReadSignal, RwSignal, Scope,
+    create_memo, create_rw_signal, create_signal, Memo, ReadSignal, RwSignal, Scope, Signal,
     SignalGetUntracked, SignalSet, SignalUpdate, SignalWith, WriteSignal,
 };
 use time::{Duration, OffsetDateTime};
@@ -160,7 +160,7 @@ pub struct Timer {
     acc_paused_duration: RwSignal<Duration>,
     /// Notifies subscribers when any of the statuses (start, pause, finish)
     /// have changed. Get notified using `timer.state_change.track()`.
-    pub state_change: Memo<()>,
+    pub state_change: Signal<()>,
     /// An id for the timer. Only to be used to distingush between different
     /// timers - this id is not stored in localstorage and will change if
     /// the timer is refetched from localstorage.
@@ -191,7 +191,8 @@ impl Timer {
             !time_remaining().is_some_and(Duration::is_positive)
         });
 
-        let state_change = create_memo(cx, move |_| {
+        // cannot be a memo: the return value does not change
+        let state_change = Signal::derive(cx, move || {
             started.track();
             paused.track();
             running.track();
