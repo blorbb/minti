@@ -110,10 +110,9 @@ pub struct Timer {
     ///
     /// Updates when the timer is started or reset.
     ///
-    /// Returns a zero duration if the timer has not started (may change in
-    /// the future).
-    pub duration: ReadSignal<Duration>,
-    set_duration: WriteSignal<Duration>,
+    /// Is [`None`] if the timer hasn't started.
+    pub duration: ReadSignal<Option<Duration>>,
+    set_duration: WriteSignal<Option<Duration>>,
     /// Whether the timer has been started.
     pub started: Memo<bool>,
     /// Whether the timer is counting down - started and not paused.
@@ -129,10 +128,9 @@ pub struct Timer {
     /// Updates when `update_time_remaining` is called. This should be used
     /// as the main way of accessing the time remaining.
     ///
-    /// Returns a zero duration if the timer has not started (may change in
-    /// the future).
-    pub time_remaining: ReadSignal<Duration>,
-    set_time_remaining: WriteSignal<Duration>,
+    /// Is [`None`] if the timer hasn't started.
+    pub time_remaining: ReadSignal<Option<Duration>>,
+    set_time_remaining: WriteSignal<Option<Duration>>,
     /// A signal that stores time at which the timer will finish.
     ///
     /// Updates when `update_end_time` is called. This should be used
@@ -177,25 +175,28 @@ impl Timer {
     /// This should only be called in the largest scope (`App`) to avoid
     /// disposing the signals.
     pub fn new(cx: Scope) -> Self {
-        let (duration, set_duration) = create_signal(cx, Duration::ZERO);
+        let (duration, set_duration) = create_signal(cx, None);
         let start_time = create_rw_signal(cx, None);
         let last_pause_time = create_rw_signal(cx, None);
         let acc_paused_duration = create_rw_signal(cx, Duration::ZERO);
 
-        let (time_remaining, set_time_remaining) = create_signal(cx, Duration::ZERO);
+        let (time_remaining, set_time_remaining) = create_signal(cx, None);
         let (end_time, set_end_time) = create_signal(cx, None);
         let (input, set_input) = create_signal(cx, String::new());
 
         let started = create_memo(cx, move |_| start_time().is_some());
         let paused = create_memo(cx, move |_| started() && last_pause_time().is_some());
         let running = create_memo(cx, move |_| started() && !paused());
-        let finished = create_memo(cx, move |_| !time_remaining().is_positive());
+        let finished = create_memo(cx, move |_| {
+            !time_remaining().is_some_and(Duration::is_positive)
+        });
 
         let state_change = create_memo(cx, move |_| {
             started.track();
             paused.track();
             running.track();
             finished.track();
+            leptos::log!("state changed");
         });
 
         Self {
@@ -237,10 +238,10 @@ impl Timer {
 
     /// Calculates the time remaining in this timer as of now.
     ///
-    /// If the timer has not started, returns the total duration (usually 0).
+    /// Returns [`None`] if the timer hasn't started.
     /// If the timer is finished, a negative duration will be returned.
-    pub fn get_time_remaining(&self) -> Duration {
-        self.duration.get_untracked() - self.get_time_elapsed()
+    pub fn get_time_remaining(&self) -> Option<Duration> {
+        Some(self.duration.get_untracked()? - self.get_time_elapsed())
     }
 
     /// Updates the `time_remaining` signal.
@@ -261,7 +262,7 @@ impl Timer {
             return None;
         }
         let now = OffsetDateTime::now_local().unwrap();
-        let duration_to_end = self.get_time_remaining();
+        let duration_to_end = self.get_time_remaining()?;
         Some(now + duration_to_end)
     }
 
@@ -276,7 +277,7 @@ impl Timer {
     ///
     /// All statuses are set to `false`.
     pub fn reset_with_duration(&self, duration: Duration) {
-        (self.set_duration)(duration);
+        (self.set_duration)(Some(duration));
         (self.set_time_remaining)(self.get_time_remaining());
         self.start_time.set(None);
         self.last_pause_time.set(None);

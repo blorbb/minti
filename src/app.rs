@@ -14,6 +14,7 @@ pub fn App(cx: Scope) -> impl IntoView {
     let timers = create_rw_signal(cx, TimerList::new(cx));
     provide_context(cx, timers);
 
+    // TODO state changes are not being tracked
     // store the timers into local storage when any of their statuses change
     create_effect(cx, move |_| {
         timers().as_vec().iter().for_each(|timer| {

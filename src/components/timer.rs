@@ -18,6 +18,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let end_time = timer.end_time;
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
 
+    // TODO!! not sure if timer is being disposed of properly. maybe it should be a rwsignal?
+    on_cleanup(cx, move || timer.reset());
+
     // update the time remaining when the timer is running
     reactive::repeat_while(
         cx,
@@ -112,7 +115,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         />
                     }
                 >
-                    <DurationDisplay duration={time_remaining} />
+                    <DurationDisplay duration={Signal::derive(cx, move || time_remaining().unwrap())} />
                 </Show>
             </div>
 
@@ -168,4 +171,5 @@ fn remove_self(cx: Scope, timer: &Timer) {
     timers.update(|t| {
         t.remove_id(timer.id());
     });
+    cx.dispose();
 }

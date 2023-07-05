@@ -12,7 +12,8 @@ use super::{Timer, TimerList};
 #[derive(Debug, Serialize, Deserialize)]
 struct TimerJson {
     /// The total duration (ms) of the timer.
-    duration: u64,
+    /// Defined if the timer has started.
+    duration: Option<u64>,
     /// The unix timestamp (ms) of when the timer started.
     /// Defined if the timer has started.
     start: Option<i64>,
@@ -32,8 +33,7 @@ impl From<Timer> for TimerJson {
             duration: value
                 .duration
                 .get_untracked()
-                .whole_milliseconds()
-                .saturating_as::<u64>(),
+                .map(|d| d.whole_milliseconds().saturating_as::<u64>()),
             start: value
                 .start_time
                 .get_untracked()
@@ -73,9 +73,11 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
         .filter_map(|unparsed| {
             let timer = Timer::new(cx);
             (timer.set_input)(unparsed.duration_input);
-            timer.reset_with_duration(Duration::milliseconds(
-                unparsed.duration.saturating_as::<i64>(),
-            ));
+            if let Some(duration) = unparsed.duration {
+                timer.reset_with_duration(Duration::milliseconds(
+                    duration.saturating_as::<i64>(),
+                ));
+            }
 
             // timer control methods (start, pause) set their respective properties to now.
             // must override the times after calling these methods.
