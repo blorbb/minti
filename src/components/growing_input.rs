@@ -32,15 +32,12 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
     }
 }
 
-pub fn resize_to_fit(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
+fn resize_to_fit(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
     set_size_ref(&input, size_ref);
     set_input_size(input, size_ref);
 }
 
-pub fn resize_to_fit_with_timeout(
-    input: HtmlElement<html::Input>,
-    size_ref: HtmlElement<html::Span>,
-) {
+fn resize_to_fit_with_timeout(input: HtmlElement<html::Input>, size_ref: HtmlElement<html::Span>) {
     set_size_ref(&input, &size_ref);
 
     // need to wait for DOM to update

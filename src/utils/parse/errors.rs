@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// The error type for `parse::parse_input`.
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseError {
     NaN,

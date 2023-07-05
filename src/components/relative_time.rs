@@ -6,17 +6,24 @@ const FULL_DATE_FORMAT: &[FormatItem<'_>] = format_description!("[year]-[month]-
 const TIME_FORMAT: &[FormatItem<'_>] =
     format_description!("[hour repr:12 padding:none]:[minute] [period case:lower]");
 
+/// Displays a time (and date when needed) relative to now.
+///
+/// Only updates when `time` is updated.
+///
+/// Renders an empty span if `None` is provided.
 #[component]
 pub fn RelativeTime(
     cx: Scope,
     #[prop(into)] time: MaybeSignal<Option<OffsetDateTime>>,
 ) -> impl IntoView {
     let string = create_memo(cx, move |_| {
+        // ignore `None`
         if time().is_none() {
             return String::new();
         };
         let time = time().unwrap();
 
+        // display a date if the target is on a different day.
         let current_day = OffsetDateTime::now_local().unwrap().date();
         let target_day = time.date();
         let days_between = (target_day - current_day).whole_days();

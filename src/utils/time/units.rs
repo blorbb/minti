@@ -10,6 +10,10 @@ pub const HOURS_IN_DAY: u64 = 24;
 pub const SECS_IN_HOUR: u64 = SECS_IN_MIN * MINS_IN_HOUR;
 pub const SECS_IN_DAY: u64 = SECS_IN_HOUR * HOURS_IN_DAY;
 
+/// A representation of various units of duration.
+///
+/// Mainly used for converting string representations of units and getting
+/// units relative to others.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum TimeUnit {
     Milli,
@@ -34,6 +38,13 @@ impl TimeUnit {
     pub const HOUR_TOKENS: [&str; 5] = ["h", "hr", "hrs", "hour", "hours"];
     pub const DAY_TOKENS: [&str; 3] = ["d", "day", "days"];
 
+    /// Converts a unit to a number, which can be used to get other units
+    /// relative to `self`.
+    ///
+    /// The number starts from milliseconds (0) to days (4).
+    ///
+    /// The number only makes sense when used in `number_to_variant`.
+    #[must_use]
     pub const fn numeric_value(&self) -> u8 {
         match self {
             Self::Milli => 0,
@@ -44,6 +55,13 @@ impl TimeUnit {
         }
     }
 
+    /// Converts a number to one of the unit variants.
+    ///
+    /// Only makes sense when used with the number returned in `numeric_value`.
+    ///
+    /// Returns `None` if `num` does not map to one of the variants (must be
+    /// in range `0..=4`).
+    #[must_use]
     pub const fn number_to_variant(num: u8) -> Option<Self> {
         if num == 0 {
             Some(Self::Milli)
@@ -60,14 +78,47 @@ impl TimeUnit {
         }
     }
 
+    /// Gets the unit that is one unit larger than `self`.
+    ///
+    /// Returns `None` if the unit is already the largest (Day).
+    ///
+    /// # Example
+    /// ```rust
+    /// # use minti_ui::utils::time::units::TimeUnit;
+    ///
+    /// assert_eq!(TimeUnit::Sec.larger_unit(), Some(TimeUnit::Min));
+    /// assert_eq!(TimeUnit::Day.larger_unit(), None);
+    /// ```
     pub const fn larger_unit(&self) -> Option<Self> {
         Self::number_to_variant(self.numeric_value().saturating_add(1))
     }
 
+    /// Gets the unit that is one unit smaller than `self`.
+    ///
+    /// Returns `None` if the unit is already the smallest (Milli).
+    ///
+    /// # Example
+    /// ```rust
+    /// # use minti_ui::utils::time::units::TimeUnit;
+    ///
+    /// assert_eq!(TimeUnit::Hour.smaller_unit(), Some(TimeUnit::Min));
+    /// assert_eq!(TimeUnit::Milli.smaller_unit(), None);
+    /// ```
     pub const fn smaller_unit(&self) -> Option<Self> {
         Self::number_to_variant(self.numeric_value().wrapping_sub(1))
     }
 
+    /// Converts a number to a duration using the unit of `self`.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use minti_ui::utils::time::units::TimeUnit;
+    /// use time::ext::NumericalDuration;
+    ///
+    /// assert_eq!(TimeUnit::Hour.to_duration(3.5), 3.5.hours());
+    /// assert_eq!(TimeUnit::Sec.to_duration(20), 20.seconds());
+    /// ```
+    // TODO rename this
     pub fn to_duration(&self, value: f64) -> Duration {
         match self {
             Self::Milli => value.milliseconds(),

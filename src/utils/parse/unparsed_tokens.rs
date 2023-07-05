@@ -3,6 +3,13 @@ use super::{
     structs::{UnparsedToken, UnparsedTokenType},
 };
 
+/// Splits a string into separate strings with types.
+///
+/// See [`UnparsedToken`] for the variants and conditions.
+///
+/// # Errors
+/// Errors if any character could not be parsed into a token.
+/// Characters `[A-Za-z0-9.:]` are the only accepted characters.
 pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, ParseError> {
     let input = input.to_lowercase().replace(' ', "");
 
@@ -17,7 +24,7 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
             || curr_token_type == UnparsedTokenType::Separator
         // Always new token if its a separator
         {
-            // new token
+            // create new token: add to the vec
             token_list.push(UnparsedToken {
                 variant: curr_token_type,
                 string: ch.to_string(),
@@ -25,10 +32,10 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
 
             prev_token_type = curr_token_type;
         } else {
-            // add to last token
+            // add to the last token in the vec
             token_list
                 .last_mut()
-                .expect("List is not empty")
+                .expect("new token should always be appended first")
                 .string
                 .push(ch);
         }

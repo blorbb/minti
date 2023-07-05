@@ -4,6 +4,7 @@ use time::Time;
 
 use crate::utils::parse::errors::ParseError;
 
+/// An enum representing either AM or PM.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Meridiem {
     Ante,
@@ -27,15 +28,31 @@ impl FromStr for Meridiem {
     }
 }
 
-/// Makes a new `NaiveTime` from 12 hour notation.
+/// Makes a new `Time` from 12 hour notation.
 /// - 12am becomes 00:00:00.
 /// - 12pm becomes 12:00:00.
+/// - 0 hours is the same as 12.
 /// - All other times are as expected.
 ///
-/// Follows the same restrictions as `Time::from_hms_opt`,
+/// Follows the same restrictions as `Time::from_hms`,
 /// but the `hour` also cannot be greater than 12.
 ///
 /// Returns `None` on invalid hour, minute and/or second.
+///
+/// # Examples
+/// ```rust
+/// use minti_ui::utils::time::meridiem::{
+///     new_12h_time,
+///     Meridiem::{Ante, Post},
+/// };
+/// use time::Time;
+///
+/// assert_eq!(new_12h_time(5, 30, 0, Ante), Time::from_hms(5, 30, 0).ok());
+/// assert_eq!(new_12h_time(5, 30, 0, Post), Time::from_hms(5+12, 30, 0).ok());
+/// assert_eq!(new_12h_time(12, 10, 0, Ante), Time::from_hms(0, 10, 0).ok());
+/// assert_eq!(new_12h_time(12, 0, 0, Post), Time::from_hms(12, 0, 0).ok());
+/// assert!(new_12h_time(13, 10, 0, Ante).is_none())
+/// ```
 pub fn new_12h_time(hour: u8, min: u8, sec: u8, meridiem: Meridiem) -> Option<Time> {
     let hour_12 = match meridiem {
         _ if hour > 12 => return None,

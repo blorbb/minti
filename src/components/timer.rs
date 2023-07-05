@@ -9,6 +9,7 @@ use crate::{
     },
 };
 
+/// Provides controls and display for a [`Timer`].
 #[expect(clippy::too_many_lines, reason = "idk how make smaller")]
 #[expect(clippy::large_types_passed_by_value, reason = "can't be reference")]
 #[component]

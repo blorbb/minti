@@ -4,6 +4,9 @@ use leptos::*;
 
 use crate::utils::time::units;
 
+/// Displays a duration up to second accuracy.
+///
+/// Supports negative durations as well.
 #[component]
 pub fn DurationDisplay(cx: Scope, #[prop(into)] duration: Signal<Duration>) -> impl IntoView {
     // need to exclude the millisecond unit, so the durations are slightly adjusted

@@ -8,8 +8,9 @@ use crate::utils::time::timestamp;
 
 use super::{Timer, TimerList};
 
+/// A short, JSON representation of a timer.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TimerJson {
+struct TimerJson {
     /// The total duration (ms) of the timer.
     duration: u64,
     /// The unix timestamp (ms) of when the timer started.
@@ -42,7 +43,7 @@ impl From<Timer> for TimerJson {
                 .get_untracked()
                 .map(timestamp::to_unix_millis),
             acc_pause_duration: value
-                .total_paused_duration
+                .acc_paused_duration
                 .get_untracked()
                 .whole_milliseconds()
                 .saturating_as::<u64>(),
@@ -51,11 +52,20 @@ impl From<Timer> for TimerJson {
     }
 }
 
+/// Transforms a `TimerList` into a JSON string.
 pub fn stringify_timers(timers: TimerList) -> String {
     let timers: Vec<TimerJson> = timers.into_iter().map(Into::into).collect();
     serde_json::to_string(&timers).expect("Failed to convert timers to JSON")
 }
 
+/// Creates timers from the given JSON string.
+///
+/// Also sets the timers to the correct state.
+///
+/// The JSON string should be a list of timers, created by `stringify_timers`.
+/// If any of the timers are invalid, they will be ignored.
+///
+/// Returns `None` if `json` could not be parsed.
 pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
     let timers: Vec<TimerJson> = serde_json::from_str(json).ok()?;
     let timers: Vec<Timer> = timers
@@ -90,7 +100,7 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
             }
 
             timer
-                .total_paused_duration
+                .acc_paused_duration
                 .set_untracked(Duration::milliseconds(
                     unparsed.acc_pause_duration.saturating_as::<i64>(),
                 ));

@@ -5,9 +5,14 @@ use crate::{
     utils::timer::{serialize, TimerList},
 };
 
+/// Main application component that manages global state.
+///
+/// - Provides a context `RwSignal<TimerList>` to all descendants.
+/// - Updates localstorage whenever a timer changes.
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
     let timers = create_rw_signal(cx, TimerList::new(cx));
+    provide_context(cx, timers);
 
     // store the timers into local storage when any of their statuses change
     create_effect(cx, move |_| {
@@ -22,8 +27,7 @@ pub fn App(cx: Scope) -> impl IntoView {
         }
     });
 
-    provide_context(cx, timers);
-
+    // load timers from localstorage
     let main_ref = create_node_ref::<html::Main>(cx);
     main_ref.on_load(cx, move |_| {
         let Some(t) = retrieve_timers(cx) else { return };
@@ -47,6 +51,11 @@ pub fn App(cx: Scope) -> impl IntoView {
 }
 
 // TODO handle errors properly
+/// Stores a `TimerList` into localstorage.
+///
+/// The timers will be stored using the key "timers".
+///
+/// Returns `None` if localstorage cannot be accessed or it failed to set the item.
 fn store_timers(timers: TimerList) -> Option<()> {
     let local_storage = window().local_storage().ok()??;
     let timers_string = serialize::stringify_timers(timers);
@@ -54,6 +63,11 @@ fn store_timers(timers: TimerList) -> Option<()> {
     Some(())
 }
 
+/// Retrieves timers from localstorage and sets them in the correct state.
+///
+/// The timers are expected to be in the key "timers".
+///
+/// Returns `None` if localstorage cannot be accessed or the item cannot be parsed.
 fn retrieve_timers(cx: Scope) -> Option<TimerList> {
     let local_storage = window().local_storage().ok()??;
     let timers_string = local_storage.get_item("timers").ok()??;

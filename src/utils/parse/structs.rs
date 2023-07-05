@@ -25,6 +25,12 @@ impl TryFrom<char> for UnparsedTokenType {
     }
 }
 
+/// A string that has one 'type' of characters.
+///
+/// The three variants are:
+/// - `Text` if all characters are letters.
+/// - `Number` if all characters are digits or ".".
+/// - `Separator` if the string is ":".
 #[derive(Debug, PartialEq, Eq)]
 pub(super) struct UnparsedToken {
     pub variant: UnparsedTokenType,
@@ -42,6 +48,8 @@ pub(super) enum TokensFormat {
     Units,
 }
 
+/// A valid token value.
+///
 /// Guarantees:
 /// - Number is a valid float, not NaN or infinity.
 /// - Text is valid, either a time unit or meridiem.

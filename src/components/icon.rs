@@ -2,11 +2,21 @@ use leptos::*;
 
 const BASE_URL: &str = "https://api.iconify.design";
 
+/// Displays an svg icon.
+///
+/// Icons are from `iconify-icon` and are expected to be valid.
+///
+/// Use the `inline` property to make the icon have the same vertical
+/// alignment as surrounding text.
 #[component]
 pub fn Icon(
     cx: Scope,
-    #[prop(into)] icon: MaybeSignal<&'static str>,
-    #[prop(default = false)] inline: bool,
+    /// The `iconify-icon` icon id. See <https://icon-sets.iconify.design/>.
+    #[prop(into)]
+    icon: MaybeSignal<&'static str>,
+    /// Moves the icon down to the same baseline as text if enabled.
+    #[prop(default = false)]
+    inline: bool,
 ) -> impl IntoView {
     let icon_svg: Resource<_, Option<String>> =
         create_local_resource(cx, icon, move |icon| async move {

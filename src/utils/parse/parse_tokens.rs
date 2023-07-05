@@ -11,6 +11,11 @@ use super::{
     structs::{Token, TokensFormat},
 };
 
+/// Tries to parse a list of tokens to a duration.
+///
+/// # Errors
+/// Errors if the list does not match any known format.
+/// See `parse::parse_input` for more details on valid formats.
 pub(super) fn parse_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
     let format = get_tokens_format(tokens);
 
