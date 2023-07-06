@@ -89,7 +89,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     fallback=|_| ()
                 >
                     " | " <span class="end">
-                        <Icon inline=true icon="ph:timer-bold" />" "
+                        <Icon icon="ph:timer-bold" />" "
                         <RelativeTime time=end_time />
                     </span>
                 </Show>
@@ -125,7 +125,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         <button on:click=move |_| set_timer_duration()>
                             // TODO: this creates a warning that a signal is updated
                             // after being disposed.
-                            <Icon inline=true icon="ph:play-fill"/>
+                            <Icon icon="ph:play-fill"/>
                         </button>
                     }
                 >
@@ -138,7 +138,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         }
                     >
                         <Icon
-                            inline=true
                             icon=Signal::derive(
                                 cx,
                                 move || if (timer.paused)() {
@@ -150,7 +149,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         />
                     </button>
                     <button on:click=move |_| timer.reset()>
-                        <Icon inline=true icon="ph:clock-counter-clockwise-bold"/>
+                        <Icon icon="ph:clock-counter-clockwise-bold"/>
                     </button>
                 </Show>
             </div>
@@ -159,7 +158,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 class="delete"
                 on:click=move |_| remove_self(cx, &timer)
             >
-                <Icon inline=true icon="ph:x-bold"/>
+                <Icon icon="ph:x-bold"/>
             </button>
         </div>
     }

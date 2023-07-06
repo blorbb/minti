@@ -7,11 +7,11 @@
     --outline: 2px solid var(--clr-purple-300);
 
     // https://utopia.fyi/type/calculator?c=320,14,1.2,1240,16,1.333,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12
-    --fs-200: clamp(0.56rem, calc(0.62rem + -0.08vw), 0.61rem);
+    --fs-200: clamp(0.56rem, calc(0.62rem - 0.08vw), 0.61rem);
     --fs-300: clamp(0.73rem, calc(0.72rem + 0.04vw), 0.75rem);
-    --fs-400: clamp(0.88rem, calc(0.83rem + 0.22vw), 1.00rem);
+    --fs-400: clamp(0.88rem, calc(0.83rem + 0.22vw), 1rem);
     --fs-500: clamp(1.05rem, calc(0.95rem + 0.49vw), 1.33rem);
-    --fs-600: clamp(1.26rem, calc(1.08rem + 0.90vw), 1.78rem);
+    --fs-600: clamp(1.26rem, calc(1.08rem + 0.9vw), 1.78rem);
     --fs-700: clamp(1.51rem, calc(1.21rem + 1.49vw), 2.37rem);
     --fs-800: clamp(1.81rem, calc(1.35rem + 2.34vw), 3.16rem);
     --fs-900: clamp(2.18rem, calc(1.47rem + 3.53vw), 4.21rem);
@@ -40,7 +40,7 @@
     --clr-green-400: lch(var(--par-lch-l) var(--par-lch-c) 140);
     --clr-blue-400: lch(var(--par-lch-l) var(--par-lch-c) 260);
     --clr-purple-400: lch(var(--par-lch-l) var(--par-lch-c) 330);
-    --clr-neutral-400: rgb(67, 72, 94);
+    --clr-neutral-400: rgb(43, 45, 53);
 
     // extra one for neutral color
     --clr-neutral-20: color-mix(in oklab, white 90%, var(--clr-neutral-400));

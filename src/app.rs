@@ -1,6 +1,7 @@
 use leptos::*;
 
 use crate::{
+    components::Icon,
     pages::HomePage,
     utils::timer::{serialize, TimerList},
 };
@@ -36,18 +37,19 @@ pub fn App(cx: Scope) -> impl IntoView {
     });
 
     view! { cx,
-        <main ref=main_ref>
-            <HomePage />
-            <button on:click=move |_| timers.update(TimerList::push_new) >
-                "New timer"
-            </button>
-            <button on:click=move |_| timers.update(TimerList::clear) >
-                "Remove all"
-            </button>
-            <button on:click=move |_| {store_timers(timers.get_untracked());}>
-                "Store timers"
-            </button>
-        </main>
+        <div class="page">
+            <main ref=main_ref>
+                <HomePage />
+            </main>
+            <nav>
+                <button class="add" on:click=move |_| timers.update(TimerList::push_new) >
+                    <Icon icon="ph:plus-bold" />
+                </button>
+                <button class="remove" on:click=move |_| timers.update(TimerList::clear) >
+                    <Icon icon="ph:trash-bold" />
+                </button>
+            </nav>
+        </div>
     }
 }
 

@@ -28,11 +28,15 @@
     padding: 0;
 }
 
-html, body, main {
-    height: 100%;
+html,
+body,
+.page {
+    height: 100dvh;
+    overflow: hidden;
 }
 
-input, button {
+input,
+button {
     font: inherit;
     color: inherit;
 
@@ -41,6 +45,76 @@ input, button {
     outline: transparent;
 }
 
-input:focus-visible, button:focus-visible {
+button {
+    display: inline-grid;
+    place-content: center;
+}
+
+input:focus-visible,
+button:focus-visible {
     outline: var(--outline);
+}
+
+// main layout //
+
+.page {
+    display: grid;
+    grid-template-rows: 1fr 3rem;
+}
+
+main {
+    overflow: auto;
+}
+
+nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1;
+    background-color: var(--clr-neutral-600);
+
+    // TODO make this a mixin?
+    .add {
+        background-color: var(--clr-green-800);
+        color: var(--clr-green-200);
+
+        height: 1lh;
+        aspect-ratio: 3;
+        border-radius: 1lh;
+
+        transition-property: color background-color;
+        transition-duration: var(--time-transition);
+
+        &:hover {
+            background-color: var(--clr-green-700);
+            color: var(--clr-green-100);
+        }
+
+        &:active {
+            background-color: var(--clr-green-400);
+            color: var(--clr-green-800);
+        }
+    }
+
+    .remove {
+        background-color: var(--clr-red-800);
+        color: var(--clr-red-200);
+
+        height: 1lh;
+        aspect-ratio: 3;
+        border-radius: 1lh;
+
+        transition-property: color background-color;
+        transition-duration: var(--time-transition);
+
+        &:hover {
+            background-color: var(--clr-red-700);
+            color: var(--clr-red-100);
+        }
+
+        &:active {
+            background-color: var(--clr-red-400);
+            color: var(--clr-red-800);
+        }
+    }
 }

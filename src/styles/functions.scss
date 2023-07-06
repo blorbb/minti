@@ -1,0 +1,20 @@
+@use "sass:selector";
+@use "sass:list";
+
+@mixin on-outer-most($selector) {
+    // a list of selectors, as commas are different selectors.
+    $current-selectors: &;
+    $new-selectors: (); // empty list without brackets around it
+
+    @each $selection in $current-selectors {
+        // replace the first selector
+        $new-first: selector.unify(nth($selection, 1), $selector);
+        $new-selection: set-nth($selection, 1, $new-first);
+        // add to final selectors
+        $new-selectors: append($new-selectors, $new-selection, $separator: comma);
+    }
+
+    @at-root #{$new-selectors} {
+        @content;
+    }
+}

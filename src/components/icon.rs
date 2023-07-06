@@ -14,9 +14,6 @@ pub fn Icon(
     /// The `iconify-icon` icon id. See <https://icon-sets.iconify.design/>.
     #[prop(into)]
     icon: MaybeSignal<&'static str>,
-    /// Moves the icon down to the same baseline as text if enabled.
-    #[prop(default = false)]
-    inline: bool,
 ) -> impl IntoView {
     let icon_svg: Resource<_, Option<String>> =
         create_local_resource(cx, icon, move |icon| async move {
@@ -39,12 +36,11 @@ pub fn Icon(
 
     move || match icon_svg.read(cx) {
         None => view! { cx,
-            <span class="com-icon" data-inline=inline.to_string() />
+            <span class="com-icon" />
         },
         Some(data) => view! { cx,
             <span
                 class="com-icon"
-                data-inline=inline.to_string()
                 inner_html=data.unwrap_or_default()
             />
         },
