@@ -175,12 +175,12 @@ impl Timer {
     /// This should only be called in the largest scope (`App`) to avoid
     /// disposing the signals.
     pub fn new(cx: Scope) -> Self {
-        let (duration, set_duration) = create_signal(cx, None);
+        let (duration, set_duration) = create_signal(cx, None::<Duration>);
         let start_time = create_rw_signal(cx, None);
         let last_pause_time = create_rw_signal(cx, None);
         let acc_paused_duration = create_rw_signal(cx, Duration::ZERO);
 
-        let (time_remaining, set_time_remaining) = create_signal(cx, None);
+        let (time_remaining, set_time_remaining) = create_signal(cx, None::<Duration>);
         let (end_time, set_end_time) = create_signal(cx, None);
         let (input, set_input) = create_signal(cx, String::new());
 
@@ -188,7 +188,7 @@ impl Timer {
         let paused = create_memo(cx, move |_| started() && last_pause_time().is_some());
         let running = create_memo(cx, move |_| started() && !paused());
         let finished = create_memo(cx, move |_| {
-            !time_remaining().is_some_and(Duration::is_positive)
+            time_remaining().is_some_and(|dur| !dur.is_positive())
         });
 
         // cannot be a memo: the return value does not change
@@ -272,28 +272,21 @@ impl Timer {
         (self.set_end_time)(self.get_end_time());
     }
 
-    // TODO remove this in favour of set_ and update_duration?
-    // move all the resets to the `reset` method.
-    /// Resets the timer with a duration set.
-    ///
-    /// All statuses are set to `false`.
-    pub fn reset_with_duration(&self, duration: Duration) {
-        (self.set_duration)(Some(duration));
-        (self.set_time_remaining)(self.get_time_remaining());
+    /// Resets the timer to as if a new one was created.
+    pub fn reset(&self) {
+        leptos::log!("resetting");
         self.start_time.set(None);
         self.last_pause_time.set(None);
         self.acc_paused_duration.set(Duration::ZERO);
-    }
-
-    /// Resets the timer to as if a new one was created.
-    pub fn reset(&self) {
-        self.reset_with_duration(Duration::ZERO);
+        (self.set_duration)(None);
+        self.update_time_remaining();
     }
 
     /// Starts the timer.
-    pub fn start(&self) {
+    pub fn start(&self, duration: Duration) {
         self.start_time
             .set(Some(OffsetDateTime::now_local().unwrap()));
+        (self.set_duration)(Some(duration));
     }
 
     /// Pauses the timer.

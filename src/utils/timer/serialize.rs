@@ -2,7 +2,7 @@ use az::SaturatingAs;
 
 use leptos::{Scope, SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
-use time::Duration;
+use time::ext::NumericalDuration;
 
 use crate::utils::time::timestamp;
 
@@ -73,17 +73,12 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
         .filter_map(|unparsed| {
             let timer = Timer::new(cx);
             (timer.set_input)(unparsed.duration_input);
-            if let Some(duration) = unparsed.duration {
-                timer.reset_with_duration(Duration::milliseconds(
-                    duration.saturating_as::<i64>(),
-                ));
-            }
 
             // timer control methods (start, pause) set their respective properties to now.
             // must override the times after calling these methods.
 
             if let Some(start_time) = unparsed.start {
-                timer.start();
+                timer.start(unparsed.duration?.saturating_as::<i64>().milliseconds());
                 timer
                     .start_time
                     .set_untracked(Some(timestamp::from_unix_millis(start_time)));
@@ -101,11 +96,12 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
                     .set_untracked(Some(timestamp::from_unix_millis(last_pause_time)));
             }
 
-            timer
-                .acc_paused_duration
-                .set_untracked(Duration::milliseconds(
-                    unparsed.acc_pause_duration.saturating_as::<i64>(),
-                ));
+            timer.acc_paused_duration.set_untracked(
+                unparsed
+                    .acc_pause_duration
+                    .saturating_as::<i64>()
+                    .milliseconds(),
+            );
 
             timer.update_time_remaining();
             timer.update_end_time();

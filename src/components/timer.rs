@@ -53,11 +53,11 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         let res = parse::parse_input(&timer.input.get_untracked());
 
         match res {
-            Ok(duration) => {
-                timer.reset_with_duration(duration);
-                timer.start();
+            Ok(duration) => cx.batch(|| {
+                timer.reset();
+                timer.start(duration);
                 set_error_message(None);
-            }
+            }),
             Err(e) => {
                 set_error_message(Some(e.to_string()));
             }
@@ -69,6 +69,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             data-started=reactive::as_attr(timer.started)
             data-paused=reactive::as_attr(timer.paused)
             data-running=reactive::as_attr(timer.running)
+            data-finished=reactive::as_attr(timer.finished)
         >
             // stuff above the input with extra info
             <div class="heading">
@@ -98,9 +99,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             // or the input to enter a time
             <div class="duration">
                 <Show
-                    when=move || {
-                        (timer.started)()
-                    }
+                    when=timer.started
                     fallback=move |cx| view! { cx,
                         <input
                             type="text"
@@ -115,7 +114,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         />
                     }
                 >
-                    <DurationDisplay duration={Signal::derive(cx, move || time_remaining().unwrap())} />
+                    <DurationDisplay duration={Signal::derive(cx, move || time_remaining().unwrap_or_default())} />
                 </Show>
             </div>
 
