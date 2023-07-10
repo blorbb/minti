@@ -13,19 +13,14 @@ use time::{ext::NumericalDuration, Duration, OffsetDateTime, Time};
 /// # Panics
 /// Panics if the local time cannot be determined.
 pub fn get_next_occurrence(target_time: Time) -> OffsetDateTime {
-    let current_time = OffsetDateTime::now_local().unwrap().time();
+    let current_time = now().time();
 
     if current_time < target_time {
         // same day
-        OffsetDateTime::now_local()
-            .unwrap()
-            .replace_time(target_time)
+        now().replace_time(target_time)
     } else {
         // next day
-        OffsetDateTime::now_local()
-            .unwrap()
-            .add(1.days())
-            .replace_time(target_time)
+        now().add(1.days()).replace_time(target_time)
     }
 }
 
@@ -37,5 +32,13 @@ pub fn get_next_occurrence(target_time: Time) -> OffsetDateTime {
 /// # Panics
 /// Panics if the local time cannot be determined.
 pub fn duration_until_time(target_time: Time) -> Duration {
-    get_next_occurrence(target_time) - OffsetDateTime::now_local().unwrap()
+    get_next_occurrence(target_time) - now()
+}
+
+/// Shortcut for `OffsetDateTime::now_local().unwrap()`
+///
+/// # Panics
+/// Panics if the local offset cannot be determined.
+pub fn now() -> OffsetDateTime {
+    OffsetDateTime::now_local().unwrap()
 }

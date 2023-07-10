@@ -7,6 +7,8 @@ use leptos::{
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
+use super::time::relative;
+
 /// A list of timers.
 ///
 /// There will always be at least one timer. A new one is pushed
@@ -228,12 +230,14 @@ impl Timer {
     ///
     /// Does not update any signals.
     pub fn get_time_elapsed(&self) -> Duration {
-        let Some(start_time) = (self.start_time).get_untracked() else { return Duration::ZERO };
+        let Some(start_time) = (self.start_time).get_untracked() else {
+            return Duration::ZERO;
+        };
 
         let end_time = self
             .last_pause_time
             .get_untracked()
-            .unwrap_or_else(|| OffsetDateTime::now_local().unwrap());
+            .unwrap_or_else(relative::now);
         (end_time - start_time) - self.acc_paused_duration.get_untracked()
     }
 
@@ -262,9 +266,9 @@ impl Timer {
         if !self.started.get_untracked() {
             return None;
         }
-        let now = OffsetDateTime::now_local().unwrap();
+
         let duration_to_end = self.get_time_remaining()?;
-        Some(now + duration_to_end)
+        Some(relative::now() + duration_to_end)
     }
 
     /// Updates the `end_time` signal.
@@ -284,8 +288,7 @@ impl Timer {
 
     /// Starts the timer.
     pub fn start(&self, duration: Duration) {
-        self.start_time
-            .set(Some(OffsetDateTime::now_local().unwrap()));
+        self.start_time.set(Some(relative::now()));
         (self.set_duration)(Some(duration));
     }
 
@@ -297,8 +300,7 @@ impl Timer {
             return;
         }
 
-        self.last_pause_time
-            .set(Some(OffsetDateTime::now_local().unwrap()));
+        self.last_pause_time.set(Some(relative::now()));
     }
 
     /// Resumes the timer.
@@ -310,8 +312,7 @@ impl Timer {
         }
 
         self.acc_paused_duration.update(|v| {
-            *v += OffsetDateTime::now_local().unwrap()
-                - self.last_pause_time.get_untracked().unwrap();
+            *v += relative::now() - self.last_pause_time.get_untracked().unwrap();
         });
         self.last_pause_time.set(None);
     }

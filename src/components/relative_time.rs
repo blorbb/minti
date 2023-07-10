@@ -1,6 +1,8 @@
 use leptos::*;
 use time::{format_description::FormatItem, macros::format_description, OffsetDateTime};
 
+use crate::utils::time::relative;
+
 const WEEKDAY_FORMAT: &[FormatItem<'_>] = format_description!("[weekday repr:short]");
 const FULL_DATE_FORMAT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");
 const TIME_FORMAT: &[FormatItem<'_>] =
@@ -24,7 +26,7 @@ pub fn RelativeTime(
         let time = time().unwrap();
 
         // display a date if the target is on a different day.
-        let current_day = OffsetDateTime::now_local().unwrap().date();
+        let current_day = relative::now().date();
         let target_day = time.date();
         let days_between = (target_day - current_day).whole_days();
 
