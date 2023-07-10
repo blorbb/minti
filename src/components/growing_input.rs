@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use leptos::*;
+use wasm_bindgen::{prelude::Closure, JsCast};
 
 /// An input element that grows with the input size.
 #[component]
@@ -14,6 +15,40 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
     // to load. If rearranged, make sure to change this too.
     title_input_ref.on_load(cx, move |elem| {
         resize_to_fit_with_timeout(elem, size_ref().unwrap());
+    });
+
+    // font size adapts to screen size. need to update when the screen resizes.
+
+    // can't use leptos::window_event_listener as it doesn't remove the event
+    // listener after this cx is disposed, causing panic in .get_untracked().
+    // .try_get_untracked() doesn't exist either.
+
+    // window_event_listener(ev::resize, move |_| {
+    //     if let Some(input) = title_input_ref.get_untracked() && let Some(size) = size_ref.get_untracked() {
+    //         resize_to_fit(
+    //             input,
+    //             &size,
+    //         )
+    //     }
+    // });
+
+    let window_resize_fn = Closure::<dyn Fn()>::wrap(Box::new(move || {
+        resize_to_fit(
+            title_input_ref.get_untracked().unwrap(),
+            &size_ref.get_untracked().unwrap(),
+        );
+    }))
+    .into_js_value()
+    .unchecked_into();
+
+    window()
+        .add_event_listener_with_callback("resize", &window_resize_fn)
+        .unwrap();
+
+    on_cleanup(cx, move || {
+        window()
+            .remove_event_listener_with_callback("resize", &window_resize_fn)
+            .unwrap();
     });
 
     view! { cx,
@@ -58,6 +93,6 @@ fn set_size_ref(input: &HtmlElement<html::Input>, size_ref: &HtmlElement<html::S
 }
 
 fn set_input_size(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
-    let width = size_ref.offset_width();
+    let width = size_ref.get_bounding_client_rect().width();
     input.style("width", format!("{width}px"));
 }

@@ -56,6 +56,8 @@
 
         input {
             background-color: rgba(255 255 255 / 0.1);
+            width: clamp(10em, 20vw + 5em, 20em);
+            height: 1lh; // screen shifts by 1px when typing if this isn't here
         }
     }
 
@@ -63,14 +65,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1rem;
+        gap: 1em;
 
         button {
             background-color: var(--clr-green-400);
             color: var(--clr-green-900);
-            height: 2rem;
+            height: 2em;
             aspect-ratio: 3 / 1;
-            border-radius: 20rem;
+            border-radius: 20em;
 
             transition: transform var(--time-transition-short) ease-out;
             animation: scale-in var(--time-transition-short) ease-out;
@@ -89,7 +91,7 @@
         position: absolute;
         top: 0;
         right: 0;
-        width: 2rem;
+        width: 2em;
         aspect-ratio: 1;
 
         color: var(--clr-red-400);
