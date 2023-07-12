@@ -203,6 +203,7 @@ impl Timer {
             paused.track();
             running.track();
             finished.track();
+            duration.track();
             leptos::log!("state changed");
         });
 
