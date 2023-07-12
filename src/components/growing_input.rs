@@ -4,7 +4,18 @@ use leptos::*;
 
 /// An input element that grows with the input size.
 #[component]
-pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
+pub fn GrowingInput<F>(
+    cx: Scope,
+    placeholder: &'static str,
+    /// Functions cannot be optional, so one must be passed in.
+    ///
+    /// If you don't want to do anything, set this to `|_| ()`.
+    on_input: F,
+    #[prop(optional)] initial: String,
+) -> impl IntoView
+where
+    F: Fn(ev::Event) + 'static,
+{
     // references
     // https://stackoverflow.com/a/38867270
     let title_input_ref = create_node_ref::<html::Input>(cx);
@@ -13,7 +24,13 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
     // input is after the size ref in DOM so wait for that
     // to load. If rearranged, make sure to change this too.
     title_input_ref.on_load(cx, move |elem| {
-        resize_to_fit_with_timeout(elem, size_ref().unwrap());
+        // need to wait slightly for initial value to be set.
+        // set_input_size also needs to be delayed here even without an
+        // initial value.
+        set_timeout(
+            move || resize_to_fit(elem, &size_ref.get_untracked().unwrap()),
+            Duration::ZERO,
+        );
     });
 
     let on_keydown = move |ev: ev::KeyboardEvent| {
@@ -29,10 +46,14 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
                 type="text"
                 placeholder=placeholder
                 ref=title_input_ref
-                on:input=move |_| resize_to_fit(
-                    title_input_ref().unwrap(),
-                    &size_ref().unwrap()
-                )
+                value=initial
+                on:input=move |ev| {
+                    resize_to_fit(
+                        title_input_ref().unwrap(),
+                        &size_ref().unwrap()
+                    );
+                    on_input(ev);
+                }
                 on:keydown=on_keydown
             />
         </span>
@@ -42,15 +63,6 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
 fn resize_to_fit(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {
     set_size_ref(&input, size_ref);
     set_input_size(input, size_ref);
-}
-
-fn resize_to_fit_with_timeout(input: HtmlElement<html::Input>, size_ref: HtmlElement<html::Span>) {
-    set_size_ref(&input, &size_ref);
-
-    // need to wait for DOM to update
-    // for some reason this isn't needed on the input event
-    // but is on element load
-    set_timeout(move || set_input_size(input, &size_ref), Duration::ZERO);
 }
 
 fn set_size_ref(input: &HtmlElement<html::Input>, size_ref: &HtmlElement<html::Span>) {

@@ -1,9 +1,6 @@
 pub mod serialize;
 
-use leptos::{
-    create_memo, create_rw_signal, create_signal, Memo, ReadSignal, RwSignal, Scope, Signal,
-    SignalGetUntracked, SignalSet, SignalUpdate, SignalWith, WriteSignal,
-};
+use leptos::*;
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
@@ -115,7 +112,8 @@ pub struct Timer {
     /// Is [`None`] if the timer hasn't started.
     pub duration: ReadSignal<Option<Duration>>,
     set_duration: WriteSignal<Option<Duration>>,
-    /// Whether the timer has been started.
+    /// Whether the timer has been started. If this is `true`, `duration`
+    /// should also be `Some`.
     pub started: Memo<bool>,
     /// Whether the timer is counting down - started and not paused.
     pub running: Memo<bool>,
@@ -143,14 +141,19 @@ pub struct Timer {
     /// is resumed now.
     pub end_time: ReadSignal<Option<OffsetDateTime>>,
     set_end_time: WriteSignal<Option<OffsetDateTime>>,
+
     /// The string the user entered into this timer.
     ///
-    /// Updates when the `set_input` property is used (may change in the future).
+    /// Set using `Timer::set_input`
     pub input: ReadSignal<String>,
-    /// Used to set the `input` property.
-    pub set_input: WriteSignal<String>,
+    set_input: WriteSignal<String>,
+    /// The title set for the timer (above each timer).
+    ///
+    /// Is an empty string if no title is set.
+    pub title: ReadSignal<String>,
+    set_title: WriteSignal<String>,
 
-    // internal timekeeping stuff
+    // internal timekeeping stuff //
     /// The time at which the timer was started.
     start_time: RwSignal<Option<OffsetDateTime>>,
     /// The time of the last pause. Is `None` if the timer is not paused.
@@ -185,6 +188,7 @@ impl Timer {
         let (time_remaining, set_time_remaining) = create_signal(cx, None::<Duration>);
         let (end_time, set_end_time) = create_signal(cx, None);
         let (input, set_input) = create_signal(cx, String::new());
+        let (title, set_title) = create_signal(cx, String::new());
 
         let started = create_memo(cx, move |_| start_time().is_some());
         let paused = create_memo(cx, move |_| started() && last_pause_time().is_some());
@@ -215,6 +219,8 @@ impl Timer {
             set_end_time,
             input,
             set_input,
+            title,
+            set_title,
             start_time,
             last_pause_time,
             acc_paused_duration,
@@ -372,5 +378,15 @@ impl Timer {
     /// localstorage.
     pub const fn id(&self) -> Uuid {
         self.id
+    }
+
+    /// Sets the timer's input.
+    pub fn set_input(&self, input: String) {
+        (self.set_input)(input);
+    }
+
+    // Sets the timer's title.
+    pub fn set_title(&self, title: String) {
+        (self.set_title)(title);
     }
 }

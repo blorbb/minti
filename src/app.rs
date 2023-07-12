@@ -21,6 +21,7 @@ pub fn App(cx: Scope) -> impl IntoView {
         timers().as_vec().iter().for_each(|timer| {
             timer.state_change.track();
             timer.input.track();
+            timer.title.track();
         });
 
         // don't set storage if the timer list is from the signal creation above.

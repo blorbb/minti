@@ -18,9 +18,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let end_time = timer.end_time;
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
 
-    // TODO!! not sure if timer is being disposed of properly. maybe it should be a rwsignal?
-    on_cleanup(cx, move || timer.reset());
-
     // update the time remaining when the timer is running
     reactive::repeat_while(
         cx,
@@ -74,7 +71,11 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             // stuff above the input with extra info
             <div class="heading">
                 <span class="title">
-                    <GrowingInput placeholder="Enter a title"/>
+                    <GrowingInput
+                        placeholder="Enter a title"
+                        on_input=move |ev| timer.set_title(event_target_value(&ev))
+                        initial=timer.title.get_untracked()
+                    />
                 </span>
 
                 <Show
@@ -104,7 +105,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         <input
                             type="text"
                             prop:value=timer.input // set to old value when reset timer
-                            on:input=move |ev| (timer.set_input)(event_target_value(&ev))
+                            on:input=move |ev| timer.set_input(event_target_value(&ev))
                             on:keydown=move |ev| {
                                 // log!("key {}", ev.key());
                                 if ev.key() == "Enter" {

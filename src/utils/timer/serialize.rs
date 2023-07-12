@@ -25,6 +25,8 @@ struct TimerJson {
     acc_pause_duration: u64,
     /// The string that was inputted for this timer.
     duration_input: String,
+    /// The title given to the timer.
+    title: String,
 }
 
 impl From<Timer> for TimerJson {
@@ -48,6 +50,7 @@ impl From<Timer> for TimerJson {
                 .whole_milliseconds()
                 .saturating_as::<u64>(),
             duration_input: value.input.get_untracked(),
+            title: value.title.get_untracked(),
         }
     }
 }
@@ -72,7 +75,8 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
         .into_iter()
         .filter_map(|unparsed| {
             let timer = Timer::new(cx);
-            (timer.set_input)(unparsed.duration_input);
+            timer.set_input(unparsed.duration_input);
+            timer.set_title(unparsed.title);
 
             // timer control methods (start, pause) set their respective properties to now.
             // must override the times after calling these methods.
