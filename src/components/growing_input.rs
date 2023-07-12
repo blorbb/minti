@@ -16,6 +16,12 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
         resize_to_fit_with_timeout(elem, size_ref().unwrap());
     });
 
+    let on_keydown = move |ev: ev::KeyboardEvent| {
+        if ev.code() == "Enter" || ev.code() == "Escape" {
+            title_input_ref.get_untracked().unwrap().blur().unwrap();
+        };
+    };
+
     view! { cx,
         <span class="com-growing-input">
             <span class="size-reference" ref=size_ref></span>
@@ -27,6 +33,7 @@ pub fn GrowingInput(cx: Scope, placeholder: &'static str) -> impl IntoView {
                     title_input_ref().unwrap(),
                     &size_ref().unwrap()
                 )
+                on:keydown=on_keydown
             />
         </span>
     }
