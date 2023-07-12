@@ -68,14 +68,17 @@
         gap: 1em;
 
         button {
+            height: 2em;
+            border-radius: 2em;
+            animation: scale-in var(--time-transition-short) ease-out;
+        }
+
+        button.primary {
             background-color: var(--clr-green-400);
             color: var(--clr-green-900);
-            height: 2em;
-            aspect-ratio: 3 / 1;
-            border-radius: 20em;
+            aspect-ratio: 3;
 
             transition: transform var(--time-transition-short) ease-out;
-            animation: scale-in var(--time-transition-short) ease-out;
 
             &:hover {
                 transform: scale(1.05);
@@ -83,6 +86,23 @@
 
             &:active {
                 transform: scale(0.9);
+            }
+        }
+
+        button.light {
+            aspect-ratio: 2;
+            color: var(--clr-neutral-50);
+
+            transition-property: background-color color;
+            transition: var(--time-transition-short) ease-out;
+
+            &:hover {
+                background-color: var(--clr-neutral-300);
+            }
+
+            &:active {
+                background-color: var(--clr-neutral-50);
+                color: var(--clr-neutral-800);
             }
         }
     }
