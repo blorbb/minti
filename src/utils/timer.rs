@@ -317,6 +317,54 @@ impl Timer {
         self.last_pause_time.set(None);
     }
 
+    /// Adds a duration to the timer. Input a negative duration to subtract time.
+    ///
+    /// # Edge cases:
+    /// - If the timer hasn't started, nothing will happen.
+    /// - If duration is subtracted and results in the timer being finished, the
+    ///   timer duration will be saturated to 0 and the timer will be unpaused.
+    /// - If duration is subtracted while the timer has already finished,
+    ///   nothing will happen.
+    /// - If duration is added while the timer is already finished, the
+    ///   overtime will be also added, so the timer jumps to having the
+    ///   inputted duration remaining.
+    pub fn add_duration(&self, duration: Duration) {
+        if !self.started.get_untracked() {
+            return;
+        };
+
+        // subtracting duration
+        if duration.is_negative() {
+            if self.finished.get_untracked() {
+                return;
+            } else if self.get_time_remaining().unwrap() <= -duration {
+                // subtract will make timer finish: saturate at 0
+                self.set_duration
+                    .update(|d| *d = Some(d.unwrap() - self.get_time_remaining().unwrap()));
+            } else {
+                // nothing special: just subtract duration
+                self.set_duration
+                    .update(|d| *d = Some(d.unwrap() + duration));
+            }
+        } else if duration.is_positive() {
+            if self.finished.get_untracked() {
+                // timer is finished: add to make the remaining time `duration`.
+                // subtract to add the negative duration
+                self.set_duration.update(|d| {
+                    *d = Some(d.unwrap() - self.get_time_remaining().unwrap() + duration);
+                });
+            } else {
+                // nothing special: just add duration
+                self.set_duration
+                    .update(|d| *d = Some(d.unwrap() + duration));
+            }
+        };
+
+        // push updates
+        self.update_end_time();
+        self.update_time_remaining();
+    }
+
     /// Gets the id for the timer.
     ///
     /// Only to be used to distingush between different timers - this id is not
