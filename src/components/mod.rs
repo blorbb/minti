@@ -10,3 +10,5 @@ pub mod icon;
 pub use icon::Icon;
 pub mod progress;
 pub use progress::ProgressBar;
+pub mod fullscreen;
+pub use fullscreen::FullscreenButton;

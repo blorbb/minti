@@ -75,6 +75,10 @@
         }
     }
 
+    button {
+        animation: scale-in var(--time-transition-short) ease-out;
+    }
+
     .controls {
         display: flex;
         align-items: center;
@@ -84,7 +88,6 @@
         button {
             height: 2em;
             border-radius: 2em;
-            animation: scale-in var(--time-transition-short) ease-out;
         }
 
         button.primary {
@@ -142,6 +145,30 @@
             color: var(--clr-red-800);
             background-color: var(--clr-red-400);
         }
+    }
+
+    button.com-fullscreen-button {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 2em;
+        aspect-ratio: 1;
+
+        color: var(--clr-neutral-50);
+
+        transition-property: color, background-color;
+        transition-duration: var(--time-transition-short);
+        transition-timing-function: ease-out;
+
+        &:hover {
+            background-color: var(--clr-overlay-2);
+        }
+
+        &:active {
+            color: var(--clr-neutral-800);
+            background-color: var(--clr-neutral-50);
+        }
+
     }
 }
 

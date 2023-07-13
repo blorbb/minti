@@ -1,10 +1,14 @@
 use leptos::*;
+use web_sys::Element;
 
 use crate::{
     components::Icon,
     pages::HomePage,
     utils::timer::{serialize, TimerList},
 };
+
+#[derive(Debug, Clone)]
+pub struct FullscreenElement(pub Option<Element>);
 
 /// Main application component that manages global state.
 ///
@@ -36,6 +40,13 @@ pub fn App(cx: Scope) -> impl IntoView {
         let Some(t) = retrieve_timers(cx) else { return };
         timers.set(t);
     });
+
+    // set fullscreen element context
+    let (fullscreen_element, set_fullscreen_element) = create_signal(cx, FullscreenElement(None));
+    window_event_listener(ev::fullscreenchange, move |_| {
+        set_fullscreen_element(FullscreenElement(document().fullscreen_element()));
+    });
+    provide_context(cx, fullscreen_element);
 
     view! { cx,
         <div class="page">

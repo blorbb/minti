@@ -3,7 +3,7 @@ use std::time::Duration as StdDuration;
 use time::Duration;
 
 use crate::{
-    components::{DurationDisplay, GrowingInput, Icon, ProgressBar, RelativeTime},
+    components::{DurationDisplay, GrowingInput, Icon, ProgressBar, RelativeTime, FullscreenButton},
     utils::{
         parse, reactive,
         timer::{Timer, TimerList},
@@ -56,12 +56,15 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         }
     };
 
+    let element = create_node_ref::<html::Div>(cx);
+
     view! { cx,
         <div class="com-timer"
             data-started=reactive::as_attr(timer.started)
             data-paused=reactive::as_attr(timer.paused)
             data-running=reactive::as_attr(timer.running)
             data-finished=reactive::as_attr(timer.finished)
+            ref=element
         >
             <ProgressBar timer=timer />
             <div class="timer-face">
@@ -173,6 +176,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         <button class="primary" on:click=move |_| timer.reset()>
                             <Icon icon="ph:clock-counter-clockwise-bold"/>
                         </button>
+
                     </Show>
                 </div>
 
@@ -182,6 +186,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 >
                     <Icon icon="ph:x-bold"/>
                 </button>
+                <FullscreenButton target=element />
             </div>
         </div>
     }
