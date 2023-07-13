@@ -18,3 +18,7 @@
         @content;
     }
 }
+
+@function scale-alpha($color, $percent) {
+    @return color-mix(in oklab, $color $percent, transparent)
+}

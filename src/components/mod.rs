@@ -8,3 +8,5 @@ pub mod relative_time;
 pub use relative_time::RelativeTime;
 pub mod icon;
 pub use icon::Icon;
+pub mod progress;
+pub use progress::ProgressBar;

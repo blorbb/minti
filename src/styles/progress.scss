@@ -1,0 +1,42 @@
+@use "./functions.scss" as f;
+
+.com-progress-bar {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+
+    .progress-value {
+        position: absolute;
+        inset: 0;
+        right: 100%;
+        pointer-events: none;
+
+        background-color: var(--clr-blue-400);
+
+        animation: progress-bar linear forwards;
+
+        // reset the animation when starting the timer.
+        @include f.on-outer-most('[data-started="true"]') {
+            animation-name: progress-bar;
+        }
+
+        @include f.on-outer-most('[data-started="false"]') {
+            animation-name: none;
+        }
+
+        @include f.on-outer-most('[data-paused="true"]') {
+            animation-play-state: paused;
+        }
+    }
+}
+
+@keyframes progress-bar {
+    from {
+        right: 100%;
+    }
+
+    to {
+        right: 0%;
+    }
+}
