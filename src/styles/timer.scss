@@ -69,7 +69,7 @@
         }
 
         input {
-            background-color: rgba(255 255 255 / 0.1);
+            background-color: var(--clr-overlay-2);
             width: clamp(10em, 20vw + 5em, 20em);
             height: 1lh; // screen shifts by 1px when typing if this isn't here
         }
@@ -111,7 +111,7 @@
             transition: var(--time-transition-short) ease-out;
 
             &:hover {
-                background-color: rgba(255 255 255 / 0.1);
+                background-color: var(--clr-overlay-2);
             }
 
             &:active {
@@ -132,9 +132,13 @@
 
         transition-property: color, background-color;
         transition-duration: var(--time-transition-short);
-        transition-timing-function: linear;
+        transition-timing-function: ease-out;
 
         &:hover {
+            background-color: var(--clr-overlay-2);
+        }
+
+        &:active {
             color: var(--clr-red-800);
             background-color: var(--clr-red-400);
         }

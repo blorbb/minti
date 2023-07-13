@@ -88,6 +88,7 @@ nav {
 
         transition-property: color background-color;
         transition-duration: var(--time-transition);
+        transition-timing-function: ease-out;
 
         &:hover {
             background-color: var(--clr-green-700);
@@ -110,6 +111,7 @@ nav {
 
         transition-property: color background-color;
         transition-duration: var(--time-transition);
+        transition-timing-function: ease-out;
 
         &:hover {
             background-color: var(--clr-red-700);
