@@ -293,7 +293,8 @@ impl Timer {
         (self.set_end_time)(self.get_end_time());
     }
 
-    /// Resets the timer to as if a new one was created.
+    /// Resets the timer to as if a new one was created, but keeping the
+    /// initial input and title.
     pub fn reset(&self) {
         log::debug!("resetting timer");
         self.start_time.set(None);
@@ -348,8 +349,7 @@ impl Timer {
     /// - If duration is subtracted while the timer has already finished,
     ///   nothing will happen.
     /// - If duration is added while the timer is already finished, the
-    ///   overtime will be also added, so the timer jumps to having the
-    ///   inputted duration remaining.
+    ///   timer will be reset with the duration specified.
     pub fn add_duration(&self, duration: Duration) {
         log::debug!("adding duration {} to timer", duration);
         if !self.started.get_untracked() {
@@ -386,12 +386,9 @@ impl Timer {
             }
         } else if duration.is_positive() {
             if self.finished.get_untracked() {
-                log::trace!("adding overtime duration");
-                // timer is finished: add to make the remaining time `duration`.
-                // subtract to add the negative duration
-                let new_duration =
-                    self.duration.get_untracked().unwrap() - self.get_time_remaining().unwrap() + duration;
-                (self.set_duration)(Some(new_duration));
+                log::debug!("resetting to {}", duration);
+                self.reset();
+                self.start(duration);
             } else {
                 log::trace!("adding duration");
                 // nothing special: just add duration
