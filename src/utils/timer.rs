@@ -180,6 +180,8 @@ impl Timer {
     /// This should only be called in the largest scope (`App`) to avoid
     /// disposing the signals.
     pub fn new(cx: Scope) -> Self {
+        log::info!("creating new timer");
+
         let (duration, set_duration) = create_signal(cx, None::<Duration>);
         let start_time = create_rw_signal(cx, None);
         let last_pause_time = create_rw_signal(cx, None);
@@ -204,7 +206,7 @@ impl Timer {
             running.track();
             finished.track();
             duration.track();
-            leptos::log!("state changed");
+            log::trace!("state changed");
         });
 
         Self {
@@ -237,7 +239,10 @@ impl Timer {
     ///
     /// Does not update any signals.
     pub fn get_time_elapsed(&self) -> Duration {
+        // log::trace!("getting time elapsed");
+
         let Some(start_time) = (self.start_time).get_untracked() else {
+            log::info!("timer has not started: returning 0 duration");
             return Duration::ZERO;
         };
 
@@ -253,6 +258,7 @@ impl Timer {
     /// Returns [`None`] if the timer hasn't started.
     /// If the timer is finished, a negative duration will be returned.
     pub fn get_time_remaining(&self) -> Option<Duration> {
+        // log::trace!("getting time remaining");
         Some(self.duration.get_untracked()? - self.get_time_elapsed())
     }
 
@@ -260,6 +266,7 @@ impl Timer {
     ///
     /// **Side effects:** Only way to update the `finished` signal.
     pub fn update_time_remaining(&self) {
+        // log::trace!("updating time remaining");
         (self.set_time_remaining)(self.get_time_remaining());
     }
 
@@ -270,7 +277,9 @@ impl Timer {
     ///
     /// Returns `None` if the timer hasn't started.
     pub fn get_end_time(&self) -> Option<OffsetDateTime> {
+        // log::trace!("getting end time");
         if !self.started.get_untracked() {
+            log::trace!("timer hasn't started, returning None");
             return None;
         }
 
@@ -280,12 +289,13 @@ impl Timer {
 
     /// Updates the `end_time` signal.
     pub fn update_end_time(&self) {
+        // log::trace!("updating end time");
         (self.set_end_time)(self.get_end_time());
     }
 
     /// Resets the timer to as if a new one was created.
     pub fn reset(&self) {
-        leptos::log!("resetting");
+        log::debug!("resetting timer");
         self.start_time.set(None);
         self.last_pause_time.set(None);
         self.acc_paused_duration.set(Duration::ZERO);
@@ -295,6 +305,7 @@ impl Timer {
 
     /// Starts the timer.
     pub fn start(&self, duration: Duration) {
+        log::debug!("starting timer with duration {}", duration);
         self.start_time.set(Some(relative::now()));
         (self.set_duration)(Some(duration));
     }
@@ -303,7 +314,9 @@ impl Timer {
     ///
     /// Does not do anything if the timer is already paused.
     pub fn pause(&self) {
+        log::debug!("paused timer");
         if self.paused.get_untracked() {
+            log::warn!("timer already paused, pause did nothing");
             return;
         }
 
@@ -314,7 +327,9 @@ impl Timer {
     ///
     /// Does not do anything if the timer is not paused.
     pub fn resume(&self) {
+        log::debug!("resuming timer");
         if !self.paused.get_untracked() {
+            log::warn!("timer already resumed, pause did nothing");
             return;
         }
 
@@ -336,31 +351,49 @@ impl Timer {
     ///   overtime will be also added, so the timer jumps to having the
     ///   inputted duration remaining.
     pub fn add_duration(&self, duration: Duration) {
+        log::debug!("adding duration {} to timer", duration);
         if !self.started.get_untracked() {
+            log::warn!("timer hasn't started, not changing duration");
             return;
         };
+
+        // NOTE: do not use `self.duration.update` if need to use
+        // `self.get_time_remaining`. `update` borrows `self.duration` mutably
+        // and  `get_time_remaining` tries to borrow `self.duration` immutably,
+        // causing panic.
+        // use `self.set_duration.set` instead.
 
         // subtracting duration
         if duration.is_negative() {
             if self.finished.get_untracked() {
+                log::warn!("timer is already finished: doing nothing");
                 return;
             } else if self.get_time_remaining().unwrap() <= -duration {
                 // subtract will make timer finish: saturate at 0
-                self.set_duration
-                    .update(|d| *d = Some(d.unwrap() - self.get_time_remaining().unwrap()));
+                let new_duration =
+                    self.duration.get_untracked().unwrap() - self.get_time_remaining().unwrap();
+                log::trace!(
+                    "saturating duration to finish: subtracting {}",
+                    new_duration
+                );
+
+                (self.set_duration)(Some(new_duration));
             } else {
+                log::trace!("subtracting duration");
                 // nothing special: just subtract duration
                 self.set_duration
                     .update(|d| *d = Some(d.unwrap() + duration));
             }
         } else if duration.is_positive() {
             if self.finished.get_untracked() {
+                log::trace!("adding overtime duration");
                 // timer is finished: add to make the remaining time `duration`.
                 // subtract to add the negative duration
-                self.set_duration.update(|d| {
-                    *d = Some(d.unwrap() - self.get_time_remaining().unwrap() + duration);
-                });
+                let new_duration =
+                    self.duration.get_untracked().unwrap() - self.get_time_remaining().unwrap() + duration;
+                (self.set_duration)(Some(new_duration));
             } else {
+                log::trace!("adding duration");
                 // nothing special: just add duration
                 self.set_duration
                     .update(|d| *d = Some(d.unwrap() + duration));
@@ -383,11 +416,13 @@ impl Timer {
 
     /// Sets the timer's input.
     pub fn set_input(&self, input: String) {
+        log::trace!("setting input to {:?}", input);
         (self.set_input)(input);
     }
 
     // Sets the timer's title.
     pub fn set_title(&self, title: String) {
+        log::trace!("setting title to {:?}", title);
         (self.set_title)(title);
     }
 }

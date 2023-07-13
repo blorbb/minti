@@ -17,6 +17,8 @@ web-sys = { version = "0.3", features = ["Node", "Element", "HtmlElement", "DomR
 reqwest = { version = "0.11", features = [] }
 serde_json = "1.0.99"
 az = "1.2.1"
+log = "0.4.19"
+console_log = { version = "1.0", features = ["color"] }
 
 [workspace]
 members = ["src-tauri"]

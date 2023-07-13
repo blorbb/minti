@@ -23,10 +23,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     reactive::repeat_while(
         cx,
         timer.running,
-        move || {
-            log!("updating time rem");
-            timer.update_time_remaining();
-        },
+        move || timer.update_time_remaining(),
         StdDuration::from_millis(200),
     );
 
@@ -34,10 +31,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     reactive::repeat_while(
         cx,
         timer.paused,
-        move || {
-            log!("updating end");
-            timer.update_end_time();
-        },
+        move || timer.update_end_time(),
         StdDuration::SECOND,
     );
     // also need to update when the timer resets,
