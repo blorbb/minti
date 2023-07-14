@@ -3,9 +3,11 @@ use std::time::Duration as StdDuration;
 use time::Duration;
 
 use crate::{
-    components::{DurationDisplay, GrowingInput, Icon, ProgressBar, RelativeTime, FullscreenButton},
+    components::{
+        DurationDisplay, FullscreenButton, GrowingInput, Icon, ProgressBar, RelativeTime,
+    },
     utils::{
-        parse, reactive,
+        commands, parse, reactive,
         timer::{Timer, TimerList},
     },
 };
@@ -39,6 +41,15 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     create_effect(cx, move |_| {
         timer.started.track();
         timer.update_end_time();
+    });
+
+    // request for user attention when the timer finishes
+    create_effect(cx, move |_| {
+        // also check that it is close to finish so that already expired timers
+        // retrieved from localstorage don't alert
+        if (timer.finished)() && timer.get_time_remaining().unwrap().abs() < Duration::SECOND {
+            spawn_local(commands::alert_window());
+        };
     });
 
     let set_timer_duration = move || {
