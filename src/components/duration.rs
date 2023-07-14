@@ -38,33 +38,28 @@ pub fn DurationDisplay(cx: Scope, #[prop(into)] duration: Signal<Duration>) -> i
 
     view! { cx,
         <span class="com-duration">
-            <Show
-                when=show_negative
-                fallback=|_| ()
-            >
+            <Show when=show_negative fallback=|_| ()>
                 <span class="negative">"-"</span>
             </Show>
-            <Show
-                when=move || days() != 0
-                fallback=|_| ()
-            >
-                <span class="value">{days}</span><span class="unit">"d"</span>" "
+            <Show when=move || days() != 0 fallback=|_| ()>
+                <span class="value">{days}</span>
+                <span class="unit">"d"</span>
+                " "
             </Show>
-            <Show
-                when=move || hours() != 0 || days() != 0
-                fallback=|_| ()
-            >
-                <span class="value">{hours}</span><span class="unit">"h"</span>" "
+            <Show when=move || hours() != 0 || days() != 0 fallback=|_| ()>
+                <span class="value">{hours}</span>
+                <span class="unit">"h"</span>
+                " "
             </Show>
 
-            <Show
-                when=move || mins() != 0 || hours() != 0 || days() != 0
-                fallback=|_| ()
-            >
-                <span class="value">{mins}</span><span class="unit">"m"</span>" "
+            <Show when=move || mins() != 0 || hours() != 0 || days() != 0 fallback=|_| ()>
+                <span class="value">{mins}</span>
+                <span class="unit">"m"</span>
+                " "
             </Show>
 
-            <span class="value">{secs}</span><span class="unit">"s"</span>
+            <span class="value">{secs}</span>
+            <span class="unit">"s"</span>
         </span>
     }
 }

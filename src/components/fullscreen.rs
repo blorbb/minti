@@ -26,22 +26,17 @@ pub fn FullscreenButton(cx: Scope, target: NodeRef<html::Div>) -> impl IntoView 
     view! { cx,
         <Show
             when=is_fullscreen
-            fallback=move |cx| view! { cx,
-                <button
-                    class="com-fullscreen-button"
-                    on:click=enable_fullscreen
-                >
-                    <Icon icon="ph:corners-out" />
-                </button>
+            fallback=move |cx| {
+                view! { cx,
+                    <button class="com-fullscreen-button" on:click=enable_fullscreen>
+                        <Icon icon="ph:corners-out"/>
+                    </button>
+                }
             }
         >
-            <button
-                class="com-fullscreen-button"
-                on:click=disable_fullscreen
-            >
-                <Icon icon="ph:corners-in" />
+            <button class="com-fullscreen-button" on:click=disable_fullscreen>
+                <Icon icon="ph:corners-in"/>
             </button>
         </Show>
-
     }
 }

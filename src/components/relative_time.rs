@@ -47,9 +47,5 @@ pub fn RelativeTime(
         format!("{} {}", display_date, end_time).trim().to_string()
     });
 
-    view! { cx,
-        <span class="com-relative-time">
-            {string}
-        </span>
-    }
+    view! { cx, <span class="com-relative-time">{string}</span> }
 }

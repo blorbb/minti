@@ -34,12 +34,13 @@ pub fn ProgressBar(cx: Scope, timer: Timer) -> impl IntoView {
                 class="progress-value"
                 ref=progress_element
                 style:animation-duration=move || {
-                    format!("{:.3}s", (timer.duration)().unwrap_or(Duration::MAX).as_seconds_f64())
+                    format!("{:.3}s", (timer.duration) ().unwrap_or(Duration::MAX).as_seconds_f64())
                 }
-                style:animation-delay=move || {
-                    format!("{:.3}s", -elapsed().as_seconds_f64())
-                }
-            />
+                style:animation-delay=move || { format!("{:.3}s", - elapsed().as_seconds_f64()) }
+            ></div>
+
+        // timer.finished.track();
+
         </div>
     }
 }

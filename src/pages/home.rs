@@ -14,9 +14,7 @@ pub fn HomePage(cx: Scope) -> impl IntoView {
             <For
                 each=timers
                 key=Timer::id
-                view=move |cx, timer| view! { cx,
-                    <TimerDisplay timer=timer />
-                }
+                view=move |cx, timer| view! { cx, <TimerDisplay timer=timer/> }
             />
         </div>
     }

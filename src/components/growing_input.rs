@@ -48,10 +48,7 @@ where
                 ref=title_input_ref
                 value=initial
                 on:input=move |ev| {
-                    resize_to_fit(
-                        title_input_ref().unwrap(),
-                        &size_ref().unwrap()
-                    );
+                    resize_to_fit(title_input_ref().unwrap(), &size_ref().unwrap());
                     on_input(ev);
                 }
                 on:keydown=on_keydown

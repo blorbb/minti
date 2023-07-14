@@ -70,14 +70,15 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let element = create_node_ref::<html::Div>(cx);
 
     view! { cx,
-        <div class="com-timer"
+        <div
+            class="com-timer"
             data-started=reactive::as_attr(timer.started)
             data-paused=reactive::as_attr(timer.paused)
             data-running=reactive::as_attr(timer.running)
             data-finished=reactive::as_attr(timer.finished)
             ref=element
         >
-            <ProgressBar timer=timer />
+            <ProgressBar timer=timer/>
             <div class="timer-face">
                 // stuff above the input with extra info
                 <div class="heading">
@@ -89,20 +90,17 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         />
                     </span>
 
-                    <Show
-                        when=move || error_message().is_some()
-                        fallback=|_| ()
-                    >
-                        " | " <span class="error">{error_message}</span>
+                    <Show when=move || error_message().is_some() fallback=|_| ()>
+                        " | "
+                        <span class="error">{error_message}</span>
                     </Show>
 
-                    <Show
-                        when=move || end_time().is_some()
-                        fallback=|_| ()
-                    >
-                        " | " <span class="end">
-                            <Icon icon="ph:timer-bold" />" "
-                            <RelativeTime time=end_time />
+                    <Show when=move || end_time().is_some() fallback=|_| ()>
+                        " | "
+                        <span class="end">
+                            <Icon icon="ph:timer-bold"/>
+                            " "
+                            <RelativeTime time=end_time/>
                         </span>
                     </Show>
                 </div>
@@ -112,63 +110,84 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 <div class="duration">
                     <Show
                         when=timer.started
-                        fallback=move |cx| view! { cx,
-                            <input
-                                type="text"
-                                prop:value=timer.input // set to old value when reset timer
-                                on:input=move |ev| timer.set_input(event_target_value(&ev))
-                                on:keydown=move |ev| {
-                                    // log!("key {}", ev.key());
-                                    if ev.key() == "Enter" {
-                                        set_timer_duration();
-                                    };
-                                }
-                            />
+                        fallback=move |cx| {
+                            view! { cx,
+                                <input
+                                    type="text"
+                                    // set to old value when reset timer
+                                    prop:value=timer.input
+                                    on:input=move |ev| timer.set_input(event_target_value(&ev))
+                                    on:keydown=move |ev| {
+                                        if ev.key() == "Enter" {
+                                            set_timer_duration();
+                                        }
+                                    }
+                                />
+                            }
                         }
                     >
-                        <DurationDisplay duration={Signal::derive(cx, move || time_remaining().unwrap_or_default())} />
+                        <DurationDisplay duration=Signal::derive(
+                            cx,
+                            move || time_remaining().unwrap_or_default(),
+                        )/>
                     </Show>
                 </div>
 
                 <div class="controls">
                     <Show
                         when=timer.started
-                        fallback=move |cx| view! { cx,
-                            <button class="primary" on:click=move |_| set_timer_duration()>
-                                <Icon icon="ph:play-fill"/>
-                            </button>
+                        fallback=move |cx| {
+                            view! { cx,
+                                <button class="primary" on:click=move |_| set_timer_duration()>
+                                    <Icon icon="ph:play-fill"/>
+                                </button>
+                            }
                         }
                     >
                         // if finished, show add duration button
                         // otherwise, show add+subtract duration and pause button
                         <Show
                             when=timer.finished
-                            fallback=move |cx| view! { cx,
-                                // add duration
-                                <button class="light" on:click=move |_| timer.add_duration(Duration::minutes(1))>
-                                    "+ 1m"
-                                </button>
-                                <button class="light" on:click=move |_| timer.add_duration(Duration::minutes(-1))>
-                                    "- 1m"
-                                </button>
-
-
-                                // switch between resume and pause button
-                                <Show
-                                    when=timer.paused
-                                    fallback=move |cx| view! { cx,
-                                        <button class="primary" on:click=move |_| timer.pause()>
-                                            <Icon icon="ph:pause-bold" />
-                                        </button>
-                                    }
-                                >
-                                    <button class="primary" on:click=move |_| timer.resume()>
-                                        <Icon icon="ph:play-bold" />
+                            fallback=move |cx| {
+                                view! { cx,
+                                    // add duration
+                                    <button
+                                        class="light"
+                                        on:click=move |_| timer.add_duration(Duration::minutes(1))
+                                    >
+                                        "+ 1m"
                                     </button>
-                                </Show>
+                                    <button
+                                        class="light"
+                                        on:click=move |_| {
+                                            timer.add_duration(Duration::minutes(-1))
+                                        }
+                                    >
+                                        "- 1m"
+                                    </button>
+
+                                    // switch between resume and pause button
+                                    <Show
+                                        when=timer.paused
+                                        fallback=move |cx| {
+                                            view! { cx,
+                                                <button class="primary" on:click=move |_| timer.pause()>
+                                                    <Icon icon="ph:pause-bold"/>
+                                                </button>
+                                            }
+                                        }
+                                    >
+                                        <button class="primary" on:click=move |_| timer.resume()>
+                                            <Icon icon="ph:play-bold"/>
+                                        </button>
+                                    </Show>
+                                }
                             }
                         >
-                            <button class="primary" on:click=move |_| timer.add_duration(Duration::minutes(1))>
+                            <button
+                                class="primary"
+                                on:click=move |_| timer.add_duration(Duration::minutes(1))
+                            >
                                 "+ 1m"
                             </button>
                         </Show>
@@ -181,13 +200,10 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     </Show>
                 </div>
 
-                <button
-                    class="delete"
-                    on:click=move |_| remove_self(cx, &timer)
-                >
+                <button class="delete" on:click=move |_| remove_self(cx, &timer)>
                     <Icon icon="ph:x-bold"/>
                 </button>
-                <FullscreenButton target=element />
+                <FullscreenButton target=element/>
             </div>
         </div>
     }

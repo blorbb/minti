@@ -51,14 +51,14 @@ pub fn App(cx: Scope) -> impl IntoView {
     view! { cx,
         <div class="page">
             <main ref=main_ref>
-                <HomePage />
+                <HomePage/>
             </main>
             <nav>
-                <button class="add" on:click=move |_| timers.update(TimerList::push_new) >
-                    <Icon icon="ph:plus-bold" />
+                <button class="add" on:click=move |_| timers.update(TimerList::push_new)>
+                    <Icon icon="ph:plus-bold"/>
                 </button>
-                <button class="remove" on:click=move |_| timers.update(TimerList::clear) >
-                    <Icon icon="ph:trash-bold" />
+                <button class="remove" on:click=move |_| timers.update(TimerList::clear)>
+                    <Icon icon="ph:trash-bold"/>
                 </button>
             </nav>
         </div>

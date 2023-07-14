@@ -51,6 +51,6 @@ pub fn Icon(
         <span
             class="com-icon"
             inner_html=move || icon_svg.read(cx).flatten().unwrap_or_default()
-        />
+        ></span>
     }
 }
