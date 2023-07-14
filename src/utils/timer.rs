@@ -317,7 +317,7 @@ impl Timer {
     pub fn pause(&self) {
         log::debug!("paused timer");
         if self.paused.get_untracked() {
-            log::warn!("timer already paused, pause did nothing");
+            log::info!("timer already paused, pause did nothing");
             return;
         }
 
@@ -330,7 +330,7 @@ impl Timer {
     pub fn resume(&self) {
         log::debug!("resuming timer");
         if !self.paused.get_untracked() {
-            log::warn!("timer already resumed, pause did nothing");
+            log::info!("timer already paused, resume did nothing");
             return;
         }
 
@@ -376,6 +376,8 @@ impl Timer {
                     "saturating duration to finish: subtracting {}",
                     new_duration
                 );
+                // unpause the timer to start overtime countdown
+                self.resume();
 
                 (self.set_duration)(Some(new_duration));
             } else {
