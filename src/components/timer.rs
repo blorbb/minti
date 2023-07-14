@@ -135,8 +135,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         when=timer.started
                         fallback=move |cx| view! { cx,
                             <button class="primary" on:click=move |_| set_timer_duration()>
-                                // TODO: this creates a warning that a signal is updated
-                                // after being disposed.
                                 <Icon icon="ph:play-fill"/>
                             </button>
                         }
@@ -156,26 +154,18 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
 
                                 // switch between resume and pause button
-                                <button
-                                    class="primary"
-                                    on:click=move |_| if (timer.paused)() {
-                                        timer.resume();
-                                    } else {
-                                        timer.pause();
+                                <Show
+                                    when=timer.paused
+                                    fallback=move |cx| view! { cx,
+                                        <button class="primary" on:click=move |_| timer.pause()>
+                                            <Icon icon="ph:pause-bold" />
+                                        </button>
                                     }
                                 >
-                                    <Icon
-                                        icon=Signal::derive(
-                                            cx,
-                                            move || if (timer.paused)() {
-                                                "ph:play-bold"
-                                            } else {
-                                                "ph:pause-bold"
-                                            }
-                                        )
-                                    />
-                                </button>
-
+                                    <button class="primary" on:click=move |_| timer.resume()>
+                                        <Icon icon="ph:play-bold" />
+                                    </button>
+                                </Show>
                             }
                         >
                             <button class="primary" on:click=move |_| timer.add_duration(Duration::minutes(1))>
