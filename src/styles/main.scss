@@ -59,6 +59,37 @@ button:focus-visible {
     outline: var(--outline);
 }
 
+// scrollbars //
+
+::-webkit-scrollbar {
+	width: var(--scrollbar-size);
+	height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--clr-neutral-200);
+	border-radius: var(--scrollbar-size);
+
+    transition: background-color var(--time-transition-short);
+
+    &:hover {
+        background: var(--clr-neutral-100);
+    }
+
+    &:active {
+        background: var(--clr-neutral-50);
+    }
+}
+
+::-webkit-scrollbar-track {
+	background-color: var(--clr-neutral-500);
+}
+
+::-webkit-scrollbar-corner {
+	background-color: transparent;
+}
+
+
 // main layout //
 
 .page {
