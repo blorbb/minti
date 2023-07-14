@@ -28,6 +28,11 @@
         @include f.on-outer-most('[data-paused="true"]') {
             animation-play-state: paused;
         }
+
+        @include f.on-outer-most('[data-finished="true"]') {
+            right: 0;
+            animation: bar-finished 1s infinite alternate ease-out !important;
+        }
     }
 }
 
@@ -38,5 +43,11 @@
 
     to {
         right: 0%;
+    }
+}
+
+@keyframes bar-finished {
+    to {
+        background-color: var(--clr-orange-400);
     }
 }
