@@ -1,5 +1,7 @@
 {
-    "conventionalCommits.scopes": [
-        "ui"
-    ]
+    "conventionalCommits.scopes": ["ui"],
+    // https://github.com/leptos-rs/leptos/issues/1310
+    "rust-analyzer.procMacro.ignored": {
+        "leptos_macro": ["server", "component"]
+    }
 }
