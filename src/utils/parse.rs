@@ -46,15 +46,14 @@ use time::Duration;
 /// );
 /// ```
 pub fn parse_input(input: &str) -> Result<Duration, ParseError> {
+    log::debug!("parsing input {input}");
+
     let tokens = unparsed_tokens::build_unparsed_tokens(input)?;
     let tokens: Vec<Token> = tokens
         .into_iter()
         .map(Token::try_from)
         .collect::<Result<_, _>>()?;
-
-    if tokens.is_empty() {
-        return Err(ParseError::Empty);
-    };
+    log::trace!("successfully mapped to parsed tokens");
 
     parse_tokens::parse_tokens(&tokens)
 }

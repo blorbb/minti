@@ -37,6 +37,7 @@ pub(super) struct UnparsedToken {
     pub string: String,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(super) enum TokensFormat {
     /// Checks that the length of a Vec<Token> is 1.
     /// Does not check that it is a number.

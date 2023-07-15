@@ -18,6 +18,7 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
     let mut prev_token_type = UnparsedTokenType::Separator; // will be overwritten
 
     for ch in input.chars() {
+        log::trace!("parsing character {ch:?}");
         let curr_token_type = UnparsedTokenType::try_from(ch)?;
 
         // Always new token if its a separator
@@ -26,6 +27,7 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
             || curr_token_type == UnparsedTokenType::Separator;
 
         if is_new_token {
+            log::trace!("character is a new token");
             // create new token: add to the vec
             token_list.push(UnparsedToken {
                 variant: curr_token_type,
@@ -34,6 +36,7 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
 
             prev_token_type = curr_token_type;
         } else {
+            log::trace!("character is same type as previous");
             // add to the last token in the vec
             token_list
                 .last_mut()
@@ -43,6 +46,7 @@ pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, P
         }
     }
 
+    log::trace!("successfully built unparsed tokens");
     Ok(token_list)
 }
 
