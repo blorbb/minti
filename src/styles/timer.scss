@@ -60,6 +60,7 @@
         text-align: center;
         font-size: 2em;
         font-weight: 600;
+        height: 1lh; // screen shifts by 1px when typing/resetting if this isn't here
 
         @include f.on-outer-most('[data-paused="true"]') {
             color: var(--clr-neutral-100);
@@ -72,7 +73,6 @@
         input {
             background-color: var(--clr-overlay-2);
             width: 12em;
-            height: 1lh; // screen shifts by 1px when typing if this isn't here
         }
     }
 
