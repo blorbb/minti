@@ -1,12 +1,16 @@
 use leptos::*;
 
-use crate::{app::FullscreenElement, components::Icon};
+use crate::{components::Icon, utils::contexts::FullscreenElement};
 
 #[component]
-pub fn FullscreenButton(cx: Scope, target: NodeRef<html::Div>, class: &'static str) -> impl IntoView {
-    let fullscreen_element = expect_context::<ReadSignal<FullscreenElement>>(cx);
+pub fn FullscreenButton(
+    cx: Scope,
+    target: NodeRef<html::Div>,
+    class: &'static str,
+) -> impl IntoView {
+    let fullscreen_element = expect_context::<FullscreenElement>(cx);
     let is_fullscreen = create_memo(cx, move |_| {
-        let result = fullscreen_element().0.is_some();
+        let result = fullscreen_element().is_some();
         log!("toggling to {}", result);
         result
     });
@@ -17,7 +21,7 @@ pub fn FullscreenButton(cx: Scope, target: NodeRef<html::Div>, class: &'static s
     };
 
     let disable_fullscreen = move |_| {
-        if !document().fullscreen_enabled() || fullscreen_element.get_untracked().0.is_none() {
+        if !document().fullscreen_enabled() || fullscreen_element.get_untracked().is_none() {
             return;
         };
         document().exit_fullscreen();

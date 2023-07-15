@@ -4,9 +4,9 @@ use leptos::{Scope, SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
 use time::ext::NumericalDuration;
 
-use crate::utils::time::timestamp;
+use crate::utils::{contexts::TimerList, time::timestamp};
 
-use super::{Timer, TimerList};
+use super::Timer;
 
 /// A short, JSON representation of a timer.
 #[derive(Debug, Serialize, Deserialize)]

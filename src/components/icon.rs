@@ -1,5 +1,7 @@
 use leptos::*;
 
+use crate::utils::contexts::Icons;
+
 const BASE_URL: &str = "https://api.iconify.design";
 
 /// Displays an svg icon.
@@ -14,15 +16,11 @@ pub fn Icon(
 ) -> impl IntoView {
     // warnings are probably fixed in https://github.com/leptos-rs/leptos/pull/1342
 
+    let stored_icons = expect_context::<Icons>(cx);
+
     let icon_svg: Resource<_, Option<String>> =
         create_local_resource(cx, icon, move |icon| async move {
-            if let Some(body) = window()
-                .local_storage()
-                .unwrap()
-                .unwrap()
-                .get_item(&format!("icon.{}", icon))
-                .unwrap()
-            {
+            if let Some(body) = stored_icons.get(icon) {
                 // TODO: probably should sanitise the body just in case
                 log::debug!("found icon {} in localstorage", icon);
                 return Some(body);
@@ -43,6 +41,7 @@ pub fn Icon(
                 None
             } else {
                 log::debug!("successfully fetched icon {}", icon);
+                stored_icons.add(icon, &body);
                 Some(body)
             }
         });

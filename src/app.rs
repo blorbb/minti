@@ -2,17 +2,17 @@ use js_sys::Function;
 use leptos::*;
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{
-    Element, HtmlElement, IntersectionObserver, IntersectionObserverEntry, IntersectionObserverInit,
+    HtmlElement, IntersectionObserver, IntersectionObserverEntry, IntersectionObserverInit,
 };
 
 use crate::{
     components::Icon,
     pages::HomePage,
-    utils::timer::{serialize, TimerList},
+    utils::{
+        contexts::{FullscreenElement, Icons, TimerList},
+        timer::serialize,
+    },
 };
-
-#[derive(Debug, Clone)]
-pub struct FullscreenElement(pub Option<Element>);
 
 /// Main application component that manages global state.
 ///
@@ -20,39 +20,42 @@ pub struct FullscreenElement(pub Option<Element>);
 /// - Updates localstorage whenever a timer changes.
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
-    let timers = create_rw_signal(cx, TimerList::new(cx));
+    let timers = TimerList::new(cx);
     provide_context(cx, timers);
-
-    // TODO state changes are not being tracked
-    // store the timers into local storage when any of their statuses change
-    create_effect(cx, move |_| {
-        timers().as_vec().iter().for_each(|timer| {
-            timer.state_change.track();
-            timer.input.track();
-            timer.title.track();
-        });
-
-        // don't set storage if the timer list is from the signal creation above.
-        if !timers().is_initial() {
-            let _ = store_timers(timers());
-        }
-    });
 
     // load timers from localstorage
     let main_ref = create_node_ref::<html::Main>(cx);
     main_ref.on_load(cx, move |_| {
         let Some(t) = retrieve_timers(cx) else { return };
-        timers.set(t);
+        timers.set(t.to_vec());
     });
 
-    // set fullscreen element context
-    let (fullscreen_element, set_fullscreen_element) = create_signal(cx, FullscreenElement(None));
-    window_event_listener(ev::fullscreenchange, move |_| {
-        set_fullscreen_element(FullscreenElement(document().fullscreen_element()));
+    // store timers into localstorage before unload
+    window_event_listener(ev::beforeunload, move |_| {
+        if !timers.is_initial() {
+            log::debug!("storing timers");
+            let _ = store_timers(timers);
+        }
     });
+
+    // contexts //
+
+    // fullscreen element context
+    let (fullscreen_element, set_fullscreen_element) = create_signal(cx, None);
+    let fullscreen_element = FullscreenElement::new(fullscreen_element);
+
+    window_event_listener(ev::fullscreenchange, move |_| {
+        set_fullscreen_element(document().fullscreen_element());
+    });
+
     provide_context(cx, fullscreen_element);
 
-    // show scroll shadows
+    // icons context
+    let icons = Icons::from_local_storage(cx);
+    provide_context(cx, icons);
+
+    // show scroll shadows //
+
     let intersection_root = create_node_ref::<html::Div>(cx);
     let top_edge = create_node_ref::<html::Div>(cx);
     let bottom_edge = create_node_ref::<html::Div>(cx);
@@ -122,10 +125,10 @@ pub fn App(cx: Scope) -> impl IntoView {
                 <div class="scroll-shadow" data-edge="bottom" ref=bottom_shadow />
             </div>
             <nav>
-                <button class="add mix-btn-colored-green" on:click=move |_| timers.update(TimerList::push_new)>
+                <button class="add mix-btn-colored-green" on:click=move |_| timers.push_new()>
                     <Icon icon="ph:plus-bold"/>
                 </button>
-                <button class="remove mix-btn-colored-red" on:click=move |_| timers.update(TimerList::clear)>
+                <button class="remove mix-btn-colored-red" on:click=move |_| timers.clear()>
                     <Icon icon="ph:trash-bold"/>
                 </button>
             </nav>
@@ -133,7 +136,6 @@ pub fn App(cx: Scope) -> impl IntoView {
     }
 }
 
-// TODO handle errors properly
 /// Stores a `TimerList` into localstorage.
 ///
 /// The timers will be stored using the key "timers".

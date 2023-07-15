@@ -6,10 +6,7 @@ use crate::{
     components::{
         DurationDisplay, FullscreenButton, GrowingInput, Icon, ProgressBar, RelativeTime,
     },
-    utils::{
-        commands, parse, reactive,
-        timer::{Timer, TimerList},
-    },
+    utils::{commands, contexts::TimerList, parse, reactive, timer::Timer},
 };
 
 /// Provides controls and display for a [`Timer`].
@@ -208,9 +205,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 }
 
 fn remove_self(cx: Scope, timer: &Timer) {
-    let timers = expect_context::<RwSignal<TimerList>>(cx);
-    timers.update(|t| {
-        t.remove_id(timer.id());
-    });
+    let timers = expect_context::<TimerList>(cx);
+    timers.remove_id(timer.id());
     cx.dispose();
 }
