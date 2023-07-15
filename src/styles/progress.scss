@@ -36,6 +36,17 @@
             animation: bar-finished 1s infinite alternate ease-out !important;
         }
     }
+
+    // place an inset box shadow above progress-value
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+
+        box-shadow: var(--shadow-2-inset);
+        pointer-events: none;
+    }
 }
 
 @keyframes progress-bar {

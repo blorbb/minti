@@ -1,8 +1,18 @@
 .page-home {
-    display: flex;
-    flex-direction: column;
+    --_min-timer-width: 350px;
+    --_border: 2px solid var(--clr-neutral-200);
+
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(min(var(--_min-timer-width), 100%), 1fr)
+    );
+
+    border-top: var(--_border);
+    border-left: var(--_border);
 
     > * {
-        flex-grow: 1;
+        border-bottom: var(--_border);
+        border-right: var(--_border);
     }
 }

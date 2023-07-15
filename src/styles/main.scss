@@ -14,7 +14,7 @@
     // from https://utopia.fyi/type/calculator/?c=320,12,1.2,1080,20,1.333,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12
     // can set everything else based on rem/em, don't need the others.
     // also like the relative scale better with rem/ems instead of the given scales.
-    font-size: clamp(12px, calc(8.64px + 1.05vmin), 20px);
+    font-size: var(--font-size-vp);
     line-height: 1.5;
 
     font-synthesis: none;
@@ -130,6 +130,7 @@ button:focus-visible {
         position: absolute;
         inset-inline: 0;
         height: 5px;
+        pointer-events: none;
 
         &[data-edge="top"] {
             top: 0;
@@ -151,6 +152,7 @@ button:focus-visible {
         z-index: 1;
 
         transition: opacity var(--time-transition);
+        pointer-events: none;
 
         &[data-edge="top"] {
             top: 0;

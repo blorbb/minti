@@ -4,12 +4,17 @@
     --clr-text-secondary: rgba(255 255 255 / 0.6);
     --clr-error: var(--clr-red-400);
 
-    --outline: 2px solid var(--clr-purple-300);  
+    --outline: 2px solid var(--clr-purple-300);
 
     --time-transition: 200ms;
     --time-transition-short: 80ms;
 
     --scrollbar-size: 1rem;
+
+    /// font size based on viewport units
+    --font-size-vp: clamp(12px, calc(8.64px + 1.05vmin), 20px);
+    /// font size based on container query
+    --font-size-cq: clamp(12px, calc(8.64px + 1.05cqmin), 20px);
 
     // colors //
 
@@ -57,4 +62,33 @@
     --clr-overlay-2: rgba(255 255 255 / 0.1);
     --clr-overlay-3: rgba(255 255 255 / 0.15);
     --clr-overlay-4: rgba(255 255 255 / 0.2);
+
+    // shadows //
+
+    // box shadows based on https://medium.com/@Florian/freebie-google-material-design-shadow-helper-2a0501295a2d
+    --shadow-1: 0 1px 3px rgba(0 0 0 / 0.12), 0 1px 2px rgba(0 0 0 / 0.24);
+    --shadow-2: 0 3px 6px rgba(0 0 0 / 0.16), 0 3px 6px rgba(0 0 0 / 0.23);
+    --shadow-3: 0 10px 20px rgba(0 0 0 / 0.19), 0 6px 6px rgba(0 0 0 / 0.23);
+    --shadow-4: 0 14px 28px rgba(0 0 0 / 0.25), 0 10px 10px rgba(0 0 0 / 0.22);
+    --shadow-5: 0 19px 38px rgba(0 0 0 / 0.3), 0 15px 12px rgba(0 0 0 / 0.22);
+
+    // for use in `filter: var(--shadow-*--drop);`
+    // filter blur radius is twice the box-shadow blur radius
+    --shadow-1-drop: drop-shadow(0 1px 1.5px rgba(0 0 0 / 0.12))
+        drop-shadow(0 1px 1px rgba(0 0 0 / 0.24));
+    --shadow-2-drop: drop-shadow(0 3px 3px rgba(0 0 0 / 0.16))
+        drop-shadow(0 3px 3px rgba(0 0 0 / 0.23));
+    --shadow-3-drop: drop-shadow(0 10px 10px rgba(0 0 0 / 0.19))
+        drop-shadow(0 6px 3px rgba(0 0 0 / 0.23));
+    --shadow-4-drop: drop-shadow(0 14px 14px rgba(0 0 0 / 0.25))
+        drop-shadow(0 10px 5px rgba(0 0 0 / 0.22));
+    --shadow-5-drop: drop-shadow(0 19px 19px rgba(0 0 0 / 0.3))
+        drop-shadow(0 15px 6px rgba(0 0 0 / 0.22));
+
+    // two insets to make both shadows inset
+    --shadow-1-inset: inset var(--shadow-1) inset;
+    --shadow-2-inset: inset var(--shadow-2) inset;
+    --shadow-3-inset: inset var(--shadow-3) inset;
+    --shadow-4-inset: inset var(--shadow-4) inset;
+    --shadow-5-inset: inset var(--shadow-5) inset;
 }
