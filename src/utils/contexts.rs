@@ -25,7 +25,7 @@ impl Deref for FullscreenElement {
 
 impl FullscreenElement {
     /// Create a new `FullscreenElement` from a signal.
-    pub fn new(elem: ReadSignal<Option<Element>>) -> Self {
+    pub const fn new(elem: ReadSignal<Option<Element>>) -> Self {
         Self(elem)
     }
 }
@@ -111,7 +111,7 @@ impl TimerList {
         }
     }
 
-    /// Sets the stored RwSignal to the given list.
+    /// Sets the stored `RwSignal` to the given list.
     ///
     /// Adds a new timer if `timers` is empty.
     pub fn set(&self, timers: Vec<Timer>) {
@@ -169,7 +169,7 @@ impl TimerList {
 
     /// Clears the timer list and adds one new timer.
     pub fn clear(&self) {
-        self.vec.update(|v| v.clear());
+        self.vec.update(Vec::clear);
         self.push_new();
     }
 
@@ -183,15 +183,16 @@ impl TimerList {
     }
 
     /// Returns the number of timers stored.
+    #[expect(clippy::len_without_is_empty, reason = "should not be empty")]
     pub fn len(&self) -> usize {
-        self.vec.with_untracked(|v| v.len())
+        self.vec.with_untracked(Vec::len)
     }
 
     /// Whether the timer list is empty.
     ///
     /// This should never be the case publically.
     fn is_empty(&self) -> bool {
-        self.vec.with_untracked(|v| v.is_empty())
+        self.vec.with_untracked(Vec::is_empty)
     }
 
     /// Returns whether this timer list is unchanged from initialisation.
