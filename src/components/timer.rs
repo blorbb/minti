@@ -53,11 +53,10 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         let res = parse::parse_input(&timer.input.get_untracked());
 
         match res {
-            Ok(duration) => cx.batch(|| {
-                timer.reset();
-                timer.start(duration);
+            Ok(duration) => {
+                timer.restart(duration);
                 set_error_message(None);
-            }),
+            }
             Err(e) => {
                 set_error_message(Some(e.to_string()));
             }

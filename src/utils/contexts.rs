@@ -115,11 +115,13 @@ impl TimerList {
     ///
     /// Adds a new timer if `timers` is empty.
     pub fn set(&self, timers: Vec<Timer>) {
-        self.vec.set(timers);
+        self.cx.batch(|| {
+            self.vec.set(timers);
 
-        if self.is_empty() {
-            self.push_new();
-        }
+            if self.is_empty() {
+                self.push_new();
+            }
+        });
     }
 
     /// Constructs a new `TimerList` from a list of timers.
@@ -146,12 +148,14 @@ impl TimerList {
     /// # Panics
     /// Panics if `index` is out of bounds.
     pub fn remove_index(&self, index: usize) {
-        self.vec.update(|v| {
-            v.remove(index);
+        self.cx.batch(|| {
+            self.vec.update(|v| {
+                v.remove(index);
+            });
+            if self.is_empty() {
+                self.push_new();
+            };
         });
-        if self.is_empty() {
-            self.push_new();
-        };
     }
 
     /// Removes the timer with the specified id.
@@ -169,8 +173,10 @@ impl TimerList {
 
     /// Clears the timer list and adds one new timer.
     pub fn clear(&self) {
-        self.vec.update(Vec::clear);
-        self.push_new();
+        self.cx.batch(|| {
+            self.vec.update(Vec::clear);
+            self.push_new();
+        });
     }
 
     /// Gets a copy of timer list.

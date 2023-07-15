@@ -12,6 +12,7 @@ use super::time::relative;
 /// for reactivity.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Timer {
+    cx: Scope,
     /// The total duration of the timer.
     ///
     /// Updates when the timer is started or reset.
@@ -117,6 +118,7 @@ impl Timer {
         });
 
         Self {
+            cx,
             duration,
             set_duration,
             started,
@@ -200,22 +202,35 @@ impl Timer {
         (self.set_end_time)(self.get_end_time());
     }
 
+    /// Batches `Timer::reset` and `Timer::start`.
+    pub fn restart(&self, duration: Duration) {
+        log::debug!("restarting timer");
+        self.cx.batch(|| {
+            self.reset();
+            self.start(duration);
+        });
+    }
+
     /// Resets the timer to as if a new one was created, but keeping the
     /// initial input and title.
     pub fn reset(&self) {
         log::debug!("resetting timer");
-        self.start_time.set(None);
-        self.last_pause_time.set(None);
-        self.acc_paused_duration.set(Duration::ZERO);
-        (self.set_duration)(None);
-        self.update_time_remaining();
+        self.cx.batch(|| {
+            self.start_time.set(None);
+            self.last_pause_time.set(None);
+            self.acc_paused_duration.set(Duration::ZERO);
+            (self.set_duration)(None);
+            self.update_time_remaining();
+        });
     }
 
     /// Starts the timer.
     pub fn start(&self, duration: Duration) {
         log::debug!("starting timer with duration {}", duration);
-        self.start_time.set(Some(relative::now()));
-        (self.set_duration)(Some(duration));
+        self.cx.batch(|| {
+            self.start_time.set(Some(relative::now()));
+            (self.set_duration)(Some(duration));
+        });
     }
 
     /// Pauses the timer.
@@ -241,10 +256,12 @@ impl Timer {
             return;
         }
 
-        self.acc_paused_duration.update(|v| {
-            *v += relative::now() - self.last_pause_time.get_untracked().unwrap();
+        self.cx.batch(|| {
+            self.acc_paused_duration.update(|v| {
+                *v += relative::now() - self.last_pause_time.get_untracked().unwrap();
+            });
+            self.last_pause_time.set(None);
         });
-        self.last_pause_time.set(None);
     }
 
     /// Adds a duration to the timer. Input a negative duration to subtract time.
@@ -270,45 +287,46 @@ impl Timer {
         // causing panic.
         // use `self.set_duration.set` instead.
 
-        // subtracting duration
-        if duration.is_negative() {
-            if self.finished.get_untracked() {
-                log::warn!("timer is already finished: doing nothing");
-                return;
-            } else if self.get_time_remaining().unwrap() <= -duration {
-                // subtract will make timer finish: saturate at 0
-                let new_duration =
-                    self.duration.get_untracked().unwrap() - self.get_time_remaining().unwrap();
-                log::trace!(
-                    "saturating duration to finish: subtracting {}",
-                    new_duration
-                );
-                // unpause the timer to start overtime countdown
-                self.resume();
+        self.cx.batch(|| {
+            // subtracting duration
+            if duration.is_negative() {
+                if self.finished.get_untracked() {
+                    log::warn!("timer is already finished: doing nothing");
+                    return;
+                } else if self.get_time_remaining().unwrap() <= -duration {
+                    // subtract will make timer finish: saturate at 0
+                    let new_duration =
+                        self.duration.get_untracked().unwrap() - self.get_time_remaining().unwrap();
+                    log::trace!(
+                        "saturating duration to finish: subtracting {}",
+                        new_duration
+                    );
+                    // unpause the timer to start overtime countdown
+                    self.resume();
 
-                (self.set_duration)(Some(new_duration));
-            } else {
-                log::trace!("subtracting duration");
-                // nothing special: just subtract duration
-                self.set_duration
-                    .update(|d| *d = Some(d.unwrap() + duration));
-            }
-        } else if duration.is_positive() {
-            if self.finished.get_untracked() {
-                log::debug!("resetting to {}", duration);
-                self.reset();
-                self.start(duration);
-            } else {
-                log::trace!("adding duration");
-                // nothing special: just add duration
-                self.set_duration
-                    .update(|d| *d = Some(d.unwrap() + duration));
-            }
-        };
+                    (self.set_duration)(Some(new_duration));
+                } else {
+                    log::trace!("subtracting duration");
+                    // nothing special: just subtract duration
+                    self.set_duration
+                        .update(|d| *d = Some(d.unwrap() + duration));
+                }
+            } else if duration.is_positive() {
+                if self.finished.get_untracked() {
+                    log::debug!("restarting to {}", duration);
+                    self.restart(duration);
+                } else {
+                    log::trace!("adding duration");
+                    // nothing special: just add duration
+                    self.set_duration
+                        .update(|d| *d = Some(d.unwrap() + duration));
+                }
+            };
 
-        // push updates
-        self.update_end_time();
-        self.update_time_remaining();
+            // push updates
+            self.update_end_time();
+            self.update_time_remaining();
+        });
     }
 
     /// Gets the id for the timer.
