@@ -13,6 +13,7 @@
     clippy::missing_panics_doc,
     // nursery
     clippy::option_if_let_else,
+    clippy::future_not_send,
 )]
 
 pub mod app;

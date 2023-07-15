@@ -20,7 +20,7 @@ pub fn FullscreenButton(cx: Scope, target: NodeRef<html::Div>) -> impl IntoView 
         if !document().fullscreen_enabled() || fullscreen_element.get_untracked().0.is_none() {
             return;
         };
-        _ = document().exit_fullscreen();
+        document().exit_fullscreen();
     };
 
     view! { cx,

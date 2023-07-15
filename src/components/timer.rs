@@ -159,9 +159,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                                     </button>
                                     <button
                                         class="light"
-                                        on:click=move |_| {
-                                            timer.add_duration(Duration::minutes(-1))
-                                        }
+                                        on:click=move |_| timer.add_duration(Duration::minutes(-1))
                                     >
                                         "- 1m"
                                     </button>
