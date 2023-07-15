@@ -40,5 +40,5 @@ pub fn duration_until_time(target_time: Time) -> Duration {
 /// # Panics
 /// Panics if the local offset cannot be determined.
 pub fn now() -> OffsetDateTime {
-    OffsetDateTime::now_local().unwrap()
+    OffsetDateTime::now_local().expect("local timezone should be found")
 }

@@ -44,7 +44,13 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     create_effect(cx, move |_| {
         // also check that it is close to finish so that already expired timers
         // retrieved from localstorage don't alert
-        if (timer.finished)() && timer.get_time_remaining().unwrap().abs() < Duration::SECOND {
+        if (timer.finished)()
+            && timer
+                .get_time_remaining()
+                .expect("timer is finished => should have started")
+                .abs()
+                < Duration::SECOND
+        {
             spawn_local(commands::alert_window());
         };
     });

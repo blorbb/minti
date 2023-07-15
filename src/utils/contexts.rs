@@ -56,7 +56,10 @@ impl Icons {
             map.insert(icon_name.to_string(), svg.to_string());
         });
 
-        let string = self.0.with_value(|map| map.ser().unwrap());
+        let string = self.0.with_value(|map| {
+            map.ser()
+                .expect("should be able to serialize `HashMap<String, String>`")
+        });
 
         window()
             .local_storage()

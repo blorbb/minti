@@ -258,7 +258,11 @@ impl Timer {
 
         self.cx.batch(|| {
             self.acc_paused_duration.update(|v| {
-                *v += relative::now() - self.last_pause_time.get_untracked().unwrap();
+                *v += relative::now()
+                    - self
+                        .last_pause_time
+                        .get_untracked()
+                        .expect("timer should be paused");
             });
             self.last_pause_time.set(None);
         });
@@ -293,7 +297,11 @@ impl Timer {
                 if self.finished.get_untracked() {
                     log::warn!("timer is already finished: doing nothing");
                     return;
-                } else if self.get_time_remaining().unwrap() <= -duration {
+                } else if self
+                    .get_time_remaining()
+                    .expect("timer should have started")
+                    <= -duration
+                {
                     // subtract will make timer finish: saturate at 0
                     let new_duration =
                         self.duration.get_untracked().unwrap() - self.get_time_remaining().unwrap();

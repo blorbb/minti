@@ -2,7 +2,7 @@
 fn alert_window(window: tauri::Window) {
     window
         .request_user_attention(Some(tauri::UserAttentionType::Critical))
-        .unwrap();
+        .expect("should be able to request user attention");
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

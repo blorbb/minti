@@ -23,7 +23,7 @@ pub fn RelativeTime(
         if time().is_none() {
             return String::new();
         };
-        let time = time().unwrap();
+        let time = time().expect("`None` should have caused early return");
 
         // display a date if the target is on a different day.
         let current_day = relative::now().date();

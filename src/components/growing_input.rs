@@ -28,7 +28,14 @@ where
         // set_input_size also needs to be delayed here even without an
         // initial value.
         set_timeout(
-            move || resize_to_fit(elem, &size_ref.get_untracked().unwrap()),
+            move || {
+                resize_to_fit(
+                    elem,
+                    &size_ref
+                        .get_untracked()
+                        .expect("`size_ref` should be loaded before `title_input_ref`"),
+                )
+            },
             Duration::ZERO,
         );
     });
@@ -86,7 +93,9 @@ fn set_input_size(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::
         .get_property_value("font-size")
         .unwrap();
     // remove last 2 characters "px"
-    let font_size = font_size[0..font_size.len() - 2].parse::<f64>().unwrap();
+    let font_size = font_size[0..font_size.len() - 2]
+        .parse::<f64>()
+        .expect("computed style should be valid float");
     let ems = width / font_size;
     input.style("width", format!("{ems}em"));
 }
