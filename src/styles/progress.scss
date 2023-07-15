@@ -6,6 +6,8 @@
     pointer-events: none;
     z-index: -1;
 
+    background-color: var(--clr-neutral-500);
+
     .progress-value {
         position: absolute;
         inset: 0;
