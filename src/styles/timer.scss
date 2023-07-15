@@ -78,6 +78,8 @@
 
     button {
         animation: scale-in var(--time-transition-short) ease-out;
+        // scales size via font-size
+        transition-property: all;
     }
 
     .controls {
@@ -92,41 +94,11 @@
         }
 
         button.primary {
-            background-color: var(--clr-green-400);
-            color: var(--clr-green-900);
             aspect-ratio: 3;
-
-            transition-property: transform, filter;
-            transition: var(--time-transition-short) ease-out;
-
-            filter: var(--shadow-1-drop);
-
-            &:hover {
-                transform: scale(1.05);
-                filter: var(--shadow-2-drop);
-            }
-
-            &:active {
-                transform: scale(0.9);
-                filter: none;
-            }
         }
 
         button.light {
             aspect-ratio: 2;
-            color: var(--clr-neutral-50);
-
-            transition-property: background-color color;
-            transition: var(--time-transition-short) ease-out;
-
-            &:hover {
-                background-color: var(--clr-overlay-2);
-            }
-
-            &:active {
-                background-color: var(--clr-neutral-50);
-                color: var(--clr-neutral-800);
-            }
         }
     }
 
@@ -136,21 +108,6 @@
         right: 0;
         width: 2em;
         aspect-ratio: 1;
-
-        color: var(--clr-red-400);
-
-        transition-property: color, background-color;
-        transition-duration: var(--time-transition-short);
-        transition-timing-function: ease-out;
-
-        &:hover {
-            background-color: var(--clr-overlay-2);
-        }
-
-        &:active {
-            color: var(--clr-red-800);
-            background-color: var(--clr-red-400);
-        }
     }
 
     button.com-fullscreen-button {
@@ -159,21 +116,6 @@
         right: 0;
         width: 2em;
         aspect-ratio: 1;
-
-        color: var(--clr-neutral-50);
-
-        transition-property: color, background-color;
-        transition-duration: var(--time-transition-short);
-        transition-timing-function: ease-out;
-
-        &:hover {
-            background-color: var(--clr-overlay-2);
-        }
-
-        &:active {
-            color: var(--clr-neutral-800);
-            background-color: var(--clr-neutral-50);
-        }
     }
 }
 

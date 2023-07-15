@@ -138,7 +138,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         when=timer.started
                         fallback=move |cx| {
                             view! { cx,
-                                <button class="primary" on:click=move |_| set_timer_duration()>
+                                <button class="primary mix-btn-scale-green" on:click=move |_| set_timer_duration()>
                                     <Icon icon="ph:play-fill"/>
                                 </button>
                             }
@@ -152,13 +152,13 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                                 view! { cx,
                                     // add duration
                                     <button
-                                        class="light"
+                                        class="light mix-btn-transp-neutral"
                                         on:click=move |_| timer.add_duration(Duration::minutes(1))
                                     >
                                         "+ 1m"
                                     </button>
                                     <button
-                                        class="light"
+                                        class="light mix-btn-transp-neutral"
                                         on:click=move |_| timer.add_duration(Duration::minutes(-1))
                                     >
                                         "- 1m"
@@ -169,13 +169,13 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                                         when=timer.paused
                                         fallback=move |cx| {
                                             view! { cx,
-                                                <button class="primary" on:click=move |_| timer.pause()>
+                                                <button class="primary mix-btn-scale-green" on:click=move |_| timer.pause()>
                                                     <Icon icon="ph:pause-bold"/>
                                                 </button>
                                             }
                                         }
                                     >
-                                        <button class="primary" on:click=move |_| timer.resume()>
+                                        <button class="primary mix-btn-scale-green" on:click=move |_| timer.resume()>
                                             <Icon icon="ph:play-bold"/>
                                         </button>
                                     </Show>
@@ -183,7 +183,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                             }
                         >
                             <button
-                                class="primary"
+                                class="primary mix-btn-scale-green"
                                 on:click=move |_| timer.add_duration(Duration::minutes(1))
                             >
                                 "+ 1m"
@@ -191,17 +191,17 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         </Show>
 
                         // always show reset button
-                        <button class="primary" on:click=move |_| timer.reset()>
+                        <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
                             <Icon icon="ph:clock-counter-clockwise-bold"/>
                         </button>
 
                     </Show>
                 </div>
 
-                <button class="delete" on:click=move |_| remove_self(cx, &timer)>
+                <button class="delete mix-btn-transp-red" on:click=move |_| remove_self(cx, &timer)>
                     <Icon icon="ph:x-bold"/>
                 </button>
-                <FullscreenButton target=element/>
+                <FullscreenButton class="mix-btn-transp-neutral" target=element/>
             </div>
         </div>
     }

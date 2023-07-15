@@ -122,10 +122,10 @@ pub fn App(cx: Scope) -> impl IntoView {
                 <div class="scroll-shadow" data-edge="bottom" ref=bottom_shadow />
             </div>
             <nav>
-                <button class="add" on:click=move |_| timers.update(TimerList::push_new)>
+                <button class="add mix-btn-colored-green" on:click=move |_| timers.update(TimerList::push_new)>
                     <Icon icon="ph:plus-bold"/>
                 </button>
-                <button class="remove" on:click=move |_| timers.update(TimerList::clear)>
+                <button class="remove mix-btn-colored-red" on:click=move |_| timers.update(TimerList::clear)>
                     <Icon icon="ph:trash-bold"/>
                 </button>
             </nav>
