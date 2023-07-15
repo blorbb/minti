@@ -1,5 +1,9 @@
+use js_sys::Function;
 use leptos::*;
-use web_sys::Element;
+use wasm_bindgen::{prelude::Closure, JsCast};
+use web_sys::{
+    Element, HtmlElement, IntersectionObserver, IntersectionObserverEntry, IntersectionObserverInit,
+};
 
 use crate::{
     components::Icon,
@@ -48,11 +52,75 @@ pub fn App(cx: Scope) -> impl IntoView {
     });
     provide_context(cx, fullscreen_element);
 
+    // show scroll shadows
+    let intersection_root = create_node_ref::<html::Div>(cx);
+    let top_edge = create_node_ref::<html::Div>(cx);
+    let bottom_edge = create_node_ref::<html::Div>(cx);
+    let top_shadow = create_node_ref::<html::Div>(cx);
+    let bottom_shadow = create_node_ref::<html::Div>(cx);
+
+    bottom_shadow.on_load(cx, move |_| {
+        let intersection_callback = Closure::<dyn Fn(Vec<IntersectionObserverEntry>)>::new(
+            move |entries: Vec<IntersectionObserverEntry>| {
+                log::debug!("finding intersections");
+                for entry in entries {
+                    let edge = entry.target().dyn_into::<HtmlElement>().unwrap();
+                    // "top" or "bottom"
+                    let side = edge.dataset().get("edge").unwrap();
+
+                    // get which shadow to show.
+                    // need to get the stored element here so dyn_ref lasts
+                    // for long enough
+                    let top_shadow = top_shadow.get_untracked().unwrap();
+                    let bottom_shadow = bottom_shadow.get_untracked().unwrap();
+                    let shadow = if &side == "top" {
+                        top_shadow.dyn_ref::<HtmlElement>().unwrap()
+                    } else {
+                        bottom_shadow.dyn_ref::<HtmlElement>().unwrap()
+                    };
+
+                    if entry.is_intersecting() {
+                        edge.dataset().set("intersecting", "true").unwrap();
+                        shadow.style().set_property("opacity", "0").unwrap();
+                    } else {
+                        edge.dataset().set("intersecting", "false").unwrap();
+                        shadow.style().set_property("opacity", "1").unwrap();
+                    }
+                }
+            },
+        )
+        .into_js_value()
+        .unchecked_into::<Function>();
+
+        let mut options = IntersectionObserverInit::new();
+        options.root(Some(
+            intersection_root
+                .get_untracked()
+                .unwrap()
+                .dyn_ref()
+                .unwrap(),
+        ));
+
+        let observer =
+            IntersectionObserver::new_with_options(&intersection_callback, &options).unwrap();
+
+        observer.observe(top_edge.get_untracked().unwrap().dyn_ref().unwrap());
+        observer.observe(bottom_edge.get_untracked().unwrap().dyn_ref().unwrap());
+    });
+
     view! { cx,
         <div class="page">
-            <main ref=main_ref>
-                <HomePage/>
-            </main>
+            <div class="context" ref=intersection_root>
+                <div class="scroller">
+                    <main ref=main_ref>
+                        <div class="intersection-edge" ref=top_edge data-edge="top" />
+                        <HomePage/>
+                        <div class="intersection-edge" ref=bottom_edge data-edge="bottom" />
+                    </main>
+                </div>
+                <div class="scroll-shadow" data-edge="top" ref=top_shadow />
+                <div class="scroll-shadow" data-edge="bottom" ref=bottom_shadow />
+            </div>
             <nav>
                 <button class="add" on:click=move |_| timers.update(TimerList::push_new)>
                     <Icon icon="ph:plus-bold"/>

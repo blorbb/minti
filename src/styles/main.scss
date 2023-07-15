@@ -97,8 +97,71 @@ button:focus-visible {
     grid-template-rows: 1fr 3rem;
 }
 
-main {
-    overflow: auto;
+/// Element that provides contexts (position, z-index, fixed pos).
+/// Takes up the viewport space excl. navbar
+.context {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    height: calc(100dvh - 3rem);
+
+    // make fixed position elements relative to this
+    transform: translate(0);
+
+    /// Element that provides scrolling.
+    /// Takes up the viewport space excl. navbar
+    .scroller {
+        overflow-y: scroll;
+        position: relative;
+        height: 100%;
+    }
+
+    /// Element inside the scroller that takes up however much it needs,
+    /// filling or overflowing the scroller
+    main {
+        position: relative;
+        min-height: 100%;
+        display: grid;
+    }
+
+    /// elements used to figure out whether there is stuff to scroll to
+    /// relative to the context element
+    .intersection-edge {
+        position: absolute;
+        inset-inline: 0;
+        height: 5px;
+
+        &[data-edge="top"] {
+            top: 0;
+        }
+
+        &[data-edge="bottom"] {
+            bottom: 0;
+        }
+    }
+
+    /// Shadows that show if there is overflow in that direction
+    .scroll-shadow {
+        --_shadow-clr: rgba(0 0 0 / 0.5);
+
+        position: fixed;
+        inset-inline: 0;
+        height: 1rem;
+
+        z-index: 1;
+
+        transition: opacity var(--time-transition);
+
+        &[data-edge="top"] {
+            top: 0;
+            background: linear-gradient(var(--_shadow-clr), transparent);
+        }
+
+        &[data-edge="bottom"] {
+            bottom: 0;
+            background: linear-gradient(transparent, var(--_shadow-clr));
+        }
+    }
 }
 
 nav {
