@@ -11,12 +11,15 @@
     .progress-value {
         position: absolute;
         inset: 0;
-        right: 100%;
+        // right: 100%;
         pointer-events: none;
 
         background-color: var(--clr-blue-400);
 
         animation: progress-bar linear forwards;
+        transform-origin: left center;
+        // halves gpu usage
+        will-change: transform, background-color;
 
         // reset the animation when starting the timer.
         @include f.on-outer-most('[data-started="true"]') {
@@ -25,6 +28,7 @@
 
         @include f.on-outer-most('[data-started="false"]') {
             animation-name: none;
+            transform: scaleX(0);
         }
 
         @include f.on-outer-most('[data-paused="true"]') {
@@ -32,11 +36,11 @@
         }
 
         @include f.on-outer-most('[data-finished="true"]') {
-            right: 0;
             animation: bar-finished 1s infinite alternate ease-out !important;
         }
     }
 
+    // PERF: ~15% more gpu
     // place an inset box shadow above progress-value
     &::before {
         content: "";
@@ -51,11 +55,11 @@
 
 @keyframes progress-bar {
     from {
-        right: 100%;
+        transform: scaleX(0);
     }
 
     to {
-        right: 0%;
+        transform: scaleX(1);
     }
 }
 

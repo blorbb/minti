@@ -24,10 +24,19 @@
         font-size: var(--font-size-cq);
         padding: 1em;
 
-        background-color: f.scale-alpha(var(--clr-neutral-400), 80%);
-        backdrop-filter: blur(2em);
+        // PERF: ~20% more gpu than opaque background
+        background-color: f.scale-alpha(var(--clr-neutral-400), 90%);
+        // PERF: ~3x more gpu and 2x cpu
+        backdrop-filter: blur(10px);
+        // creates new painting layer, seem to slightly improve perf
+        transform: translateZ(0);
 
         box-shadow: var(--shadow-1);
+
+        // PERF: ~4x less gpu when finished
+        @include f.on-outer-most('[data-finished="true"]') {
+            backdrop-filter: none;
+        }
     }
 
     input {
