@@ -1,6 +1,7 @@
 use leptos::*;
 use std::time::Duration as StdDuration;
 use time::Duration;
+use wasm_bindgen::JsValue;
 
 use crate::{
     components::{
@@ -69,7 +70,11 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         }
     };
 
-    let element = create_node_ref::<html::Div>(cx);
+    let component = create_node_ref::<html::Div>(cx);
+    let duration_display = create_node_ref::<html::Div>(cx);
+
+    let update_timer_duration =
+        move |duration: Duration| update_and_bump(duration, duration_display, &timer);
 
     view! { cx,
         <div
@@ -78,7 +83,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
             data-paused=reactive::as_attr(timer.paused)
             data-running=reactive::as_attr(timer.running)
             data-finished=reactive::as_attr(timer.finished)
-            ref=element
+            ref=component
         >
             <ProgressBar timer=timer/>
             <div class="timer-face">
@@ -109,7 +114,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
                 // main timer display, showing either the countdown
                 // or the input to enter a time
-                <div class="duration">
+                <div class="duration" ref=duration_display>
                     <Show
                         when=timer.started
                         fallback=move |cx| {
@@ -155,13 +160,13 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                                     // add duration
                                     <button
                                         class="light mix-btn-transp-neutral"
-                                        on:click=move |_| timer.add_duration(Duration::minutes(1))
+                                        on:click=move |_| update_timer_duration(Duration::MINUTE)
                                     >
                                         "+ 1m"
                                     </button>
                                     <button
                                         class="light mix-btn-transp-neutral"
-                                        on:click=move |_| timer.add_duration(Duration::minutes(-1))
+                                        on:click=move |_| update_timer_duration(-Duration::MINUTE)
                                     >
                                         "- 1m"
                                     </button>
@@ -203,7 +208,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 <button class="delete mix-btn-transp-red" on:click=move |_| remove_self(cx, &timer)>
                     <Icon icon="ph:x-bold"/>
                 </button>
-                <FullscreenButton class="mix-btn-transp-neutral" target=element/>
+                <FullscreenButton class="mix-btn-transp-neutral" target=component/>
             </div>
         </div>
     }
@@ -213,4 +218,44 @@ fn remove_self(cx: Scope, timer: &Timer) {
     let timers = expect_context::<TimerList>(cx);
     timers.remove_id(timer.id());
     cx.dispose();
+}
+
+/// Creates a JS object with one key-value pair.
+fn js_obj_1(key: &str, value: &str) -> js_sys::Object {
+    let obj = js_sys::Object::new();
+    js_sys::Reflect::set(&obj, &key.into(), &value.into()).unwrap();
+    obj
+}
+
+/// Updates the timer's duration and bumps the element up/down
+fn update_and_bump(duration: Duration, element: NodeRef<html::Div>, timer: &Timer) {
+    let mut anim_options = web_sys::KeyframeAnimationOptions::new();
+    anim_options.duration(&JsValue::from_f64(100.0));
+    anim_options.easing("ease-out");
+
+    timer.add_duration(duration);
+
+    if let Some(display) = element.get_untracked() {
+        if duration.is_positive() {
+            let anim_up_keyframes: js_sys::Array = [
+                js_obj_1("transform", "translateY(0)"),
+                js_obj_1("transform", "translateY(-0.2em)"),
+                js_obj_1("transform", "translateY(0)"),
+            ]
+            .into_iter()
+            .collect();
+            display
+                .animate_with_keyframe_animation_options(Some(&anim_up_keyframes), &anim_options);
+        } else {
+            let anim_down_keyframes: js_sys::Array = [
+                js_obj_1("transform", "translateY(0)"),
+                js_obj_1("transform", "translateY(0.2em)"),
+                js_obj_1("transform", "translateY(0)"),
+            ]
+            .into_iter()
+            .collect();
+            display
+                .animate_with_keyframe_animation_options(Some(&anim_down_keyframes), &anim_options);
+        };
+    };
 }

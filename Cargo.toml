@@ -28,7 +28,9 @@ features = [
     "IntersectionObserver",
     "IntersectionObserverInit",
     "IntersectionObserverEntry",
-    "DomStringMap"
+    "DomStringMap",
+    "Animation",
+    "KeyframeAnimationOptions"
 ]
 
 [workspace]
