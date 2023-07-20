@@ -48,16 +48,16 @@ button {
     border: none;
     background-color: transparent;
     outline: transparent;
+
+    &:focus-visible {
+        outline: var(--outline);
+        outline-offset: 2px;
+    }
 }
 
 button {
     display: inline-grid;
     place-content: center;
-}
-
-input:focus-visible,
-button:focus-visible {
-    outline: var(--outline);
 }
 
 // scrollbars //

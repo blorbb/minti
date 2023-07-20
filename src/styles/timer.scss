@@ -48,11 +48,6 @@
 
         .title {
             color: var(--clr-text-secondary);
-
-            input:focus-visible {
-                outline: var(--outline);
-                outline-offset: 2px;
-            }
         }
 
         .error {
