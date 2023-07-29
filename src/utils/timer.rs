@@ -1,8 +1,11 @@
 pub mod serialize;
 
 use leptos::*;
+use std::time::Duration as StdDuration;
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
+
+use crate::utils::{commands, reactive};
 
 use super::time::relative;
 
@@ -117,7 +120,7 @@ impl Timer {
             log::trace!("state changed");
         });
 
-        Self {
+        let timer = Self {
             cx,
             duration,
             set_duration,
@@ -138,7 +141,47 @@ impl Timer {
             acc_paused_duration,
             state_change,
             id: Uuid::new_v4(),
-        }
+        };
+
+        // update the time remaining when the timer is running
+        reactive::repeat_while(
+            cx,
+            timer.running,
+            move || timer.update_time_remaining(),
+            StdDuration::from_millis(200),
+        );
+
+        // update the end time when the timer is paused (started and not running)
+        reactive::repeat_while(
+            cx,
+            timer.paused,
+            move || timer.update_end_time(),
+            StdDuration::SECOND,
+        );
+        // also need to update when the timer resets,
+        // so that the end time component is removed
+        create_effect(cx, move |_| {
+            timer.started.track();
+            timer.update_end_time();
+        });
+
+        // request for user attention when the timer finishes //
+
+        create_effect(cx, move |_| {
+            // also check that it is close to finish so that already expired timers
+            // retrieved from localstorage don't alert
+            if (timer.finished)()
+                && timer
+                    .get_time_remaining()
+                    .expect("timer is finished => should have started")
+                    .abs()
+                    < Duration::SECOND
+            {
+                spawn_local(commands::alert_window());
+            };
+        });
+
+        timer
     }
 
     /// Calculates the time elapsed as of now.

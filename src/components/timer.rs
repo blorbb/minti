@@ -1,5 +1,5 @@
 use leptos::*;
-use std::time::Duration as StdDuration;
+
 use time::Duration;
 use wasm_bindgen::JsValue;
 
@@ -7,7 +7,7 @@ use crate::{
     components::{
         DurationDisplay, FullscreenButton, GrowingInput, Icon, ProgressBar, RelativeTime,
     },
-    utils::{commands, contexts::TimerList, parse, reactive, timer::Timer},
+    utils::{contexts::TimerList, parse, reactive, timer::Timer},
 };
 
 /// Provides controls and display for a [`Timer`].
@@ -15,58 +15,15 @@ use crate::{
 #[expect(clippy::large_types_passed_by_value, reason = "can't be reference")]
 #[component]
 pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
-    let time_remaining = timer.time_remaining;
-    let end_time = timer.end_time;
     let (error_message, set_error_message) = create_signal(cx, None::<String>);
 
-    // update the time remaining when the timer is running
-    reactive::repeat_while(
-        cx,
-        timer.running,
-        move || timer.update_time_remaining(),
-        StdDuration::from_millis(200),
-    );
-
-    // update the end time when the timer is paused (started and not running)
-    reactive::repeat_while(
-        cx,
-        timer.paused,
-        move || timer.update_end_time(),
-        StdDuration::SECOND,
-    );
-    // also need to update when the timer resets,
-    // so that the end time component is removed
-    create_effect(cx, move |_| {
-        timer.started.track();
-        timer.update_end_time();
-    });
-
-    // request for user attention when the timer finishes
-    create_effect(cx, move |_| {
-        // also check that it is close to finish so that already expired timers
-        // retrieved from localstorage don't alert
-        if (timer.finished)()
-            && timer
-                .get_time_remaining()
-                .expect("timer is finished => should have started")
-                .abs()
-                < Duration::SECOND
-        {
-            spawn_local(commands::alert_window());
-        };
-    });
-
-    let set_timer_duration = move || {
-        let res = parse::parse_input(&timer.input.get_untracked());
-
-        match res {
-            Ok(duration) => {
-                timer.restart(duration);
-                set_error_message(None);
-            }
-            Err(e) => {
-                set_error_message(Some(e.to_string()));
-            }
+    let set_timer_duration = move || match parse::parse_input(&timer.input.get_untracked()) {
+        Ok(duration) => {
+            timer.restart(duration);
+            set_error_message(None);
+        }
+        Err(e) => {
+            set_error_message(Some(e.to_string()));
         }
     };
 
@@ -180,12 +137,12 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         <span class="error">{error_message}</span>
                     </Show>
 
-                    <Show when=move || end_time().is_some() fallback=|_| ()>
+                    <Show when=move || (timer.end_time)().is_some() fallback=|_| ()>
                         " | "
                         <span class="end">
                             <Icon icon="ph:timer-bold"/>
                             " "
-                            <RelativeTime time=end_time/>
+                            <RelativeTime time=timer.end_time/>
                         </span>
                     </Show>
                 </div>
@@ -213,7 +170,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     >
                         <DurationDisplay duration=Signal::derive(
                             cx,
-                            move || time_remaining().unwrap_or_default(),
+                            move || (timer.time_remaining)().unwrap_or_default(),
                         )/>
                     </Show>
                 </div>
