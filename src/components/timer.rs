@@ -76,6 +76,84 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let update_timer_duration =
         move |duration: Duration| update_and_bump(duration, duration_display, &timer);
 
+    // sub-components //
+
+    // switch between resume and pause button
+    let pause_button = move || {
+        if (timer.paused)() {
+            view! { cx,
+                <button class="primary mix-btn-scale-green" on:click=move |_| timer.resume()>
+                    <Icon icon="ph:play-bold"/>
+                </button>
+            }
+        } else {
+            view! { cx,
+                <button class="primary mix-btn-scale-green" on:click=move |_| timer.pause()>
+                    <Icon icon="ph:pause-bold"/>
+                </button>
+            }
+        }
+    };
+
+    let controls_start = move || {
+        view! { cx,
+            <button class="primary mix-btn-scale-green" on:click=move |_| set_timer_duration()>
+                <Icon icon="ph:play-fill"/>
+            </button>
+        }
+    };
+
+    let controls_running = move || {
+        view! { cx,
+            // add duration
+            <button
+                class="light mix-btn-transp-neutral"
+                on:click=move |_| update_timer_duration(Duration::MINUTE)
+            >
+                "+ 1m"
+            </button>
+            <button
+                class="light mix-btn-transp-neutral"
+                on:click=move |_| update_timer_duration(-Duration::MINUTE)
+            >
+                "- 1m"
+            </button>
+
+            {pause_button}
+
+            <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
+                <Icon icon="ph:clock-counter-clockwise-bold"/>
+            </button>
+        }
+    };
+
+    let controls_finished = move || {
+        view! { cx,
+            <button
+                class="primary mix-btn-scale-green"
+                on:click=move |_| timer.add_duration(Duration::minutes(1))
+            >
+                "+ 1m"
+            </button>
+
+            <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
+                <Icon icon="ph:clock-counter-clockwise-bold"/>
+            </button>
+        }
+    };
+
+    // using <Show /> causes components to re-render for some reason
+    // using `if` is fine as `started` and `finished` are memos anyways.
+    let controls = move || {
+        if !(timer.started)() {
+            controls_start().into_view(cx)
+        } else if !(timer.finished)() {
+            controls_running().into_view(cx)
+        } else {
+            controls_finished().into_view(cx)
+        }
+    };
+
     view! { cx,
         <div
             class="com-timer"
@@ -141,68 +219,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 </div>
 
                 <div class="controls">
-                    <Show
-                        when=timer.started
-                        fallback=move |cx| {
-                            view! { cx,
-                                <button class="primary mix-btn-scale-green" on:click=move |_| set_timer_duration()>
-                                    <Icon icon="ph:play-fill"/>
-                                </button>
-                            }
-                        }
-                    >
-                        // if finished, show add duration button
-                        // otherwise, show add+subtract duration and pause button
-                        <Show
-                            when=timer.finished
-                            fallback=move |cx| {
-                                view! { cx,
-                                    // add duration
-                                    <button
-                                        class="light mix-btn-transp-neutral"
-                                        on:click=move |_| update_timer_duration(Duration::MINUTE)
-                                    >
-                                        "+ 1m"
-                                    </button>
-                                    <button
-                                        class="light mix-btn-transp-neutral"
-                                        on:click=move |_| update_timer_duration(-Duration::MINUTE)
-                                    >
-                                        "- 1m"
-                                    </button>
-
-                                    // switch between resume and pause button
-                                    <Show
-                                        when=timer.paused
-                                        fallback=move |cx| {
-                                            view! { cx,
-                                                <button class="primary mix-btn-scale-green" on:click=move |_| timer.pause()>
-                                                    <Icon icon="ph:pause-bold"/>
-                                                </button>
-                                            }
-                                        }
-                                    >
-                                        <button class="primary mix-btn-scale-green" on:click=move |_| timer.resume()>
-                                            <Icon icon="ph:play-bold"/>
-                                        </button>
-                                    </Show>
-                                }
-                            }
-                        >
-                            <button
-                                class="primary mix-btn-scale-green"
-                                on:click=move |_| timer.add_duration(Duration::minutes(1))
-                            >
-                                "+ 1m"
-                            </button>
-                        </Show>
-
-                        // always show reset button
-                        <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
-                            <Icon icon="ph:clock-counter-clockwise-bold"/>
-                        </button>
-
-                    </Show>
+                    {controls}
                 </div>
 
                 <button class="delete mix-btn-transp-red" on:click=move |_| remove_self(cx, &timer)>
