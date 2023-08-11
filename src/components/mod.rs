@@ -12,3 +12,5 @@ pub mod progress;
 pub use progress::ProgressBar;
 pub mod fullscreen;
 pub use fullscreen::FullscreenButton;
+pub mod duration_updater;
+pub use duration_updater::DurationUpdateButton;

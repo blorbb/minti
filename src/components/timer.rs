@@ -5,7 +5,8 @@ use wasm_bindgen::JsValue;
 
 use crate::{
     components::{
-        DurationDisplay, FullscreenButton, GrowingInput, Icon, ProgressBar, RelativeTime,
+        DurationDisplay, DurationUpdateButton, FullscreenButton, GrowingInput, Icon, ProgressBar,
+        RelativeTime,
     },
     utils::{contexts::TimerList, parse, reactive, timer::Timer},
 };
@@ -63,18 +64,16 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     let controls_running = move || {
         view! { cx,
             // add duration
-            <button
-                class="light mix-btn-transp-neutral"
-                on:click=move |_| update_timer_duration(Duration::MINUTE)
-            >
-                "+ 1m"
-            </button>
-            <button
-                class="light mix-btn-transp-neutral"
-                on:click=move |_| update_timer_duration(-Duration::MINUTE)
-            >
-                "- 1m"
-            </button>
+            <DurationUpdateButton
+                button_class="light mix-btn-transp-neutral"
+                on_click=move |d| update_timer_duration(d)
+                add=true
+            />
+            <DurationUpdateButton
+                button_class="light mix-btn-transp-neutral"
+                on_click=move |d| update_timer_duration(d)
+                add=false
+            />
 
             {pause_button}
 
@@ -86,12 +85,11 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
 
     let controls_finished = move || {
         view! { cx,
-            <button
-                class="primary mix-btn-scale-green"
-                on:click=move |_| timer.add_duration(Duration::minutes(1))
-            >
-                "+ 1m"
-            </button>
+            <DurationUpdateButton
+                button_class="primary mix-btn-scale-green"
+                on_click=move |d| update_timer_duration(d)
+                add=true
+            />
 
             <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
                 <Icon icon="ph:clock-counter-clockwise-bold"/>
