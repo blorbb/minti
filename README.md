@@ -1,7 +1,8 @@
-# Tauri + Leptos
+# MinTi
 
-This template should help get you started developing with Tauri and Leptos.
+Minimal Timer
+A simple timer app with Tauri and SvelteKit
 
-## Recommended IDE Setup
+Still WIP.
 
-[VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+:)
