@@ -1,0 +1,29 @@
+.com-duration-menu {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    grid-template-columns: repeat(4, auto);
+
+    background-color: rgba(0 0 0 / 0.2);
+    backdrop-filter: blur(1rem);
+    z-index: 2;
+    gap: 0.5rem;
+
+    // transition the background out with opacity
+    transition: opacity var(--time-transition);
+
+    @at-root .hiding > & {
+        opacity: 0;
+
+        // transition the button out with scale to match scale-in
+        & button {
+            transform: scale(0);
+        }
+    }
+}
+
+div:has(> .com-duration-menu) {
+    position: absolute;
+    inset: 0;
+}

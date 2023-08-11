@@ -1,0 +1,10 @@
+.com-growing-input {
+    // hide the size reference
+    // https://stackoverflow.com/a/38867270
+    .size-reference {
+        position: absolute;
+        height: 0;
+        overflow: hidden;
+        white-space: pre;
+    }
+}

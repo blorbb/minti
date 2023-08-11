@@ -3,5 +3,5 @@
 
 fn main() {
     #[cfg(desktop)]
-    mobile_app_lib::run();
+    minti_lib::run();
 }
