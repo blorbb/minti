@@ -33,7 +33,7 @@ where
                     &size_ref
                         .get_untracked()
                         .expect("`size_ref` should be loaded before `title_input_ref`"),
-                )
+                );
             },
             Duration::ZERO,
         );

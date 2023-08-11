@@ -66,12 +66,12 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
             // add duration
             <DurationUpdateButton
                 button_class="light mix-btn-transp-neutral"
-                on_click=move |d| update_timer_duration(d)
+                on_click=update_timer_duration
                 add=true
             />
             <DurationUpdateButton
                 button_class="light mix-btn-transp-neutral"
-                on_click=move |d| update_timer_duration(d)
+                on_click=update_timer_duration
                 add=false
             />
 
@@ -87,7 +87,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
         view! {
             <DurationUpdateButton
                 button_class="primary mix-btn-scale-green"
-                on_click=move |d| update_timer_duration(d)
+                on_click=update_timer_duration
                 add=true
             />
 

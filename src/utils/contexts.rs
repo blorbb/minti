@@ -221,3 +221,9 @@ impl IntoIterator for TimerList {
         self.vec.get().into_iter()
     }
 }
+
+impl Default for TimerList {
+    fn default() -> Self {
+        Self::new()
+    }
+}

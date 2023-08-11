@@ -395,3 +395,9 @@ impl Timer {
         (self.set_title)(title);
     }
 }
+
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
