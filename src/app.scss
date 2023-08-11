@@ -1,0 +1,296 @@
+///
+/// Global variables.
+///
+:root {
+	//#region basic settings
+
+	/// type naming conventions:
+	/// --[type]-<name>
+	/// types:
+	/// c: color
+	/// t: time
+	/// l: length
+	/// s: scoped (non-global variable, inside a component)
+	/// p-[subtype]: partial variable, to be used with other things
+	/// 	e.g. p-hsl: hsl values (h s% l%)
+	/// 		 use it with hsla(var(--p-hsl-...) / <alpha>)
+	/// no type: anything else
+
+	--c-bg: #1b1c18;
+
+	--p-hsl-text: 60 20% 90%;
+	--c-text: hsla(var(--p-hsl-text) / 0.88);
+	--c-text--faded: hsla(var(--p-hsl-text) / 0.5);
+	--c-text--invert: hsla(240 22% 10% / 0.95);
+
+	--l-font-size--small: 0.8rem;
+
+	// material design colors
+	// primary #426916, everything else auto
+	// from https://m3.material.io/theme-builder#/custom
+	// use -on for text on top of primary or primary-container
+	--c-primary: #a6d475;
+	--c-primary-on: #1d3700;
+	--c-primary-container: #2c5000;
+	--c-primary-container-on: #c1f18e;
+
+	--c-secondary: #bfcbad;
+	--c-secondary-on: #2a331f;
+	--c-secondary-container: #404a34;
+	--c-secondary-container-on: #dbe7c8;
+
+	--c-tertiary: #a0cfcc;
+	--c-tertiary-on: #003735;
+	--c-tertiary-container: #1f4e4c;
+	--c-tertiary-container-on: #bbece8;
+
+	--c-error: #ffb4ab;
+	--c-error-on: #690005;
+	--c-error-container: #93000a;
+	--c-error-container-on: #ffdad6;
+
+	--p-hsl-primary: 89 52% 65%;
+	--c-surface-1: hsla(var(--p-hsl-primary) / 0.05);
+	--c-surface-2: hsla(var(--p-hsl-primary) / 0.08);
+	--c-surface-3: hsla(var(--p-hsl-primary) / 0.11);
+	--c-surface-4: hsla(var(--p-hsl-primary) / 0.12);
+	--c-surface-5: hsla(var(--p-hsl-primary) / 0.14);
+
+	--c-outline: #8e9285;
+	--c-surface-variant: #44483d;
+	--c-surface-variant-on: #c4c8ba;
+
+	--c-container: #292929;
+	--c-container-up: #2d2d2d;
+
+	--c-overlay-light: rgba(255 255 255 / 0.05);
+	--c-overlay-lighter: rgba(255 255 255 / 0.07);
+	--c-overlay-lightest: rgba(255 255 255 / 0.15);
+	--c-overlay-dark: rgba(0 0 0 / 0.05);
+	--c-overlay-darker: rgba(0 0 0 / 0.1);
+
+	--t-transition: 200ms;
+	--t-transition--short: 80ms;
+
+	// box shadows based on https://medium.com/@Florian/freebie-google-material-design-shadow-helper-2a0501295a2d
+	--shadow-1: 0 1px 3px rgba(0 0 0 / 0.12), 0 1px 2px rgba(0 0 0 / 0.24);
+	--shadow-2: 0 3px 6px rgba(0 0 0 / 0.16), 0 3px 6px rgba(0 0 0 / 0.23);
+	--shadow-3: 0 10px 20px rgba(0 0 0 / 0.19), 0 6px 6px rgba(0 0 0 / 0.23);
+	--shadow-4: 0 14px 28px rgba(0 0 0 / 0.25), 0 10px 10px rgba(0 0 0 / 0.22);
+	--shadow-5: 0 19px 38px rgba(0 0 0 / 0.3), 0 15px 12px rgba(0 0 0 / 0.22);
+
+	// for use in `filter: var(--shadow-*--drop);`
+	// filter blur radius is twice the box-shadow blur radius
+	--shadow-1--drop: drop-shadow(0 1px 1.5px rgba(0 0 0 / 0.12))
+		drop-shadow(0 1px 1px rgba(0 0 0 / 0.24));
+	--shadow-2--drop: drop-shadow(0 3px 3px rgba(0 0 0 / 0.16))
+		drop-shadow(0 3px 3px rgba(0 0 0 / 0.23));
+	--shadow-3--drop: drop-shadow(0 10px 10px rgba(0 0 0 / 0.19))
+		drop-shadow(0 6px 3px rgba(0 0 0 / 0.23));
+	--shadow-4--drop: drop-shadow(0 14px 14px rgba(0 0 0 / 0.25))
+		drop-shadow(0 10px 5px rgba(0 0 0 / 0.22));
+	--shadow-5--drop: drop-shadow(0 19px 19px rgba(0 0 0 / 0.3))
+		drop-shadow(0 15px 6px rgba(0 0 0 / 0.22));
+
+	// two insets to make both shadows inset
+	--shadow-1--inset: inset var(--shadow-1) inset;
+	--shadow-2--inset: inset var(--shadow-2) inset;
+	--shadow-3--inset: inset var(--shadow-3) inset;
+	--shadow-4--inset: inset var(--shadow-4) inset;
+	--shadow-5--inset: inset var(--shadow-5) inset;
+
+	--line-height: 1.5;
+	//#endregion
+
+	//#region component specific settings
+
+	/// naming convention:
+	/// --[type]-[component]--[modifiers]__[property]
+	/// type: see above
+	/// component: name of the targeted component class, without the prepending c-
+	/// modifiers: any variations or sub-components
+	/// property: property name or general description of what is changed
+	///
+	/// no component means it affects global stuff
+
+	--background: radial-gradient(
+			farthest-corner at top left,
+			hsl(343, 68%, 77%),
+			transparent
+		),
+		radial-gradient(
+			farthest-corner at top right,
+			hsl(275, 100%, 85%),
+			transparent
+		),
+		radial-gradient(
+			farthest-corner at 30% 100%,
+			hsl(165, 84%, 75%),
+			transparent
+		);
+	--l-scrollbar__width: 0px;
+	--l-navbar__width: 3rem;
+	--navbar__background: rgba(0 0 0 / 0.719);
+
+	// timer
+	// how far apart different timers are
+	--l-timer-list__padding: 0.5rem;
+	--l-timer-box__border-radius: 0.5rem;
+	// color
+	--p-hsl-timer-front__bgc: 0 0% 23%;
+	--p-a-timer-front__bgc: 0.93;
+	--c-timer--countdown__finish-color: hsl(9 95% 61%);
+
+	// progress bar
+	--c-progress-bar--value__color: var(--c-tertiary);
+	// background only
+	// thickness of the progress bar around the front section
+	--l-progress-bar--bg__padding: 1rem;
+	// set by settings
+	--l-progress-bar--bg__border-width: 0;
+	// line only
+	--l-progress-bar--line__height: 3px;
+	//#endregion
+}
+
+:root {
+	box-sizing: border-box;
+
+	background-color: var(--c-bg);
+	color: var(--c-text);
+
+	line-height: var(--line-height);
+
+	// font things
+	font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+	// disambiguation excl. slashed 0
+	font-feature-settings: "ss04";
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: inherit;
+	// remove blue square when mobile device holds on an element
+	-webkit-tap-highlight-color: transparent;
+}
+
+@supports (font-variation-settings: normal) {
+	:root {
+		font-family: "Inter var", Avenir, Helvetica, Arial, sans-serif;
+	}
+}
+
+body {
+	height: 100dvh;
+	overflow: hidden;
+	background: var(--background);
+}
+
+///
+/// Scrollbar related.
+///
+::-webkit-scrollbar {
+	width: var(--l-scrollbar__width);
+	height: var(--l-scrollbar__width);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--c-secondary-container);
+	border-radius: var(--l-scrollbar__width);
+}
+
+::-webkit-scrollbar-track {
+	background-color: #2c2c30;
+}
+
+::-webkit-scrollbar-corner {
+	background-color: transparent;
+}
+
+///
+/// Make button and input inherit most properties.
+///
+button,
+input {
+	background-color: transparent;
+	color: inherit;
+
+	border: none;
+	outline: transparent;
+
+	font: inherit;
+	line-height: inherit;
+
+	&:focus-visible {
+		outline: var(--c-outline) 2px solid;
+	}
+}
+
+button {
+	cursor: pointer;
+	user-select: none;
+
+	&:focus-visible {
+		outline-offset: 0.25em;
+	}
+}
+
+///
+/// Mixin-like classes for special global styles
+///
+button.m-primary {
+	--s-height: 2rem;
+
+	background-color: var(--c-primary);
+	color: var(--c-primary-on);
+
+	height: var(--s-height);
+	aspect-ratio: 5 / 2;
+	border-radius: 5rem;
+
+	font-size: calc(var(--s-height) / 2);
+
+	filter: var(--shadow-2--drop);
+	transition-property: filter, transform;
+	transition-duration: var(--t-transition);
+
+	&:is(:hover, :focus-visible) {
+		filter: var(--shadow-3--drop);
+	}
+
+	&:active {
+		filter: none;
+		transform: scale(0.9);
+	}
+}
+
+button.m-light {
+	--s-height: 2rem;
+	background-color: transparent;
+
+	aspect-ratio: 1 / 1;
+	height: var(--s-height);
+	border-radius: var(--s-height);
+
+	font-size: calc(var(--s-height) / 2);
+
+	transition: background-color var(--t-transition);
+
+	&:is(:hover, :focus-visible) {
+		background-color: var(--c-overlay-light);
+	}
+
+	&:active {
+		background-color: var(--c-overlay-lightest);
+		transition: none;
+	}
+}

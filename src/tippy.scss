@@ -1,0 +1,59 @@
+/// global properties for Tippy.js themes
+///
+/// Tippy structure is as follows: (https://atomiks.github.io/tippyjs/v6/themes/)
+/// Descriptions are separated by =>
+///
+/// <div data-tippy-root> => Positioning of the tippy. Do not style this.
+///     <div class="tippy-box" data-placement="top" data-theme="theme-name"> => The actual box. Style this.
+///         <div class="tippy-backdrop"></div> => If `animateFill: true`
+///         <div class="tippy[-svg]-arrow"></div> => If `arrow: true`
+///         <div class="tippy-content">
+///             My Content
+///         </div>
+///     </div>
+/// </div>
+
+// add [data-tippy-root] to increase specificity over the default styles
+[data-tippy-root] .tippy-box {
+	--s-background: black;
+	background: var(--s-background);
+	.tippy-svg-arrow {
+		fill: var(--s-background);
+		filter: inherit;
+	}
+
+	// allow multi-line
+	white-space: pre-line;
+	// override default inline style
+	transition-duration: var(--t-transition) !important;
+
+	// custom themes
+	&[data-theme~="dark"] {
+		--s-background: black;
+		color: var(--c-text);
+	}
+
+	&[data-theme~="error"] {
+		--s-background: var(--c-error);
+		color: var(--c-error-on);
+	}
+
+	&[data-theme~="translucent"] {
+		--s-background: hsla(0 0% 100% / 0.9);
+		color: var(--c-text--invert);
+		backdrop-filter: blur(2px);
+	}
+
+	&[data-theme~="overlay-menu"] {
+		--s-background: var(--c-overlay-lightest);
+		padding: 0;
+
+		backdrop-filter: blur(0.2rem);
+		transition-property: background-color backdrop-filter;
+		transition-duration: var(--t-transition--short);
+
+		> .tippy-content {
+			padding: 0;
+		}
+	}
+}
