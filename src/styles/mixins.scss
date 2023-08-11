@@ -1,0 +1,94 @@
+// generates mix-* classes to add to elements
+
+// $color should just be the string, e.g. "green" or "red", not "var(--clr-green-400)"
+
+@mixin -btn-active-invert($color) {
+    &:active {
+        color: var(--clr-#{$color}-800);
+        @if $color == "neutral" {
+            background-color: var(--clr-neutral-50);
+        } @else {
+            background-color: var(--clr-#{$color}-400);
+        }
+    }
+}
+
+@mixin -btn-transp($color) {
+    @if $color == "neutral" {
+        color: var(--clr-neutral-50);
+    } @else {
+        color: var(--clr-#{$color}-400);
+    }
+
+    transition-property: color, background-color;
+    transition-duration: var(--time-transition-short);
+    transition-timing-function: ease-out;
+
+    &:hover {
+        background-color: var(--clr-overlay-2);
+    }
+
+    @include -btn-active-invert($color);
+}
+
+@mixin -btn-colored($color) {
+    @if $color == "neutral" {
+        color: var(--clr-neutral-50);
+        background-color: var(--clr-neutral-600);
+    } @else {
+        color: var(--clr-#{$color}-200);
+        background-color: var(--clr-#{$color}-800);
+    }
+
+    transition-property: color, background-color;
+    transition-duration: var(--time-transition-short);
+    transition-timing-function: ease-out;
+
+    &:hover {
+        @if $color == "neutral" {
+            color: var(--clr-neutral-50);
+            background-color: var(--clr-neutral-500);
+        } @else {
+            color: var(--clr-#{$color}-100);
+            background-color: var(--clr-#{$color}-700);
+        }
+    }
+
+    @include -btn-active-invert($color);
+}
+
+@mixin -btn-scale($color) {
+    background-color: var(--clr-#{$color}-400);
+    color: var(--clr-#{$color}-900);
+
+    transition-property: transform, filter;
+    transition-duration: var(--time-transition-short);
+    transition-timing-function: ease-out;
+
+    filter: var(--shadow-1-drop);
+
+    &:hover {
+        transform: scale(1.05);
+        filter: var(--shadow-2-drop);
+    }
+
+    &:active {
+        transform: scale(0.9);
+        filter: none;
+    }
+}
+
+$colors: "red", "orange", "yellow", "green", "blue", "purple", "neutral";
+@each $color in $colors {
+    .mix-btn-colored-#{$color} {
+        @include -btn-colored($color);
+    }
+
+    .mix-btn-transp-#{$color} {
+        @include -btn-transp($color);
+    }
+
+    .mix-btn-scale-#{$color} {
+        @include -btn-scale($color);
+    }
+}
