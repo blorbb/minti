@@ -15,8 +15,8 @@ use crate::{
 #[expect(clippy::too_many_lines, reason = "idk how make smaller")]
 #[expect(clippy::large_types_passed_by_value, reason = "can't be reference")]
 #[component]
-pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
-    let (error_message, set_error_message) = create_signal(cx, None::<String>);
+pub fn TimerDisplay(timer: Timer) -> impl IntoView {
+    let (error_message, set_error_message) = create_signal(None::<String>);
 
     let set_timer_duration = move || match parse::parse_input(&timer.input.get_untracked()) {
         Ok(duration) => {
@@ -28,8 +28,8 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
         }
     };
 
-    let component = create_node_ref::<html::Div>(cx);
-    let duration_display = create_node_ref::<html::Div>(cx);
+    let component = create_node_ref::<html::Div>();
+    let duration_display = create_node_ref::<html::Div>();
 
     let update_timer_duration =
         move |duration: Duration| update_and_bump(duration, duration_display, &timer);
@@ -39,13 +39,13 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     // switch between resume and pause button
     let pause_button = move || {
         if (timer.paused)() {
-            view! { cx,
+            view! {
                 <button class="primary mix-btn-scale-green" on:click=move |_| timer.resume()>
                     <Icon icon="ph:play-bold"/>
                 </button>
             }
         } else {
-            view! { cx,
+            view! {
                 <button class="primary mix-btn-scale-green" on:click=move |_| timer.pause()>
                     <Icon icon="ph:pause-bold"/>
                 </button>
@@ -54,7 +54,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     };
 
     let controls_start = move || {
-        view! { cx,
+        view! {
             <button class="primary mix-btn-scale-green" on:click=move |_| set_timer_duration()>
                 <Icon icon="ph:play-fill"/>
             </button>
@@ -62,7 +62,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     };
 
     let controls_running = move || {
-        view! { cx,
+        view! {
             // add duration
             <DurationUpdateButton
                 button_class="light mix-btn-transp-neutral"
@@ -84,7 +84,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     };
 
     let controls_finished = move || {
-        view! { cx,
+        view! {
             <DurationUpdateButton
                 button_class="primary mix-btn-scale-green"
                 on_click=move |d| update_timer_duration(d)
@@ -101,15 +101,15 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     // using `if` is fine as `started` and `finished` are memos anyways.
     let controls = move || {
         if !(timer.started)() {
-            controls_start().into_view(cx)
+            controls_start().into_view()
         } else if !(timer.finished)() {
-            controls_running().into_view(cx)
+            controls_running().into_view()
         } else {
-            controls_finished().into_view(cx)
+            controls_finished().into_view()
         }
     };
 
-    view! { cx,
+    view! {
         <div
             class="com-timer"
             data-started=reactive::as_attr(timer.started)
@@ -130,12 +130,12 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         />
                     </span>
 
-                    <Show when=move || error_message().is_some() fallback=|_| ()>
+                    <Show when=move || error_message().is_some() fallback=|| ()>
                         " | "
                         <span class="error">{error_message}</span>
                     </Show>
 
-                    <Show when=move || (timer.end_time)().is_some() fallback=|_| ()>
+                    <Show when=move || (timer.end_time)().is_some() fallback=|| ()>
                         " | "
                         <span class="end">
                             <Icon icon="ph:timer-bold"/>
@@ -150,8 +150,8 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                 <div class="duration" ref=duration_display>
                     <Show
                         when=timer.started
-                        fallback=move |cx| {
-                            view! { cx,
+                        fallback=move || {
+                            view! {
                                 <input
                                     type="text"
                                     // set to old value when reset timer
@@ -167,7 +167,6 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                         }
                     >
                         <DurationDisplay duration=Signal::derive(
-                            cx,
                             move || (timer.time_remaining)().unwrap_or_default(),
                         )/>
                     </Show>
@@ -177,7 +176,7 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
                     {controls}
                 </div>
 
-                <button class="delete mix-btn-transp-red" on:click=move |_| remove_self(cx, &timer)>
+                <button class="delete mix-btn-transp-red" on:click=move |_| remove_self(&timer)>
                     <Icon icon="ph:x-bold"/>
                 </button>
                 <FullscreenButton class="mix-btn-transp-neutral" target=component/>
@@ -186,10 +185,9 @@ pub fn TimerDisplay(cx: Scope, timer: Timer) -> impl IntoView {
     }
 }
 
-fn remove_self(cx: Scope, timer: &Timer) {
-    let timers = expect_context::<TimerList>(cx);
+fn remove_self(timer: &Timer) {
+    let timers = expect_context::<TimerList>();
     timers.remove_id(timer.id());
-    cx.dispose();
 }
 
 /// Creates a JS object with one key-value pair.

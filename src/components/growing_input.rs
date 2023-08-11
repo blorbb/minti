@@ -5,7 +5,6 @@ use leptos::*;
 /// An input element that grows with the input size.
 #[component]
 pub fn GrowingInput<F>(
-    cx: Scope,
     placeholder: &'static str,
     /// Functions cannot be optional, so one must be passed in.
     ///
@@ -18,12 +17,12 @@ where
 {
     // references
     // https://stackoverflow.com/a/38867270
-    let title_input_ref = create_node_ref::<html::Input>(cx);
-    let size_ref = create_node_ref(cx);
+    let title_input_ref = create_node_ref::<html::Input>();
+    let size_ref = create_node_ref();
 
     // input is after the size ref in DOM so wait for that
     // to load. If rearranged, make sure to change this too.
-    title_input_ref.on_load(cx, move |elem| {
+    title_input_ref.on_load(move |elem| {
         // need to wait slightly for initial value to be set.
         // set_input_size also needs to be delayed here even without an
         // initial value.
@@ -46,7 +45,7 @@ where
         };
     };
 
-    view! { cx,
+    view! {
         <span class="com-growing-input">
             <span class="size-reference" ref=size_ref></span>
             <input

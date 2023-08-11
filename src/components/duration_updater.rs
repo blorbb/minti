@@ -5,7 +5,6 @@ use time::Duration;
 
 #[component]
 pub fn DurationUpdateButton<F>(
-    cx: Scope,
     on_click: F,
     add: bool,
     #[prop(optional)] button_class: &'static str,
@@ -15,21 +14,18 @@ where
 {
     let duration_prefix = if add { "+" } else { "-" };
     let duration_multiplier = if add { 1 } else { -1 };
-    let durations = store_value(
-        cx,
-        [
-            LabelledDuration::new(1.days(), "1d"),
-            LabelledDuration::new(1.hours(), "1h"),
-            LabelledDuration::new(30.minutes(), "30m"),
-            LabelledDuration::new(10.minutes(), "10m"),
-            LabelledDuration::new(5.minutes(), "5m"),
-            LabelledDuration::new(1.minutes(), "1m"),
-            LabelledDuration::new(30.seconds(), "30s"),
-            LabelledDuration::new(10.seconds(), "10s"),
-        ],
-    );
-    let menu_expanded = create_rw_signal(cx, false);
-    let selected_duration = create_rw_signal(cx, durations()[5].clone());
+    let durations = store_value([
+        LabelledDuration::new(1.days(), "1d"),
+        LabelledDuration::new(1.hours(), "1h"),
+        LabelledDuration::new(30.minutes(), "30m"),
+        LabelledDuration::new(10.minutes(), "10m"),
+        LabelledDuration::new(5.minutes(), "5m"),
+        LabelledDuration::new(1.minutes(), "1m"),
+        LabelledDuration::new(30.seconds(), "30s"),
+        LabelledDuration::new(10.seconds(), "10s"),
+    ]);
+    let menu_expanded = create_rw_signal(false);
+    let selected_duration = create_rw_signal(durations()[5].clone());
 
     let oncontextmenu = move |ev: ev::MouseEvent| {
         ev.prevent_default();
@@ -42,27 +38,31 @@ where
     };
 
     // clicking anywhere should hide
-    // TODO in 0.5.0 get the handler and remove on cleanup, I'm lazy for now
-    window_event_listener(ev::click, move |_| {
+    let click_handler = window_event_listener(ev::click, move |_| {
         if menu_expanded() {
             menu_expanded.set(false);
         };
     });
     // esc should hide as well
-    window_event_listener(ev::keydown, move |ev| {
+    let key_handler = window_event_listener(ev::keydown, move |ev| {
         if menu_expanded() && ev.key() == "Escape" {
             menu_expanded.set(false);
         };
     });
 
+    on_cleanup(|| {
+        click_handler.remove();
+        key_handler.remove();
+    });
+
     // TODO focus capturing
 
     let menu = move || {
-        view! { cx,
+        view! {
             <div class="com-duration-menu">
                 {durations().map(|d| {
                     let label = d.label.clone();
-                    view! { cx,
+                    view! {
                         <button
                             class=button_class
                             on:click=move |_| onmenuselect(d.clone())
@@ -70,13 +70,13 @@ where
                             {duration_prefix} {label}
                         </button>
                     }
-                })}
+                }).collect_view()}
             </div>
         }
     };
 
     let update_button = move || {
-        view! { cx,
+        view! {
             <button
                 class=button_class
                 on:click=move |_| on_click(duration_multiplier * selected_duration().duration)
@@ -87,7 +87,7 @@ where
         }
     };
 
-    view! { cx,
+    view! {
         {update_button}
         <AnimatedShow
             when=menu_expanded

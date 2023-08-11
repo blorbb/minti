@@ -7,22 +7,22 @@ use crate::utils::{reactive, timer::Timer};
 
 #[expect(clippy::large_types_passed_by_value)]
 #[component]
-pub fn ProgressBar(cx: Scope, timer: Timer) -> impl IntoView {
-    let elapsed = create_memo(cx, move |_| {
+pub fn ProgressBar(timer: Timer) -> impl IntoView {
+    let elapsed = create_memo(move |_| {
         timer.started.track();
         // timer.finished.track();
         timer.get_time_elapsed()
     });
 
-    let progress_element = create_node_ref::<html::Div>(cx);
+    let progress_element = create_node_ref::<html::Div>();
 
-    create_effect(cx, move |_| {
+    create_effect(move |_| {
         if !(timer.finished)() && let Some(progress_element) = progress_element() {
             reset_animation(progress_element.dyn_ref::<HtmlDivElement>().unwrap());
         }
     });
 
-    view! { cx,
+    view! {
         <div
             class="com-progress-bar"
             role="progressbar"

@@ -11,7 +11,7 @@ use super::timer::Timer;
 /// Derefs to a `ReadSignal<Option<Element>>`.
 ///
 /// Should be provided as a context by the top-level component.
-/// Retrieve using `expect_context::<FullscreenElement>(cx)`
+/// Retrieve using `expect_context::<FullscreenElement>()`
 #[derive(Debug, Clone, Copy)]
 pub struct FullscreenElement(ReadSignal<Option<Element>>);
 
@@ -33,7 +33,7 @@ impl FullscreenElement {
 /// Stores and sets icons used into local storage.
 ///
 /// Should be provided as a context by the top-level component.
-/// Retrieve using `expect_context::<Icons>(cx)`
+/// Retrieve using `expect_context::<Icons>()`
 #[derive(Debug, Clone, Copy)]
 pub struct Icons(StoredValue<HashMap<String, String>>);
 
@@ -72,7 +72,7 @@ impl Icons {
     /// Constructs a new `Icons` map from the local storage "icons" key.
     ///
     /// Returns an empty map if it could not be deserialized.
-    pub fn from_local_storage(cx: Scope) -> Self {
+    pub fn from_local_storage() -> Self {
         let string = window()
             .local_storage()
             .unwrap()
@@ -83,7 +83,7 @@ impl Icons {
 
         let map: HashMap<String, String> = serde_json::from_str(&string).unwrap_or_default();
 
-        Self(store_value(cx, map))
+        Self(store_value(map))
     }
 
     /// Returns a clone of the icons hashmap.
@@ -98,19 +98,17 @@ impl Icons {
 /// if the vector is empty.
 ///
 /// Should be provided as a context by the top-level component.
-/// Retrieve using `expect_context::<TimerList>(cx)`
+/// Retrieve using `expect_context::<TimerList>()`
 #[derive(Debug, Clone, Copy)]
 pub struct TimerList {
     vec: RwSignal<Vec<Timer>>,
-    cx: Scope,
 }
 
 impl TimerList {
     /// Creates a new `TimerList` with one timer.
-    pub fn new(cx: Scope) -> Self {
+    pub fn new() -> Self {
         Self {
-            vec: create_rw_signal(cx, vec![Timer::new(cx)]),
-            cx,
+            vec: create_rw_signal(vec![Timer::new()]),
         }
     }
 
@@ -118,7 +116,7 @@ impl TimerList {
     ///
     /// Adds a new timer if `timers` is empty.
     pub fn set(&self, timers: Vec<Timer>) {
-        self.cx.batch(|| {
+        batch(|| {
             self.vec.set(timers);
 
             if self.is_empty() {
@@ -130,20 +128,19 @@ impl TimerList {
     /// Constructs a new `TimerList` from a list of timers.
     ///
     /// If the vec is empty, a timer is created.
-    pub fn from_timers(cx: Scope, timers: Vec<Timer>) -> Self {
+    pub fn from_timers(timers: Vec<Timer>) -> Self {
         if timers.is_empty() {
-            Self::new(cx)
+            Self::new()
         } else {
             Self {
-                vec: create_rw_signal(cx, timers),
-                cx,
+                vec: create_rw_signal(timers),
             }
         }
     }
 
     /// Adds a new timer to the list.
     pub fn push_new(&self) {
-        self.vec.update(|v| v.push(Timer::new(self.cx)));
+        self.vec.update(|v| v.push(Timer::new()));
     }
 
     /// Removes the timer at a certain index from the list.
@@ -151,7 +148,7 @@ impl TimerList {
     /// # Panics
     /// Panics if `index` is out of bounds.
     pub fn remove_index(&self, index: usize) {
-        self.cx.batch(|| {
+        batch(|| {
             self.vec.update(|v| {
                 v.remove(index);
             });
@@ -176,7 +173,7 @@ impl TimerList {
 
     /// Clears the timer list and adds one new timer.
     pub fn clear(&self) {
-        self.cx.batch(|| {
+        batch(|| {
             self.vec.update(Vec::clear);
             self.push_new();
         });

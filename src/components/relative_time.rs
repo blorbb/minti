@@ -14,11 +14,8 @@ const TIME_FORMAT: &[FormatItem<'_>] =
 ///
 /// Renders an empty span if `None` is provided.
 #[component]
-pub fn RelativeTime(
-    cx: Scope,
-    #[prop(into)] time: MaybeSignal<Option<OffsetDateTime>>,
-) -> impl IntoView {
-    let string = create_memo(cx, move |_| {
+pub fn RelativeTime(#[prop(into)] time: MaybeSignal<Option<OffsetDateTime>>) -> impl IntoView {
+    let string = create_memo(move |_| {
         // ignore `None`
         if time().is_none() {
             return String::new();
@@ -47,5 +44,5 @@ pub fn RelativeTime(
         format!("{} {}", display_date, end_time).trim().to_string()
     });
 
-    view! { cx, <span class="com-relative-time">{string}</span> }
+    view! { <span class="com-relative-time">{string}</span> }
 }

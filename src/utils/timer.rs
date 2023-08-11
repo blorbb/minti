@@ -15,7 +15,6 @@ use super::time::relative;
 /// for reactivity.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Timer {
-    cx: Scope,
     /// The total duration of the timer.
     ///
     /// Updates when the timer is started or reset.
@@ -90,28 +89,26 @@ impl Timer {
     ///
     /// This should only be called in the largest scope (`App`) to avoid
     /// disposing the signals.
-    pub fn new(cx: Scope) -> Self {
+    pub fn new() -> Self {
         log::info!("creating new timer");
 
-        let (duration, set_duration) = create_signal(cx, None::<Duration>);
-        let start_time = create_rw_signal(cx, None);
-        let last_pause_time = create_rw_signal(cx, None);
-        let acc_paused_duration = create_rw_signal(cx, Duration::ZERO);
+        let (duration, set_duration) = create_signal(None::<Duration>);
+        let start_time = create_rw_signal(None);
+        let last_pause_time = create_rw_signal(None);
+        let acc_paused_duration = create_rw_signal(Duration::ZERO);
 
-        let (time_remaining, set_time_remaining) = create_signal(cx, None::<Duration>);
-        let (end_time, set_end_time) = create_signal(cx, None);
-        let (input, set_input) = create_signal(cx, String::new());
-        let (title, set_title) = create_signal(cx, String::new());
+        let (time_remaining, set_time_remaining) = create_signal(None::<Duration>);
+        let (end_time, set_end_time) = create_signal(None);
+        let (input, set_input) = create_signal(String::new());
+        let (title, set_title) = create_signal(String::new());
 
-        let started = create_memo(cx, move |_| start_time().is_some());
-        let paused = create_memo(cx, move |_| started() && last_pause_time().is_some());
-        let running = create_memo(cx, move |_| started() && !paused());
-        let finished = create_memo(cx, move |_| {
-            time_remaining().is_some_and(|dur| !dur.is_positive())
-        });
+        let started = create_memo(move |_| start_time().is_some());
+        let paused = create_memo(move |_| started() && last_pause_time().is_some());
+        let running = create_memo(move |_| started() && !paused());
+        let finished = create_memo(move |_| time_remaining().is_some_and(|dur| !dur.is_positive()));
 
         // cannot be a memo: the return value does not change
-        let state_change = Signal::derive(cx, move || {
+        let state_change = Signal::derive(move || {
             started.track();
             paused.track();
             running.track();
@@ -121,7 +118,6 @@ impl Timer {
         });
 
         let timer = Self {
-            cx,
             duration,
             set_duration,
             started,
@@ -145,7 +141,6 @@ impl Timer {
 
         // update the time remaining when the timer is running
         reactive::repeat_while(
-            cx,
             timer.running,
             move || timer.update_time_remaining(),
             StdDuration::from_millis(200),
@@ -153,21 +148,20 @@ impl Timer {
 
         // update the end time when the timer is paused (started and not running)
         reactive::repeat_while(
-            cx,
             timer.paused,
             move || timer.update_end_time(),
             StdDuration::SECOND,
         );
         // also need to update when the timer resets,
         // so that the end time component is removed
-        create_effect(cx, move |_| {
+        create_effect(move |_| {
             timer.started.track();
             timer.update_end_time();
         });
 
         // request for user attention when the timer finishes //
 
-        create_effect(cx, move |_| {
+        create_effect(move |_| {
             // also check that it is close to finish so that already expired timers
             // retrieved from localstorage don't alert
             if (timer.finished)()
@@ -248,7 +242,7 @@ impl Timer {
     /// Batches `Timer::reset` and `Timer::start`.
     pub fn restart(&self, duration: Duration) {
         log::debug!("restarting timer");
-        self.cx.batch(|| {
+        batch(|| {
             self.reset();
             self.start(duration);
         });
@@ -258,7 +252,7 @@ impl Timer {
     /// initial input and title.
     pub fn reset(&self) {
         log::debug!("resetting timer");
-        self.cx.batch(|| {
+        batch(|| {
             self.start_time.set(None);
             self.last_pause_time.set(None);
             self.acc_paused_duration.set(Duration::ZERO);
@@ -270,7 +264,7 @@ impl Timer {
     /// Starts the timer.
     pub fn start(&self, duration: Duration) {
         log::debug!("starting timer with duration {}", duration);
-        self.cx.batch(|| {
+        batch(|| {
             self.start_time.set(Some(relative::now()));
             (self.set_duration)(Some(duration));
         });
@@ -299,7 +293,7 @@ impl Timer {
             return;
         }
 
-        self.cx.batch(|| {
+        batch(|| {
             self.acc_paused_duration.update(|v| {
                 *v += relative::now()
                     - self
@@ -334,7 +328,7 @@ impl Timer {
         // causing panic.
         // use `self.set_duration.set` instead.
 
-        self.cx.batch(|| {
+        batch(|| {
             // subtracting duration
             if duration.is_negative() {
                 if self.finished.get_untracked() {

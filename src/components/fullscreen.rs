@@ -3,13 +3,9 @@ use leptos::*;
 use crate::{components::Icon, utils::contexts::FullscreenElement};
 
 #[component]
-pub fn FullscreenButton(
-    cx: Scope,
-    target: NodeRef<html::Div>,
-    class: &'static str,
-) -> impl IntoView {
-    let fullscreen_element = expect_context::<FullscreenElement>(cx);
-    let is_fullscreen = create_memo(cx, move |_| {
+pub fn FullscreenButton(target: NodeRef<html::Div>, class: &'static str) -> impl IntoView {
+    let fullscreen_element = expect_context::<FullscreenElement>();
+    let is_fullscreen = create_memo(move |_| {
         let result = fullscreen_element().is_some();
         log!("toggling to {}", result);
         result
@@ -27,11 +23,11 @@ pub fn FullscreenButton(
         document().exit_fullscreen();
     };
 
-    view! { cx,
+    view! {
         <Show
             when=is_fullscreen
-            fallback=move |cx| {
-                view! { cx,
+            fallback=move || {
+                view! {
                     <button class=format!("com-fullscreen-button {}", class) on:click=enable_fullscreen>
                         <Icon icon="ph:corners-out"/>
                     </button>

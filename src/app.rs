@@ -19,14 +19,14 @@ use crate::{
 /// - Provides a context `RwSignal<TimerList>` to all descendants.
 /// - Updates localstorage whenever a timer changes.
 #[component]
-pub fn App(cx: Scope) -> impl IntoView {
-    let timers = TimerList::new(cx);
-    provide_context(cx, timers);
+pub fn App() -> impl IntoView {
+    let timers = TimerList::new();
+    provide_context(timers);
 
     // load timers from localstorage
-    let main_ref = create_node_ref::<html::Main>(cx);
-    main_ref.on_load(cx, move |_| {
-        let Some(t) = retrieve_timers(cx) else { return };
+    let main_ref = create_node_ref::<html::Main>();
+    main_ref.on_load(move |_| {
+        let Some(t) = retrieve_timers() else { return };
         timers.set(t.to_vec());
     });
 
@@ -41,28 +41,28 @@ pub fn App(cx: Scope) -> impl IntoView {
     // contexts //
 
     // fullscreen element context
-    let (fullscreen_element, set_fullscreen_element) = create_signal(cx, None);
+    let (fullscreen_element, set_fullscreen_element) = create_signal(None);
     let fullscreen_element = FullscreenElement::new(fullscreen_element);
 
     window_event_listener(ev::fullscreenchange, move |_| {
         set_fullscreen_element(document().fullscreen_element());
     });
 
-    provide_context(cx, fullscreen_element);
+    provide_context(fullscreen_element);
 
     // icons context
-    let icons = Icons::from_local_storage(cx);
-    provide_context(cx, icons);
+    let icons = Icons::from_local_storage();
+    provide_context(icons);
 
     // show scroll shadows //
 
-    let intersection_root = create_node_ref::<html::Div>(cx);
-    let top_edge = create_node_ref::<html::Div>(cx);
-    let bottom_edge = create_node_ref::<html::Div>(cx);
-    let top_shadow = create_node_ref::<html::Div>(cx);
-    let bottom_shadow = create_node_ref::<html::Div>(cx);
+    let intersection_root = create_node_ref::<html::Div>();
+    let top_edge = create_node_ref::<html::Div>();
+    let bottom_edge = create_node_ref::<html::Div>();
+    let top_shadow = create_node_ref::<html::Div>();
+    let bottom_shadow = create_node_ref::<html::Div>();
 
-    bottom_shadow.on_load(cx, move |_| {
+    bottom_shadow.on_load(move |_| {
         let intersection_callback = Closure::<dyn Fn(Vec<IntersectionObserverEntry>)>::new(
             move |entries: Vec<IntersectionObserverEntry>| {
                 log::debug!("finding intersections");
@@ -111,7 +111,7 @@ pub fn App(cx: Scope) -> impl IntoView {
         observer.observe(bottom_edge.get_untracked().unwrap().dyn_ref().unwrap());
     });
 
-    view! { cx,
+    view! {
         <div class="page">
             <div class="context" ref=intersection_root>
                 <div class="scroller">
@@ -153,8 +153,8 @@ fn store_timers(timers: TimerList) -> Option<()> {
 /// The timers are expected to be in the key "timers".
 ///
 /// Returns `None` if localstorage cannot be accessed or the item cannot be parsed.
-fn retrieve_timers(cx: Scope) -> Option<TimerList> {
+fn retrieve_timers() -> Option<TimerList> {
     let local_storage = window().local_storage().ok()??;
     let timers_string = local_storage.get_item("timers").ok()??;
-    serialize::parse_timer_json(cx, &timers_string)
+    serialize::parse_timer_json(&timers_string)
 }

@@ -1,6 +1,6 @@
 use az::SaturatingAs;
 
-use leptos::{Scope, SignalGetUntracked, SignalSetUntracked};
+use leptos::{SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
 use time::ext::NumericalDuration;
 
@@ -69,12 +69,12 @@ pub fn stringify_timers(timers: TimerList) -> String {
 /// If any of the timers are invalid, they will be ignored.
 ///
 /// Returns `None` if `json` could not be parsed.
-pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
+pub fn parse_timer_json(json: &str) -> Option<TimerList> {
     let timers: Vec<TimerJson> = serde_json::from_str(json).ok()?;
     let timers: Vec<Timer> = timers
         .into_iter()
         .filter_map(|unparsed| {
-            let timer = Timer::new(cx);
+            let timer = Timer::new();
             timer.set_input(unparsed.duration_input);
             timer.set_title(unparsed.title);
 
@@ -114,5 +114,5 @@ pub fn parse_timer_json(cx: Scope, json: &str) -> Option<TimerList> {
         })
         .collect();
 
-    Some(TimerList::from_timers(cx, timers))
+    Some(TimerList::from_timers(timers))
 }

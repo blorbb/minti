@@ -6,15 +6,15 @@ use crate::{
 };
 
 #[component]
-pub fn HomePage(cx: Scope) -> impl IntoView {
-    let timers = expect_context::<TimerList>(cx);
+pub fn HomePage() -> impl IntoView {
+    let timers = expect_context::<TimerList>();
 
-    view! { cx,
+    view! {
         <div class="page-home">
             <For
                 each=timers.vec_signal()
                 key=Timer::id
-                view=move |cx, timer| view! { cx, <TimerDisplay timer=timer/> }
+                view=move |timer| view! { <TimerDisplay timer=timer/> }
             />
         </div>
     }

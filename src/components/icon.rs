@@ -9,17 +9,16 @@ const BASE_URL: &str = "https://api.iconify.design";
 /// Icons are from `iconify-icon` and are expected to be valid.
 #[component]
 pub fn Icon(
-    cx: Scope,
     /// The `iconify-icon` icon id. See <https://icon-sets.iconify.design/>.
     #[prop(into)]
     icon: MaybeSignal<&'static str>,
 ) -> impl IntoView {
     // warnings are probably fixed in https://github.com/leptos-rs/leptos/pull/1342
 
-    let stored_icons = expect_context::<Icons>(cx);
+    let stored_icons = expect_context::<Icons>();
 
     let icon_svg: Resource<_, Option<String>> =
-        create_local_resource(cx, icon, move |icon| async move {
+        create_local_resource(icon, move |icon| async move {
             if let Some(body) = stored_icons.get(icon) {
                 // TODO: probably should sanitise the body just in case
                 log::debug!("found icon {} in localstorage", icon);
@@ -46,10 +45,10 @@ pub fn Icon(
             }
         });
 
-    view! { cx,
+    view! {
         <span
             class="com-icon"
-            inner_html=move || icon_svg.read(cx).flatten().unwrap_or_default()
+            inner_html=move || icon_svg.read().flatten().unwrap_or_default()
         ></span>
     }
 }
