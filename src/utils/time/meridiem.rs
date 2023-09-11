@@ -12,8 +12,8 @@ pub enum Meridiem {
 }
 
 impl Meridiem {
-    pub const AM_TOKENS: [&str; 2] = ["am", "a.m."];
-    pub const PM_TOKENS: [&str; 2] = ["pm", "p.m."];
+    pub const AM_TOKENS: [&'static str; 2] = ["am", "a.m."];
+    pub const PM_TOKENS: [&'static str; 2] = ["pm", "p.m."];
 }
 
 impl FromStr for Meridiem {

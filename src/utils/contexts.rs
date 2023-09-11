@@ -39,7 +39,7 @@ pub struct Icons(StoredValue<HashMap<String, String>>);
 
 impl Icons {
     /// The key used to fetch the icons from local storage.
-    pub const STORAGE_KEY: &str = "icons";
+    pub const STORAGE_KEY: &'static str = "icons";
 
     /// Tries to retrieve the specified icon.
     ///

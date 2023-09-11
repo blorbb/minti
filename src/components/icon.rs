@@ -1,3 +1,4 @@
+use gloo_net::http::Request;
 use leptos::*;
 
 use crate::utils::contexts::Icons;
@@ -28,7 +29,8 @@ pub fn Icon(
             log::debug!("fetching icon {}", icon);
             let (prefix, name) = icon.split_once(':')?;
 
-            let body = reqwest::get(format!("{}/{}/{}.svg", BASE_URL, prefix, name))
+            let body = Request::get(&format!("{}/{}/{}.svg", BASE_URL, prefix, name))
+                .send()
                 .await
                 .ok()?
                 .text()
@@ -48,7 +50,7 @@ pub fn Icon(
     view! {
         <span
             class="com-icon"
-            inner_html=move || icon_svg.read().flatten().unwrap_or_default()
+            inner_html=move || icon_svg.get().flatten().unwrap_or_default()
         ></span>
     }
 }

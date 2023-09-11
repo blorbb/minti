@@ -24,7 +24,7 @@ pub enum TimeUnit {
 }
 
 impl TimeUnit {
-    pub const MILLI_TOKENS: [&str; 7] = [
+    pub const MILLI_TOKENS: [&'static str; 7] = [
         "ms",
         "milli",
         "millis",
@@ -33,10 +33,10 @@ impl TimeUnit {
         "millisecond",
         "milliseconds",
     ];
-    pub const SEC_TOKENS: [&str; 5] = ["s", "sec", "secs", "second", "seconds"];
-    pub const MIN_TOKENS: [&str; 5] = ["m", "min", "mins", "minute", "minutes"];
-    pub const HOUR_TOKENS: [&str; 5] = ["h", "hr", "hrs", "hour", "hours"];
-    pub const DAY_TOKENS: [&str; 3] = ["d", "day", "days"];
+    pub const SEC_TOKENS: [&'static str; 5] = ["s", "sec", "secs", "second", "seconds"];
+    pub const MIN_TOKENS: [&'static str; 5] = ["m", "min", "mins", "minute", "minutes"];
+    pub const HOUR_TOKENS: [&'static str; 5] = ["h", "hr", "hrs", "hour", "hours"];
+    pub const DAY_TOKENS: [&'static str; 3] = ["d", "day", "days"];
 
     /// Converts a unit to a number, which can be used to get other units
     /// relative to `self`.
