@@ -11,6 +11,13 @@
     "version": "0.0.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      }
+    },
     "bundle": {
       "active": true,
       "targets": "all",
@@ -37,10 +44,5 @@
         "minHeight": 200
       }
     ]
-  },
-  "plugins": {
-    "shell": {
-      "open": true
-    }
   }
 }
