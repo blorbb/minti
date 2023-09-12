@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use leptos::*;
+use leptos_mview::view;
 
 /// An input element that grows with the input size.
 #[component]
@@ -45,21 +46,36 @@ where
         };
     };
 
+    // view! {
+    //     <span class="com-growing-input">
+    //         <span class="size-reference" ref=size_ref></span>
+    //         <input
+    //             type="text"
+    //             placeholder=placeholder
+    //             ref=title_input_ref
+    //             value=initial
+    //             on:input=move |ev| {
+    //                 resize_to_fit(title_input_ref().unwrap(), &size_ref().unwrap());
+    //                 on_input(ev);
+    //             }
+    //             on:keydown=on_keydown
+    //         />
+    //     </span>
+    // }
     view! {
-        <span class="com-growing-input">
-            <span class="size-reference" ref=size_ref></span>
-            <input
+        span class="com-growing-input" {
+            span class="size-reference" ref={size_ref};
+            input
                 type="text"
-                placeholder=placeholder
-                ref=title_input_ref
-                value=initial
-                on:input=move |ev| {
+                {placeholder}
+                ref={title_input_ref}
+                value={initial}
+                on:input={move |ev| {
                     resize_to_fit(title_input_ref().unwrap(), &size_ref().unwrap());
-                    on_input(ev);
-                }
-                on:keydown=on_keydown
-            />
-        </span>
+                    on_input(ev)
+                }}
+                on:keydown={on_keydown};
+        }
     }
 }
 

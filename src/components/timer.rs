@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_mview::view;
 
 use time::Duration;
 use wasm_bindgen::JsValue;
@@ -40,60 +41,56 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let pause_button = move || {
         if (timer.paused)() {
             view! {
-                <button class="primary mix-btn-scale-green" on:click=move |_| timer.resume()>
-                    <Icon icon="ph:play-bold"/>
-                </button>
+                button class="primary mix-btn-scale-green" on:click={move |_| timer.resume()} {
+                    Icon icon="ph:play-bold";
+                }
             }
         } else {
             view! {
-                <button class="primary mix-btn-scale-green" on:click=move |_| timer.pause()>
-                    <Icon icon="ph:pause-bold"/>
-                </button>
+                button class="primary mix-btn-scale-green" on:click={move |_| timer.pause()} {
+                    Icon icon="ph:pause-bold";
+                }
             }
         }
     };
 
     let controls_start = move || {
         view! {
-            <button class="primary mix-btn-scale-green" on:click=move |_| set_timer_duration()>
-                <Icon icon="ph:play-fill"/>
-            </button>
+            button class="primary mix-btn-scale-green" on:click={move |_| set_timer_duration()} {
+                Icon icon="ph:play-fill";
+            }
         }
     };
 
     let controls_running = move || {
         view! {
-            // add duration
-            <DurationUpdateButton
+            DurationUpdateButton
                 button_class="light mix-btn-transp-neutral"
-                on_click=update_timer_duration
-                add=true
-            />
-            <DurationUpdateButton
+                on_click={update_timer_duration}
+                add;
+            DurationUpdateButton
                 button_class="light mix-btn-transp-neutral"
-                on_click=update_timer_duration
-                add=false
-            />
+                on_click={update_timer_duration}
+                add=false;
 
             {pause_button}
 
-            <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
-                <Icon icon="ph:clock-counter-clockwise-bold"/>
-            </button>
+            button class="primary mix-btn-scale-green" on:click={move |_| timer.reset()} {
+                Icon icon="ph:clock-counter-clockwise-bold";
+            }
         }
     };
 
     let controls_finished = move || {
         view! {
-            <DurationUpdateButton
+            DurationUpdateButton
                 button_class="primary mix-btn-scale-green"
-                on_click=update_timer_duration
-                add=true
-            />
+                on_click={update_timer_duration}
+                add;
 
-            <button class="primary mix-btn-scale-green" on:click=move |_| timer.reset()>
-                <Icon icon="ph:clock-counter-clockwise-bold"/>
-            </button>
+            button class="primary mix-btn-scale-green" on:click={move |_| timer.reset()} {
+                Icon icon="ph:clock-counter-clockwise-bold";
+            }
         }
     };
 
@@ -110,78 +107,72 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     };
 
     view! {
-        <div
+        div
             class="com-timer"
-            data-started=reactive::as_attr(timer.started)
-            data-paused=reactive::as_attr(timer.paused)
-            data-running=reactive::as_attr(timer.running)
-            data-finished=reactive::as_attr(timer.finished)
-            ref=component
-        >
-            <ProgressBar timer=timer/>
-            <div class="timer-face">
+            data-started={reactive::as_attr(timer.started)}
+            data-paused={reactive::as_attr(timer.paused)}
+            data-running={reactive::as_attr(timer.running)}
+            data-finished={reactive::as_attr(timer.finished)}
+            ref={component}
+        {
+            ProgressBar {timer};
+            div class="timer-face" {
                 // stuff above the input with extra info
-                <div class="heading">
-                    <span class="title">
-                        <GrowingInput
+                div class="heading" {
+                    span class="title" {
+                        GrowingInput
                             placeholder="Enter a title"
-                            on_input=move |ev| timer.set_title(event_target_value(&ev))
-                            initial=timer.title.get_untracked()
-                        />
-                    </span>
+                            on_input={move |ev| timer.set_title(event_target_value(&ev))}
+                            initial={timer.title.get_untracked()};
+                    }
 
-                    <Show when=move || error_message().is_some() fallback=|| ()>
+                    Show when=[error_message().is_some()] fallback=[()] {
                         " | "
-                        <span class="error">{error_message}</span>
-                    </Show>
+                        span class="error" { {error_message} }
+                    }
 
-                    <Show when=move || (timer.end_time)().is_some() fallback=|| ()>
+                    Show when=[(timer.end_time)().is_some()] fallback=[()] {
                         " | "
-                        <span class="end">
-                            <Icon icon="ph:timer-bold"/>
+                        span class="end" {
+                            Icon icon="ph:timer-bold";
                             " "
-                            <RelativeTime time=timer.end_time/>
-                        </span>
-                    </Show>
-                </div>
-
+                            RelativeTime time={timer.end_time};
+                        }
+                    }
+                }
                 // main timer display, showing either the countdown
                 // or the input to enter a time
-                <div class="duration" ref=duration_display>
-                    <Show
-                        when=timer.started
-                        fallback=move || {
-                            view! {
-                                <input
-                                    type="text"
-                                    // set to old value when reset timer
-                                    prop:value=timer.input
-                                    on:input=move |ev| timer.set_input(event_target_value(&ev))
-                                    on:keydown=move |ev| {
-                                        if ev.key() == "Enter" {
-                                            set_timer_duration();
-                                        }
+                div class="duration" ref={duration_display} {
+                    [if (timer.started)() {
+                        view! {
+                            DurationDisplay duration={
+                                Signal::derive(move || (timer.time_remaining)().unwrap_or_default())
+                            };
+                        }.into_view()
+                    } else {
+                        view! {
+                            input
+                                type="text"
+                                // set old value when reset timer
+                                prop:value={timer.input}
+                                on:input={move |ev| timer.set_input(event_target_value(&ev))}
+                                on:keydown={move |ev| {
+                                    if ev.key() == "Enter" {
+                                        set_timer_duration();
                                     }
-                                />
-                            }
-                        }
-                    >
-                        <DurationDisplay duration=Signal::derive(
-                            move || (timer.time_remaining)().unwrap_or_default(),
-                        )/>
-                    </Show>
-                </div>
+                                }};
+                        }.into_view()
+                    }]
+                }
 
-                <div class="controls">
-                    {controls}
-                </div>
+                div class="controls" { {controls} }
 
-                <button class="delete mix-btn-transp-red" on:click=move |_| remove_self(&timer)>
-                    <Icon icon="ph:x-bold"/>
-                </button>
-                <FullscreenButton class="mix-btn-transp-neutral" target=component/>
-            </div>
-        </div>
+                button class="delete mix-btn-transp-red" on:click={move |_| remove_self(&timer)} {
+                    Icon icon="ph:x-bold";
+                }
+                FullscreenButton class="mix-btn-transp-neutral" target={component};
+            }
+        }
     }
 }
 

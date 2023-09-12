@@ -1,5 +1,6 @@
 use js_sys::Function;
 use leptos::*;
+use leptos_mview::view;
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{
     HtmlElement, IntersectionObserver, IntersectionObserverEntry, IntersectionObserverInit,
@@ -112,27 +113,27 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
-        <div class="page">
-            <div class="context" ref=intersection_root>
-                <div class="scroller">
-                    <main ref=main_ref>
-                        <div class="intersection-edge" ref=top_edge data-edge="top" />
-                        <HomePage/>
-                        <div class="intersection-edge" ref=bottom_edge data-edge="bottom" />
-                    </main>
-                </div>
-                <div class="scroll-shadow" data-edge="top" ref=top_shadow />
-                <div class="scroll-shadow" data-edge="bottom" ref=bottom_shadow />
-            </div>
-            <nav>
-                <button class="add mix-btn-colored-green" on:click=move |_| timers.push_new()>
-                    <Icon icon="ph:plus-bold"/>
-                </button>
-                <button class="remove mix-btn-colored-red" on:click=move |_| timers.clear()>
-                    <Icon icon="ph:trash-bold"/>
-                </button>
-            </nav>
-        </div>
+        div class="page" {
+            div class="context" ref={intersection_root} {
+                div class="scroller" {
+                    main ref={main_ref} {
+                        div class="intersection-edge" ref={top_edge} data-edge="top";
+                        HomePage;
+                        div class="intersection-edge" ref={bottom_edge} data-edge="bottom";
+                    }
+                }
+                div class="scroll-shadow" data-edge="top" ref={top_shadow};
+                div class="scroll-shadow" data-edge="bottom" ref={bottom_shadow};
+            }
+            nav {
+                button class="add mix-btn-colored-green" on:click={move |_| timers.push_new()} {
+                    Icon icon="ph:plus-bold";
+                }
+                button class="remove mix-btn-colored-red" on:click={move |_| timers.clear()} {
+                    Icon icon="ph:trash-bold";
+                }
+            }
+        }
     }
 }
 

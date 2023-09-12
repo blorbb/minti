@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_mview::view;
 use std::time::Duration as StdDuration;
 use time::ext::NumericalDuration;
 use time::Duration;
@@ -59,43 +60,44 @@ where
 
     let menu = move || {
         view! {
-            <div class="com-duration-menu">
+            div class="com-duration-menu" {
                 {durations().map(|d| {
                     let label = d.label.clone();
                     view! {
-                        <button
-                            class=button_class
-                            on:click=move |_| onmenuselect(d.clone())
-                        >
+                        button
+                            class={button_class}
+                            on:click={move |_| onmenuselect(d.clone())}
+                        {
                             {duration_prefix} {label}
-                        </button>
+                        }
                     }
                 }).collect_view()}
-            </div>
+            }
         }
     };
 
+
     let update_button = move || {
         view! {
-            <button
-                class=button_class
-                on:click=move |_| on_click(duration_multiplier * selected_duration().duration)
-                on:contextmenu=oncontextmenu
-            >
-                {duration_prefix} {move || selected_duration().label}
-            </button>
+            button
+                class={button_class}
+                on:click={move |_| on_click(duration_multiplier * selected_duration().duration)}
+                on:contextmenu={oncontextmenu}
+            {
+                {duration_prefix} [selected_duration().label]
+            }
         }
     };
 
     view! {
         {update_button}
-        <AnimatedShow
-            when=menu_expanded
-            hide_class="hiding"
-            hide_delay=StdDuration::from_millis(200)
-        >
-            {menu()}
-        </AnimatedShow>
+        AnimatedShow
+            when={menu_expanded}
+            hide-class="hiding"
+            hide-delay={StdDuration::from_millis(200)}
+        {
+            {menu}
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_mview::view;
 use time::{format_description::FormatItem, macros::format_description, OffsetDateTime};
 
 use crate::utils::time::relative;
@@ -44,5 +45,5 @@ pub fn RelativeTime(#[prop(into)] time: MaybeSignal<Option<OffsetDateTime>>) -> 
         format!("{} {}", display_date, end_time).trim().to_string()
     });
 
-    view! { <span class="com-relative-time">{string}</span> }
+    view! { span class="com-relative-time" { {string} } }
 }

@@ -1,6 +1,7 @@
 use time::Duration;
 
 use leptos::*;
+use leptos_mview::view;
 
 use crate::utils::time::units;
 
@@ -31,30 +32,54 @@ pub fn DurationDisplay(#[prop(into)] duration: Signal<Duration>) -> impl IntoVie
     let hours = create_memo(move |_| rounded_duration().whole_hours() as u64 % units::HOURS_IN_DAY);
     let days = create_memo(move |_| rounded_duration().whole_days());
 
+    // view! {
+    //     <span class="com-duration">
+    //         <Show when=show_negative fallback=|| ()>
+    //             <span class="negative">"-"</span>
+    //         </Show>
+    //         <Show when=move || days() != 0 fallback=|| ()>
+    //             <span class="value">{days}</span>
+    //             <span class="unit">"d"</span>
+    //             " "
+    //         </Show>
+    //         <Show when=move || hours() != 0 || days() != 0 fallback=|| ()>
+    //             <span class="value">{hours}</span>
+    //             <span class="unit">"h"</span>
+    //             " "
+    //         </Show>
+
+    //         <Show when=move || mins() != 0 || hours() != 0 || days() != 0 fallback=|| ()>
+    //             <span class="value">{mins}</span>
+    //             <span class="unit">"m"</span>
+    //             " "
+    //         </Show>
+
+    //         <span class="value">{secs}</span>
+    //         <span class="unit">"s"</span>
+    //     </span>
+    // }
     view! {
-        <span class="com-duration">
-            <Show when=show_negative fallback=|| ()>
-                <span class="negative">"-"</span>
-            </Show>
-            <Show when=move || days() != 0 fallback=|| ()>
-                <span class="value">{days}</span>
-                <span class="unit">"d"</span>
+        span class="com-duration" {
+            Show when={show_negative} fallback=[()] {
+                span class="negative" { "-" }
+            }
+            Show when=[days() != 0] fallback=[()] {
+                span class="value" { {days} }
+                span class="unit" { "d" }
                 " "
-            </Show>
-            <Show when=move || hours() != 0 || days() != 0 fallback=|| ()>
-                <span class="value">{hours}</span>
-                <span class="unit">"h"</span>
+            }
+            Show when=[hours() != 0 || days() != 0] fallback=[()] {
+                span class="value" { {hours} }
+                span class="unit" { "h" }
                 " "
-            </Show>
-
-            <Show when=move || mins() != 0 || hours() != 0 || days() != 0 fallback=|| ()>
-                <span class="value">{mins}</span>
-                <span class="unit">"m"</span>
+            }
+            Show when=[mins() != 0 || hours() != 0 || days() != 0] fallback=[()] {
+                span class="value" { {mins} }
+                span class="unit" { "m" }
                 " "
-            </Show>
-
-            <span class="value">{secs}</span>
-            <span class="unit">"s"</span>
-        </span>
+            }
+            span class="value" { {secs} }
+            span class="unit" { "s" }
+        }
     }
 }

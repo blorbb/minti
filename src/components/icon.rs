@@ -1,5 +1,6 @@
 use gloo_net::http::Request;
 use leptos::*;
+use leptos_mview::view;
 
 use crate::utils::contexts::Icons;
 
@@ -48,9 +49,6 @@ pub fn Icon(
         });
 
     view! {
-        <span
-            class="com-icon"
-            inner_html=move || icon_svg.get().flatten().unwrap_or_default()
-        ></span>
+        span class="com-icon" inner_html=[icon_svg.get().flatten().unwrap_or_default()];
     }
 }

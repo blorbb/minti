@@ -1,4 +1,5 @@
 use leptos::*;
+use leptos_mview::view;
 
 use crate::{components::Icon, utils::contexts::FullscreenElement};
 
@@ -23,20 +24,33 @@ pub fn FullscreenButton(target: NodeRef<html::Div>, class: &'static str) -> impl
         document().exit_fullscreen();
     };
 
-    view! {
-        <Show
-            when=is_fullscreen
-            fallback=move || {
-                view! {
-                    <button class=format!("com-fullscreen-button {}", class) on:click=enable_fullscreen>
-                        <Icon icon="ph:corners-out"/>
-                    </button>
-                }
+    // view! {
+    //     <Show
+    //         when=is_fullscreen
+    //         fallback=move || {
+    //             view! {
+    //                 <button class=format!("com-fullscreen-button {}", class) on:click=enable_fullscreen>
+    //                     <Icon icon="ph:corners-out"/>
+    //                 </button>
+    //             }
+    //         }
+    //     >
+    //         <button class=format!("com-fullscreen-button {}", class) on:click=disable_fullscreen>
+    //             <Icon icon="ph:corners-in"/>
+    //         </button>
+    //     </Show>
+    // }
+    move || if is_fullscreen() {
+        view! {
+            button class={format!("com-fullscreen-button {}", class)} on:click={disable_fullscreen} {
+                Icon icon="ph:corners-in";
             }
-        >
-            <button class=format!("com-fullscreen-button {}", class) on:click=disable_fullscreen>
-                <Icon icon="ph:corners-in"/>
-            </button>
-        </Show>
+        }
+    } else {
+        view! {
+            button class={format!("com-fullscreen-button {}", class)} on:click={enable_fullscreen} {
+                Icon icon="ph:corners-out";
+            }
+        }
     }
 }
