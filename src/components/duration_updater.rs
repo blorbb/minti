@@ -60,7 +60,7 @@ where
 
     let menu = move || {
         view! {
-            div class="com-duration-menu" {
+            div.com-duration-menu {
                 {durations().map(|d| {
                     let label = d.label.clone();
                     view! {

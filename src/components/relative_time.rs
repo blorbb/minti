@@ -45,5 +45,5 @@ pub fn RelativeTime(#[prop(into)] time: MaybeSignal<Option<OffsetDateTime>>) -> 
         format!("{} {}", display_date, end_time).trim().to_string()
     });
 
-    view! { span class="com-relative-time" { {string} } }
+    view! { span.com-relative-time { {string} } }
 }

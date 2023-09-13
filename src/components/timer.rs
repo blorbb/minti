@@ -41,13 +41,13 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let pause_button = move || {
         if (timer.paused)() {
             view! {
-                button class="primary mix-btn-scale-green" on:click={move |_| timer.resume()} {
+                button.primary.mix-btn-scale-green on:click={move |_| timer.resume()} {
                     Icon icon="ph:play-bold";
                 }
             }
         } else {
             view! {
-                button class="primary mix-btn-scale-green" on:click={move |_| timer.pause()} {
+                button.primary.mix-btn-scale-green on:click={move |_| timer.pause()} {
                     Icon icon="ph:pause-bold";
                 }
             }
@@ -56,7 +56,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
     let controls_start = move || {
         view! {
-            button class="primary mix-btn-scale-green" on:click={move |_| set_timer_duration()} {
+            button.primary.mix-btn-scale-green on:click={move |_| set_timer_duration()} {
                 Icon icon="ph:play-fill";
             }
         }
@@ -75,7 +75,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
             {pause_button}
 
-            button class="primary mix-btn-scale-green" on:click={move |_| timer.reset()} {
+            button.primary.mix-btn-scale-green on:click={move |_| timer.reset()} {
                 Icon icon="ph:clock-counter-clockwise-bold";
             }
         }
@@ -88,7 +88,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                 on_click={update_timer_duration}
                 add;
 
-            button class="primary mix-btn-scale-green" on:click={move |_| timer.reset()} {
+            button.primary.mix-btn-scale-green on:click={move |_| timer.reset()} {
                 Icon icon="ph:clock-counter-clockwise-bold";
             }
         }
@@ -107,8 +107,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     };
 
     view! {
-        div
-            class="com-timer"
+        div.com-timer
             data-started={reactive::as_attr(timer.started)}
             data-paused={reactive::as_attr(timer.paused)}
             data-running={reactive::as_attr(timer.running)}
@@ -116,10 +115,10 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
             ref={component}
         {
             ProgressBar {timer};
-            div class="timer-face" {
+            div.timer-face {
                 // stuff above the input with extra info
-                div class="heading" {
-                    span class="title" {
+                div.heading {
+                    span.title {
                         GrowingInput
                             placeholder="Enter a title"
                             on_input={move |ev| timer.set_title(event_target_value(&ev))}
@@ -128,12 +127,12 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
                     Show when=[error_message().is_some()] fallback=[()] {
                         " | "
-                        span class="error" { {error_message} }
+                        span.error { {error_message} }
                     }
 
                     Show when=[(timer.end_time)().is_some()] fallback=[()] {
                         " | "
-                        span class="end" {
+                        span.end {
                             Icon icon="ph:timer-bold";
                             " "
                             RelativeTime time={timer.end_time};
@@ -142,7 +141,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                 }
                 // main timer display, showing either the countdown
                 // or the input to enter a time
-                div class="duration" ref={duration_display} {
+                div.duration ref={duration_display} {
                     [if (timer.started)() {
                         view! {
                             DurationDisplay duration={
@@ -165,9 +164,9 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                     }]
                 }
 
-                div class="controls" { {controls} }
+                div.controls { {controls} }
 
-                button class="delete mix-btn-transp-red" on:click={move |_| remove_self(&timer)} {
+                button.delete.mix-btn-transp-red on:click={move |_| remove_self(&timer)} {
                     Icon icon="ph:x-bold";
                 }
                 FullscreenButton class="mix-btn-transp-neutral" target={component};

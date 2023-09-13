@@ -24,15 +24,13 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
     });
 
     view! {
-        div
-            class="com-progress-bar"
+        div.com-progress-bar
             role="progressbar"
             data-started={reactive::as_attr(timer.started)}
             data-paused={reactive::as_attr(timer.paused)}
             data-finished={reactive::as_attr(timer.finished)}
         {
-            div
-                class="progress-value"
+            div.progress-value
                 ref={progress_element}
                 style:animation-duration=[
                     format!("{:.3}s", (timer.duration)().unwrap_or(Duration::MAX).as_seconds_f64())

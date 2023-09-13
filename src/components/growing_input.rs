@@ -46,25 +46,9 @@ where
         };
     };
 
-    // view! {
-    //     <span class="com-growing-input">
-    //         <span class="size-reference" ref=size_ref></span>
-    //         <input
-    //             type="text"
-    //             placeholder=placeholder
-    //             ref=title_input_ref
-    //             value=initial
-    //             on:input=move |ev| {
-    //                 resize_to_fit(title_input_ref().unwrap(), &size_ref().unwrap());
-    //                 on_input(ev);
-    //             }
-    //             on:keydown=on_keydown
-    //         />
-    //     </span>
-    // }
     view! {
-        span class="com-growing-input" {
-            span class="size-reference" ref={size_ref};
+        span.com-growing-input {
+            span.size-reference ref={size_ref};
             input
                 type="text"
                 {placeholder}

@@ -49,6 +49,6 @@ pub fn Icon(
         });
 
     view! {
-        span class="com-icon" inner_html=[icon_svg.get().flatten().unwrap_or_default()];
+        span.com-icon inner_html=[icon_svg.get().flatten().unwrap_or_default()];
     }
 }

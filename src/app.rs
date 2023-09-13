@@ -50,7 +50,6 @@ pub fn App() -> impl IntoView {
     });
 
     provide_context(fullscreen_element);
-
     // icons context
     let icons = Icons::from_local_storage();
     provide_context(icons);
@@ -113,23 +112,23 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
-        div class="page" {
-            div class="context" ref={intersection_root} {
-                div class="scroller" {
+        div.page {
+            div.context ref={intersection_root} {
+                div.scroller {
                     main ref={main_ref} {
-                        div class="intersection-edge" ref={top_edge} data-edge="top";
+                        div.intersection-edge ref={top_edge} data-edge="top";
                         HomePage;
-                        div class="intersection-edge" ref={bottom_edge} data-edge="bottom";
+                        div.intersection-edge ref={bottom_edge} data-edge="bottom";
                     }
                 }
-                div class="scroll-shadow" data-edge="top" ref={top_shadow};
-                div class="scroll-shadow" data-edge="bottom" ref={bottom_shadow};
+                div.scroll-shadow data-edge="top" ref={top_shadow};
+                div.scroll-shadow data-edge="bottom" ref={bottom_shadow};
             }
             nav {
-                button class="add mix-btn-colored-green" on:click={move |_| timers.push_new()} {
+                button.add.mix-btn-colored-green on:click={move |_| timers.push_new()} {
                     Icon icon="ph:plus-bold";
                 }
-                button class="remove mix-btn-colored-red" on:click={move |_| timers.clear()} {
+                button.remove.mix-btn-colored-red on:click={move |_| timers.clear()} {
                     Icon icon="ph:trash-bold";
                 }
             }
