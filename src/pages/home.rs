@@ -15,7 +15,7 @@ pub fn HomePage() -> impl IntoView {
             For
                 each={timers.vec_signal()}
                 key={Timer::id}
-                view={move |timer| view! { TimerDisplay {timer}; }};
+            |timer| { TimerDisplay {timer}; }
         }
     }
 }
