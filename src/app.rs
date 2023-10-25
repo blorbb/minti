@@ -1,6 +1,6 @@
 use js_sys::Function;
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{
     HtmlElement, IntersectionObserver, IntersectionObserverEntry, IntersectionObserverInit,
@@ -111,7 +111,7 @@ pub fn App() -> impl IntoView {
         observer.observe(bottom_edge.get_untracked().unwrap().dyn_ref().unwrap());
     });
 
-    view! {
+    mview! {
         div.page {
             div.context ref={intersection_root} {
                 div.scroller {

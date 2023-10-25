@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 
 use time::Duration;
 use wasm_bindgen::JsValue;
@@ -40,13 +40,13 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     // switch between resume and pause button
     let pause_button = move || {
         if (timer.paused)() {
-            view! {
+            mview! {
                 button.primary.mix-btn-scale-green on:click={move |_| timer.resume()} {
                     Icon icon="ph:play-bold";
                 }
             }
         } else {
-            view! {
+            mview! {
                 button.primary.mix-btn-scale-green on:click={move |_| timer.pause()} {
                     Icon icon="ph:pause-bold";
                 }
@@ -55,7 +55,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     };
 
     let controls_start = move || {
-        view! {
+        mview! {
             button.primary.mix-btn-scale-green on:click={move |_| set_timer_duration()} {
                 Icon icon="ph:play-fill";
             }
@@ -63,7 +63,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     };
 
     let controls_running = move || {
-        view! {
+        mview! {
             DurationUpdateButton
                 button_class="light mix-btn-transp-neutral"
                 on_click={update_timer_duration}
@@ -82,7 +82,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     };
 
     let controls_finished = move || {
-        view! {
+        mview! {
             DurationUpdateButton
                 button_class="primary mix-btn-scale-green"
                 on_click={update_timer_duration}
@@ -106,7 +106,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
         }
     };
 
-    view! {
+    mview! {
         div.com-timer
             data-started={reactive::as_attr(timer.started)}
             data-paused={reactive::as_attr(timer.paused)}
@@ -143,13 +143,13 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                 // or the input to enter a time
                 div.duration ref={duration_display} {
                     [if (timer.started)() {
-                        view! {
+                        mview! {
                             DurationDisplay duration={
                                 Signal::derive(move || (timer.time_remaining)().unwrap_or_default())
                             };
                         }.into_view()
                     } else {
-                        view! {
+                        mview! {
                             input
                                 type="text"
                                 // set old value when reset timer

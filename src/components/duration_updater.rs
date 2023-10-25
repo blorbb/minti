@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 use std::time::Duration as StdDuration;
 use time::ext::NumericalDuration;
 use time::Duration;
@@ -59,11 +59,11 @@ where
     // TODO focus capturing
 
     let menu = move || {
-        view! {
+        mview! {
             div.com-duration-menu {
                 {durations().map(|d| {
                     let label = d.label.clone();
-                    view! {
+                    mview! {
                         button
                             class={button_class}
                             on:click={move |_| onmenuselect(d.clone())}
@@ -78,7 +78,7 @@ where
 
 
     let update_button = move || {
-        view! {
+        mview! {
             button
                 class={button_class}
                 on:click={move |_| on_click(duration_multiplier * selected_duration().duration)}
@@ -89,7 +89,7 @@ where
         }
     };
 
-    view! {
+    mview! {
         {update_button}
         AnimatedShow
             when={menu_expanded}

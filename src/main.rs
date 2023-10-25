@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 use minti_ui::app::App;
 
 fn main() {
@@ -7,6 +7,6 @@ fn main() {
     console_error_panic_hook::set_once();
 
     mount_to_body(|| {
-        view! { App; }
+        mview! { App; }
     });
 }

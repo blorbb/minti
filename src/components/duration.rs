@@ -1,7 +1,7 @@
 use time::Duration;
 
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 
 use crate::utils::time::units;
 
@@ -32,7 +32,7 @@ pub fn DurationDisplay(#[prop(into)] duration: Signal<Duration>) -> impl IntoVie
     let hours = create_memo(move |_| rounded_duration().whole_hours() as u64 % units::HOURS_IN_DAY);
     let days = create_memo(move |_| rounded_duration().whole_days());
 
-    view! {
+    mview! {
         span.com-duration {
             Show when={show_negative} fallback=[()] {
                 span.negative { "-" }

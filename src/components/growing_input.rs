@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 
 /// An input element that grows with the input size.
 #[component]
@@ -46,7 +46,7 @@ where
         };
     };
 
-    view! {
+    mview! {
         span.com-growing-input {
             span.size-reference ref={size_ref};
             input

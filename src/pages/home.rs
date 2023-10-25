@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 
 use crate::{
     components::TimerDisplay,
@@ -10,7 +10,7 @@ use crate::{
 pub fn HomePage() -> impl IntoView {
     let timers = expect_context::<TimerList>();
 
-    view! {
+    mview! {
         div.page-home {
             For
                 each={timers.vec_signal()}

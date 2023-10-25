@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 use time::Duration;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlDivElement;
@@ -23,7 +23,7 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
         }
     });
 
-    view! {
+    mview! {
         div.com-progress-bar
             role="progressbar"
             data-started={reactive::as_attr(timer.started)}

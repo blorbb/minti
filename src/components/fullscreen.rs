@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_mview::view;
+use leptos_mview::mview;
 
 use crate::{components::Icon, utils::contexts::FullscreenElement};
 
@@ -22,13 +22,13 @@ pub fn FullscreenButton(target: NodeRef<html::Div>, class: &'static str) -> impl
 
     move || {
         if is_fullscreen() {
-            view! {
+            mview! {
                 button class={format!("com-fullscreen-button {}", class)} on:click={disable_fullscreen} {
                     Icon icon="ph:corners-in";
                 }
             }
         } else {
-            view! {
+            mview! {
                 button class={format!("com-fullscreen-button {}", class)} on:click={enable_fullscreen} {
                     Icon icon="ph:corners-out";
                 }
