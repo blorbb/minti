@@ -96,5 +96,5 @@ fn set_input_size(input: HtmlElement<html::Input>, size_ref: &HtmlElement<html::
         .parse::<f64>()
         .expect("computed style should be valid float");
     let ems = width / font_size;
-    input.style("width", format!("{ems}em"));
+    _ = input.set_attribute("style", &format!("width: {ems}em;"));
 }
