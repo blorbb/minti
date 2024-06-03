@@ -10,6 +10,7 @@ fn alert_window(window: tauri::Window) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![alert_window])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
