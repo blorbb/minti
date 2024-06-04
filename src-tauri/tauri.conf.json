@@ -1,9 +1,27 @@
 {
+  "productName": "minti",
+  "version": "0.0.0",
+  "identifier": "com.blorbb.minti",
   "build": {
     "beforeDevCommand": "trunk serve",
+    "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "trunk build",
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420"
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "minti",
+        "width": 800,
+        "height": 600,
+        "minWidth": 350,
+        "minHeight": 200
+      }
+    ],
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
@@ -15,26 +33,5 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
-  },
-  "productName": "minti",
-  "version": "0.0.0",
-  "identifier": "com.blorbb.minti",
-  "plugins": {},
-  "app": {
-    "withGlobalTauri": true,
-    "windows": [
-      {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "minti",
-        "width": 800,
-        "height": 600,
-        "minWidth": 350,
-        "minHeight": 200
-      }
-    ],
-    "security": {
-      "csp": null
-    }
   }
 }

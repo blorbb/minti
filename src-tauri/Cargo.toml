@@ -3,8 +3,6 @@ name = "minti"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]
-license = ""
-repository = ""
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,12 +11,7 @@ edition = "2021"
 tauri-build = { version = "2.0.0-beta", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-beta", features = [ "devtools"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tauri-plugin-shell = "2.0.0-beta.7"
-
-[features]
-# this feature is used for production builds or when `devPath` points to the filesystem
-# DO NOT REMOVE!!
-custom-protocol = ["tauri/custom-protocol"]
+tauri = { version = "2.0.0-beta", features = [] }
+tauri-plugin-shell = "2.0.0-beta"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
