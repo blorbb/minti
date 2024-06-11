@@ -93,18 +93,13 @@ button {
 
 // main layout //
 
-.page {
-    display: grid;
-    grid-template-rows: 1fr 3rem;
-}
-
 /// Element that provides contexts (position, z-index, fixed pos).
 /// Takes up the viewport space excl. navbar
 .context {
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    height: calc(100dvh - 3rem);
+    height: 100dvh;
 
     // make fixed position elements relative to this
     transform: translate(0);

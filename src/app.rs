@@ -7,9 +7,9 @@ use web_sys::{
 };
 
 use crate::{
-    components::Icon,
     pages::HomePage,
     utils::{
+        commands::{listen_event, popup_contextmenu},
         contexts::{FullscreenElement, Icons, TimerList},
         timer::serialize,
     },
@@ -37,6 +37,25 @@ pub fn App() -> impl IntoView {
             log::debug!("storing timers");
             let _ = store_timers(timers);
         }
+    });
+
+    window_event_listener(ev::contextmenu, |ev| {
+        ev.prevent_default();
+        spawn_local(popup_contextmenu())
+    });
+
+    listen_event("contextmenu::add-timer", move |ev| {
+        logging::log!("{ev:?}");
+        timers.push_new();
+    });
+
+    listen_event("contextmenu::delete-all", move |ev| {
+        logging::log!("{ev:?}");
+        timers.clear();
+    });
+
+    listen_event("contextmenu::timer-card", move |ev| {
+        logging::log!("{ev:?}");
     });
 
     // contexts //
@@ -123,14 +142,6 @@ pub fn App() -> impl IntoView {
                 }
                 div.scroll-shadow data-edge="top" ref={top_shadow};
                 div.scroll-shadow data-edge="bottom" ref={bottom_shadow};
-            }
-            nav {
-                button.add.mix-btn-colored-green on:click={move |_| timers.push_new()} {
-                    Icon icon="ph:plus-bold";
-                }
-                button.remove.mix-btn-colored-red on:click={move |_| timers.clear()} {
-                    Icon icon="ph:trash-bold";
-                }
             }
         }
     }
