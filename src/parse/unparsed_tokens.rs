@@ -1,6 +1,6 @@
 use super::{
-    ParseError,
     structs::{UnparsedToken, UnparsedTokenType},
+    Result,
 };
 
 /// Splits a string into separate strings with types.
@@ -10,7 +10,7 @@ use super::{
 /// # Errors
 /// Errors if any character could not be parsed into a token.
 /// Characters `[A-Za-z0-9.:]` are the only accepted characters.
-pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>, ParseError> {
+pub(super) fn build_unparsed_tokens(input: &str) -> Result<Vec<UnparsedToken>> {
     // only ascii is parsed anyways
     let input = input.to_ascii_lowercase().replace(' ', "");
 

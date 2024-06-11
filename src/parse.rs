@@ -5,6 +5,8 @@ mod unparsed_tokens;
 use self::structs::Token;
 use time::Duration;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 /// Tries to parse a user inputted string as a duration.
 ///
 /// There are 2 main formats:
@@ -44,14 +46,14 @@ use time::Duration;
 ///     3.hours() + 20.minutes() + 10.seconds()
 /// );
 /// ```
-pub fn parse_input(input: &str) -> Result<Duration, ParseError> {
+pub fn parse_input(input: &str) -> Result<Duration> {
     log::debug!("parsing input {input}");
 
     let tokens = unparsed_tokens::build_unparsed_tokens(input)?;
     let tokens: Vec<Token> = tokens
         .into_iter()
         .map(Token::try_from)
-        .collect::<Result<_, _>>()?;
+        .collect::<Result<_>>()?;
     log::trace!("successfully mapped to parsed tokens");
 
     parse_tokens::parse_tokens(&tokens)
@@ -60,7 +62,7 @@ use std::fmt;
 
 /// The error type for `parse::parse_input`.
 #[derive(Debug, PartialEq, Clone)]
-pub enum ParseError {
+pub enum Error {
     NaN,
     InvalidCharacter(char),
     InvalidNumber(String),
@@ -72,7 +74,7 @@ pub enum ParseError {
     Unknown,
 }
 
-impl fmt::Display for ParseError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NaN => {
@@ -104,7 +106,7 @@ impl fmt::Display for ParseError {
     }
 }
 
-impl std::error::Error for ParseError {}
+impl std::error::Error for Error {}
 
 #[cfg(test)]
 mod tests {

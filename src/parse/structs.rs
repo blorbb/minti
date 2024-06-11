@@ -1,6 +1,6 @@
 use crate::{time::meridiem::Meridiem, time::units::TimeUnit};
 
-use super::ParseError;
+use super::Error;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(super) enum UnparsedTokenType {
@@ -10,7 +10,7 @@ pub(super) enum UnparsedTokenType {
 }
 
 impl TryFrom<char> for UnparsedTokenType {
-    type Error = ParseError;
+    type Error = Error;
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         if value.is_ascii_alphabetic() {
@@ -20,7 +20,7 @@ impl TryFrom<char> for UnparsedTokenType {
         } else if value == ':' {
             Ok(Self::Separator)
         } else {
-            Err(ParseError::InvalidCharacter(value))
+            Err(Error::InvalidCharacter(value))
         }
     }
 }
@@ -63,7 +63,7 @@ pub(super) enum Token {
 }
 
 impl TryFrom<UnparsedToken> for Token {
-    type Error = ParseError;
+    type Error = Error;
 
     fn try_from(value: UnparsedToken) -> Result<Self, Self::Error> {
         let token = value.variant;
@@ -73,10 +73,10 @@ impl TryFrom<UnparsedToken> for Token {
                 // TODO figure out how to remove the clone
                 let num = string
                     .parse::<f64>()
-                    .map_err(|_| ParseError::InvalidNumber(string.clone()))?;
+                    .map_err(|_| Error::InvalidNumber(string.clone()))?;
 
                 if num.is_nan() || num.is_infinite() {
-                    return Err(ParseError::InvalidNumber(string));
+                    return Err(Error::InvalidNumber(string));
                 }
                 Self::Number(num)
             }

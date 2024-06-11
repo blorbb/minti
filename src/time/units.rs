@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use time::{ext::NumericalDuration, Duration};
 
-use crate::parse::ParseError;
+use crate::parse::Error;
 
 pub const MILLIS_IN_SEC: u64 = 1000;
 pub const SECS_IN_MIN: u64 = 60;
@@ -131,7 +131,7 @@ impl TimeUnit {
 }
 
 impl FromStr for TimeUnit {
-    type Err = ParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {

@@ -8,7 +8,7 @@ use crate::time::{
 
 use super::{
     structs::{Token, TokensFormat},
-    ParseError,
+    Error, Result,
 };
 
 /// Tries to parse a list of tokens to a duration.
@@ -16,11 +16,11 @@ use super::{
 /// # Errors
 /// Errors if the list does not match any known format.
 /// See `parse::parse_input` for more details on valid formats.
-pub(super) fn parse_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
+pub(super) fn parse_tokens(tokens: &[Token]) -> Result<Duration> {
     log::trace!("parsing tokens");
     if tokens.is_empty() {
         log::trace!("no tokens found");
-        return Err(ParseError::Empty);
+        return Err(Error::Empty);
     };
 
     let format = get_tokens_format(tokens);
@@ -47,10 +47,10 @@ fn get_tokens_format(tokens: &[Token]) -> TokensFormat {
 }
 
 /// Tries to parse a token list as a single number.
-fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
+fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration> {
     let Token::Number(n) = tokens[0] else {
         log::trace!("single token is not a number");
-        return Err(ParseError::Empty);
+        return Err(Error::Empty);
     };
     log::trace!("successfully parsed as {n} minutes");
     Ok(n.minutes())
@@ -58,7 +58,7 @@ fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration, ParseError> 
 
 /// Tries to parse a token list as a specific time,
 /// in 12h or 24h format.
-fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
+fn parse_time_tokens(tokens: &[Token]) -> Result<Duration> {
     let mut meridiem: Option<Meridiem> = None;
     let mut time_sections: [u8; 3] = [0, 0, 0];
     // 0 = hour, 1 = min, 2 = sec
@@ -71,7 +71,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
         // This would not run if it was set on the last iteration
         if meridiem.is_some() {
             log::trace!("found token after a meridiem");
-            return Err(ParseError::Unknown);
+            return Err(Error::Unknown);
         };
 
         #[expect(clippy::match_wildcard_for_single_variants)]
@@ -82,7 +82,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
                 // check needs to be here to avoid an index error
                 if current_unit > 2 {
                     log::trace!("found more than 2 separators");
-                    return Err(ParseError::TooManySeparators);
+                    return Err(Error::TooManySeparators);
                 }
             }
             // only allow times with integers
@@ -92,7 +92,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
             }
             Token::Number(n) => {
                 log::trace!("time {n} is not an integer");
-                return Err(ParseError::InvalidNumber(n.to_string()));
+                return Err(Error::InvalidNumber(n.to_string()));
             }
             Token::Meridiem(m) => {
                 log::trace!("setting meridiem to {m:?}");
@@ -100,7 +100,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
             }
             _ => {
                 log::trace!("token is not any accepted token in the time format");
-                return Err(ParseError::ClashingFormats);
+                return Err(Error::ClashingFormats);
             }
         }
     }
@@ -109,15 +109,13 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
 
     let duration = if let Some(meri) = meridiem {
         log::trace!("setting to closest {h}:{m}:{s} {meri:?}");
-        relative::duration_until_time(
-            meridiem::new_12h_time(h, m, s, meri).ok_or(ParseError::Unknown)?,
-        )
+        relative::duration_until_time(meridiem::new_12h_time(h, m, s, meri).ok_or(Error::Unknown)?)
     } else {
         log::trace!("setting to closest {h}:{m}:{s}");
 
         // find the one that is closest to now
-        let am_time = meridiem::new_12h_time(h, m, s, Meridiem::Ante).ok_or(ParseError::Unknown)?;
-        let pm_time = meridiem::new_12h_time(h, m, s, Meridiem::Post).ok_or(ParseError::Unknown)?;
+        let am_time = meridiem::new_12h_time(h, m, s, Meridiem::Ante).ok_or(Error::Unknown)?;
+        let pm_time = meridiem::new_12h_time(h, m, s, Meridiem::Post).ok_or(Error::Unknown)?;
 
         Duration::min(
             relative::duration_until_time(am_time),
@@ -131,7 +129,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
 }
 
 /// Tries to parse a token list as a duration with units.
-fn parse_unit_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
+fn parse_unit_tokens(tokens: &[Token]) -> Result<Duration> {
     let mut total_duration = Duration::ZERO;
     let mut current_number = 0.0;
 
@@ -141,7 +139,7 @@ fn parse_unit_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
         match token {
             Token::Number(n) => current_number = *n,
             Token::Unit(u) => total_duration += u.to_duration(current_number),
-            _ => return Err(ParseError::ClashingFormats),
+            _ => return Err(Error::ClashingFormats),
         }
     }
 
@@ -156,14 +154,14 @@ fn parse_unit_tokens(tokens: &[Token]) -> Result<Duration, ParseError> {
                 r#"token before a the last number should always be a unit!\
                 found non-unit before {n} in tokens {tokens:?}"#
             );
-            return Err(ParseError::Unknown);
+            return Err(Error::Unknown);
         };
 
         log::trace!("adding {n} in unit smaller than {unit:?}");
 
         total_duration += unit
             .smaller_unit()
-            .ok_or(ParseError::SmallerThanMilli(*n))?
+            .ok_or(Error::SmallerThanMilli(*n))?
             .to_duration(*n);
     };
 
