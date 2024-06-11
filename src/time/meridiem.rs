@@ -41,7 +41,7 @@ impl FromStr for Meridiem {
 ///
 /// # Examples
 /// ```rust
-/// use minti_ui::utils::time::meridiem::{
+/// use minti_ui::time::meridiem::{
 ///     new_12h_time,
 ///     Meridiem::{Ante, Post},
 /// };

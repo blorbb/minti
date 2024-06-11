@@ -45,13 +45,12 @@ pub fn repeat_while(
 /// # Example
 /// ```rust
 /// # use leptos::*;
-/// # use minti_ui::utils::reactive;
-/// # #[component]
+/// # use minti_ui::reactive;
 /// let (started, set_started) = create_signal(false);
 /// view! {
 ///     // becomes <div data-started="false"></div>
 ///     <div data-started=reactive::as_attr(started)></div>
-/// }
+/// };
 /// ```
 pub fn as_attr(bool_signal: impl Into<MaybeSignal<bool>>) -> impl Fn() -> String {
     let bool_signal: MaybeSignal<bool> = bool_signal.into();

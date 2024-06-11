@@ -38,11 +38,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// # Examples
 /// ```rust
 /// use time::{Duration, ext::NumericalDuration};
-/// # use minti_ui::utils::parse::parse_input;
+/// # use minti_ui::interpreter::interpret;
 ///
-/// assert_eq!(parse_input("3").unwrap(), 3.minutes());
+/// assert_eq!(interpret("3").unwrap(), 3.minutes());
 /// assert_eq!(
-///     parse_input("3h 20m 10").unwrap(),
+///     interpret("3h 20m 10").unwrap(),
 ///     3.hours() + 20.minutes() + 10.seconds()
 /// );
 /// ```

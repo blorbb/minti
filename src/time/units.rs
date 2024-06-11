@@ -84,7 +84,7 @@ impl TimeUnit {
     ///
     /// # Example
     /// ```rust
-    /// # use minti_ui::utils::time::units::TimeUnit;
+    /// # use minti_ui::time::units::TimeUnit;
     ///
     /// assert_eq!(TimeUnit::Sec.larger_unit(), Some(TimeUnit::Min));
     /// assert_eq!(TimeUnit::Day.larger_unit(), None);
@@ -99,7 +99,7 @@ impl TimeUnit {
     ///
     /// # Example
     /// ```rust
-    /// # use minti_ui::utils::time::units::TimeUnit;
+    /// # use minti_ui::time::units::TimeUnit;
     ///
     /// assert_eq!(TimeUnit::Hour.smaller_unit(), Some(TimeUnit::Min));
     /// assert_eq!(TimeUnit::Milli.smaller_unit(), None);
@@ -112,11 +112,11 @@ impl TimeUnit {
     ///
     /// # Example
     /// ```rust
-    /// # use minti_ui::utils::time::units::TimeUnit;
+    /// # use minti_ui::time::units::TimeUnit;
     /// use time::ext::NumericalDuration;
     ///
     /// assert_eq!(TimeUnit::Hour.to_duration(3.5), 3.5.hours());
-    /// assert_eq!(TimeUnit::Sec.to_duration(20), 20.seconds());
+    /// assert_eq!(TimeUnit::Sec.to_duration(20.0), 20.seconds());
     /// ```
     // TODO rename this
     pub fn to_duration(&self, value: f64) -> Duration {
