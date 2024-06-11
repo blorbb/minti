@@ -8,12 +8,10 @@ use web_sys::{
 };
 
 use crate::{
+    commands::{listen_event, popup_contextmenu},
+    contexts::{FullscreenElement, Icons, TimerList},
     pages::HomePage,
-    utils::{
-        commands::{listen_event, popup_contextmenu},
-        contexts::{FullscreenElement, Icons, TimerList},
-        timer::serialize,
-    },
+    timer::serialize,
 };
 
 /// Main application component that manages global state.

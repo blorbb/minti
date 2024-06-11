@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use time::{ext::NumericalDuration, Duration};
 
-use crate::utils::parse::errors::ParseError;
+use crate::parse::ParseError;
 
 pub const MILLIS_IN_SEC: u64 = 1000;
 pub const SECS_IN_MIN: u64 = 60;

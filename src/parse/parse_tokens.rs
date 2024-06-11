@@ -1,14 +1,14 @@
 use az::SaturatingAs;
 use time::{ext::NumericalDuration, Duration};
 
-use crate::utils::time::{
+use crate::time::{
     meridiem::{self, Meridiem},
     relative,
 };
 
 use super::{
-    errors::ParseError,
     structs::{Token, TokensFormat},
+    ParseError,
 };
 
 /// Tries to parse a list of tokens to a duration.

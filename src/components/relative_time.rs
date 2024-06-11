@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_mview::mview;
 use time::{format_description::FormatItem, macros::format_description, OffsetDateTime};
 
-use crate::utils::time::relative;
+use crate::time::relative;
 
 const WEEKDAY_FORMAT: &[FormatItem<'_>] = format_description!("[weekday repr:short]");
 const FULL_DATE_FORMAT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");

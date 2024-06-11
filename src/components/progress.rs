@@ -4,7 +4,7 @@ use time::Duration;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlDivElement;
 
-use crate::utils::{reactive, timer::Timer};
+use crate::{reactive, timer::Timer};
 
 #[component]
 pub fn ProgressBar(timer: Timer) -> impl IntoView {

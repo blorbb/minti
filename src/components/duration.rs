@@ -3,7 +3,7 @@ use time::Duration;
 use leptos::*;
 use leptos_mview::mview;
 
-use crate::utils::time::units;
+use crate::time::units;
 
 /// Displays a duration up to second accuracy.
 ///

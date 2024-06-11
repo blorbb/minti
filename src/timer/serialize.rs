@@ -4,7 +4,7 @@ use leptos::{SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
 use time::ext::NumericalDuration;
 
-use crate::utils::{contexts::TimerList, time::timestamp};
+use crate::{contexts::TimerList, time::timestamp};
 
 use super::{RawTimer, Timer};
 

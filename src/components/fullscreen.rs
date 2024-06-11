@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_mview::mview;
 
-use crate::{components::Icon, utils::contexts::FullscreenElement};
+use crate::{components::Icon, contexts::FullscreenElement};
 
 #[component]
 pub fn FullscreenButton(target: NodeRef<html::Div>, class: &'static str) -> impl IntoView {

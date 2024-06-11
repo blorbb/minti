@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use time::Time;
 
-use crate::utils::parse::errors::ParseError;
+use crate::parse::ParseError;
 
 /// An enum representing either AM or PM.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

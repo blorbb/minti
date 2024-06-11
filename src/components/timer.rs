@@ -9,13 +9,14 @@ use crate::{
         DurationDisplay, DurationUpdateButton, FullscreenButton, GrowingInput, Icon, ProgressBar,
         RelativeTime,
     },
-    utils::{contexts::TimerList, parse, reactive, timer::Timer},
+    contexts::TimerList,
+    parse, reactive,
+    timer::Timer,
 };
 
 /// Provides controls and display for a [`Timer`].
 #[component]
 pub fn TimerDisplay(timer: Timer) -> impl IntoView {
-
     let (error_message, set_error_message) = create_signal(None::<String>);
 
     let set_timer_duration = move || match parse::parse_input(&timer.input().get_untracked()) {

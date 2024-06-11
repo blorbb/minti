@@ -1,5 +1,5 @@
 use super::{
-    errors::ParseError,
+    ParseError,
     structs::{UnparsedToken, UnparsedTokenType},
 };
 

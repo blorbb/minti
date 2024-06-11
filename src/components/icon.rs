@@ -2,7 +2,7 @@ use gloo_net::http::Request;
 use leptos::*;
 use leptos_mview::mview;
 
-use crate::utils::contexts::Icons;
+use crate::contexts::Icons;
 
 const BASE_URL: &str = "https://api.iconify.design";
 

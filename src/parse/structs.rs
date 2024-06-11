@@ -1,6 +1,6 @@
-use crate::utils::{time::meridiem::Meridiem, time::units::TimeUnit};
+use crate::{time::meridiem::Meridiem, time::units::TimeUnit};
 
-use super::errors::ParseError;
+use super::ParseError;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(super) enum UnparsedTokenType {

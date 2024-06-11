@@ -1,10 +1,7 @@
 use leptos::*;
 use leptos_mview::mview;
 
-use crate::{
-    components::TimerDisplay,
-    utils::{contexts::TimerList, timer::Timer},
-};
+use crate::{components::TimerDisplay, contexts::TimerList, timer::Timer};
 
 #[component]
 pub fn HomePage() -> impl IntoView {
