@@ -10,7 +10,7 @@ use crate::utils::{reactive, timer::Timer};
 #[component]
 pub fn ProgressBar(timer: Timer) -> impl IntoView {
     let elapsed = create_memo(move |_| {
-        timer.started.track();
+        timer.started().track();
         // timer.finished.track();
         timer.get_time_elapsed()
     });
@@ -18,7 +18,7 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
     let progress_element = create_node_ref::<html::Div>();
 
     create_effect(move |_| {
-        if !(timer.finished)() && let Some(progress_element) = progress_element() {
+        if !(timer.finished())() && let Some(progress_element) = progress_element() {
             reset_animation(progress_element.dyn_ref::<HtmlDivElement>().unwrap());
         }
     });
@@ -26,14 +26,14 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
     mview! {
         div.com-progress-bar
             role="progressbar"
-            data-started={reactive::as_attr(timer.started)}
-            data-paused={reactive::as_attr(timer.paused)}
-            data-finished={reactive::as_attr(timer.finished)}
+            data-started={reactive::as_attr(timer.started())}
+            data-paused={reactive::as_attr(timer.paused())}
+            data-finished={reactive::as_attr(timer.finished())}
         {
             div.progress-value
                 ref={progress_element}
                 style:animation-duration=[
-                    format!("{:.3}s", (timer.duration)().unwrap_or(Duration::MAX).as_seconds_f64())
+                    format!("{:.3}s", (timer.duration())().unwrap_or(Duration::MAX).as_seconds_f64())
                 ]
                 style:animation-delay=[format!("{:.3}s", -elapsed().as_seconds_f64())];
         }

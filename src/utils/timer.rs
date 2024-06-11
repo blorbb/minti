@@ -9,12 +9,114 @@ use crate::utils::{commands, reactive};
 
 use super::time::relative;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct Timer(StoredValue<RawTimer>);
+
+macro_rules! prop {
+    ($prop:ident: $ty:ty) => {
+        pub fn $prop(&self) -> $ty {
+            self.0.with_value(|t| t.$prop)
+        }
+    };
+}
+
+macro_rules! priv_prop {
+    ($prop:ident: $ty:ty) => {
+        fn $prop(&self) -> $ty {
+            self.0.with_value(|t| t.$prop)
+        }
+    };
+}
+
+macro_rules! method {
+    ($method:ident( $( $arg:ident: $ty:ty ),* ) $(-> $ret:ty)?) => {
+        pub fn $method(&self $(, $arg: $ty)* ) $(-> $ret)? {
+            self.0.with_value(|t| t.$method( $($arg),* ))
+        }
+    };
+}
+
+impl Timer {
+    prop!(duration: ReadSignal<Option<Duration>>);
+    prop!(started: Memo<bool>);
+    prop!(running: Memo<bool>);
+    prop!(paused: Memo<bool>);
+    prop!(finished: Memo<bool>);
+    prop!(time_remaining: ReadSignal<Option<Duration>>);
+    prop!(end_time: ReadSignal<Option<OffsetDateTime>>);
+    prop!(input: ReadSignal<String>);
+    prop!(title: ReadSignal<String>);
+    // priv_prop!(set_duration: WriteSignal<Option<Duration>>);
+    // priv_prop!(set_time_remaining: WriteSignal<Option<Duration>>);
+    // priv_prop!(set_end_time: WriteSignal<Option<OffsetDateTime>>);
+    priv_prop!(start_time: RwSignal<Option<OffsetDateTime>>);
+    priv_prop!(last_pause_time: RwSignal<Option<OffsetDateTime>>);
+    priv_prop!(acc_paused_duration: RwSignal<Duration>);
+
+    method!(get_time_elapsed() -> Duration);
+    method!(get_time_remaining() -> Option<Duration>);
+    method!(update_time_remaining());
+    method!(get_end_time() -> Option<OffsetDateTime>);
+    method!(update_end_time());
+    method!(restart(duration: Duration));
+    method!(reset());
+    method!(start(duration: Duration));
+    method!(pause());
+    method!(resume());
+    method!(add_duration(duration: Duration));
+    method!(id() -> Uuid);
+    method!(set_input(input: String));
+    method!(set_title(title: String));
+
+    pub fn new() -> Self {
+        let timer = Self(StoredValue::new(RawTimer::new()));
+
+        // update the time remaining when the timer is running
+        reactive::repeat_while(
+            timer.running(),
+            move || timer.update_time_remaining(),
+            StdDuration::from_millis(200),
+        );
+
+        // update the end time when the timer is paused (started and not running)
+        reactive::repeat_while(
+            timer.paused(),
+            move || timer.update_end_time(),
+            StdDuration::SECOND,
+        );
+        // also need to update when the timer resets,
+        // so that the end time component is removed
+        create_effect(move |_| {
+            timer.started().track();
+            timer.update_end_time();
+        });
+
+        // request for user attention when the timer finishes //
+
+        create_effect(move |_| {
+            // also check that it is close to finish so that already expired timers
+            // retrieved from localstorage don't alert
+            if (timer.finished())()
+                && timer
+                    .get_time_remaining()
+                    .expect("timer is finished => should have started")
+                    .abs()
+                    < Duration::SECOND
+            {
+                spawn_local(commands::alert_window());
+            };
+        });
+
+        timer
+    }
+}
+
 /// A timer that counts down.
 ///
 /// Most of the inner components are reactive: subscribe to these properties
 /// for reactivity.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct Timer {
+#[derive(Debug, PartialEq, Eq)]
+pub struct RawTimer {
     /// The total duration of the timer.
     ///
     /// Updates when the timer is started or reset.
@@ -82,7 +184,7 @@ pub struct Timer {
     id: Uuid,
 }
 
-impl Timer {
+impl RawTimer {
     /// Creates a new `Timer` instance.
     ///
     /// The timer is unstarted with zero duration.
@@ -138,43 +240,6 @@ impl Timer {
             state_change,
             id: Uuid::new_v4(),
         };
-
-        // update the time remaining when the timer is running
-        reactive::repeat_while(
-            timer.running,
-            move || timer.update_time_remaining(),
-            StdDuration::from_millis(200),
-        );
-
-        // update the end time when the timer is paused (started and not running)
-        reactive::repeat_while(
-            timer.paused,
-            move || timer.update_end_time(),
-            StdDuration::SECOND,
-        );
-        // also need to update when the timer resets,
-        // so that the end time component is removed
-        create_effect(move |_| {
-            timer.started.track();
-            timer.update_end_time();
-        });
-
-        // request for user attention when the timer finishes //
-
-        create_effect(move |_| {
-            // also check that it is close to finish so that already expired timers
-            // retrieved from localstorage don't alert
-            if (timer.finished)()
-                && timer
-                    .get_time_remaining()
-                    .expect("timer is finished => should have started")
-                    .abs()
-                    < Duration::SECOND
-            {
-                spawn_local(commands::alert_window());
-            };
-        });
-
         timer
     }
 

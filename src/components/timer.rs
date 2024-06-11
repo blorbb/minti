@@ -17,9 +17,10 @@ use crate::{
 #[expect(clippy::large_types_passed_by_value, reason = "can't be reference")]
 #[component]
 pub fn TimerDisplay(timer: Timer) -> impl IntoView {
+
     let (error_message, set_error_message) = create_signal(None::<String>);
 
-    let set_timer_duration = move || match parse::parse_input(&timer.input.get_untracked()) {
+    let set_timer_duration = move || match parse::parse_input(&timer.input().get_untracked()) {
         Ok(duration) => {
             timer.restart(duration);
             set_error_message(None);
@@ -39,7 +40,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
     // switch between resume and pause button
     let pause_button = move || {
-        if (timer.paused)() {
+        if (timer.paused())() {
             mview! {
                 button.primary.mix-btn-scale-green on:click={move |_| timer.resume()} {
                     Icon icon="ph:play-bold";
@@ -97,9 +98,9 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     // using <Show /> causes components to re-render for some reason
     // using `if` is fine as `started` and `finished` are memos anyways.
     let controls = move || {
-        if !(timer.started)() {
+        if !(timer.started())() {
             controls_start().into_view()
-        } else if !(timer.finished)() {
+        } else if !(timer.finished())() {
             controls_running().into_view()
         } else {
             controls_finished().into_view()
@@ -108,10 +109,10 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
     mview! {
         div.com-timer
-            data-started={reactive::as_attr(timer.started)}
-            data-paused={reactive::as_attr(timer.paused)}
-            data-running={reactive::as_attr(timer.running)}
-            data-finished={reactive::as_attr(timer.finished)}
+            data-started={reactive::as_attr(timer.started())}
+            data-paused={reactive::as_attr(timer.paused())}
+            data-running={reactive::as_attr(timer.running())}
+            data-finished={reactive::as_attr(timer.finished())}
             ref={component}
         {
             ProgressBar {timer};
@@ -122,7 +123,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                         GrowingInput
                             placeholder="Enter a title"
                             on_input={move |ev| timer.set_title(event_target_value(&ev))}
-                            initial={timer.title.get_untracked()};
+                            initial={timer.title().get_untracked()};
                     }
 
                     Show when=[error_message().is_some()] fallback=[()] {
@@ -130,22 +131,22 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                         span.error { {error_message} }
                     }
 
-                    Show when=[(timer.end_time)().is_some()] fallback=[()] {
+                    Show when=[(timer.end_time())().is_some()] fallback=[()] {
                         " | "
                         span.end {
                             Icon icon="ph:timer-bold";
                             " "
-                            RelativeTime time={timer.end_time};
+                            RelativeTime time={timer.end_time()};
                         }
                     }
                 }
                 // main timer display, showing either the countdown
                 // or the input to enter a time
                 div.duration ref={duration_display} {
-                    [if (timer.started)() {
+                    [if (timer.started())() {
                         mview! {
                             DurationDisplay duration={
-                                Signal::derive(move || (timer.time_remaining)().unwrap_or_default())
+                                Signal::derive(move || (timer.time_remaining())().unwrap_or_default())
                             };
                         }.into_view()
                     } else {
@@ -153,7 +154,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                             input
                                 type="text"
                                 // set old value when reset timer
-                                prop:value={timer.input}
+                                prop:value={timer.input()}
                                 on:input={move |ev| timer.set_input(event_target_value(&ev))}
                                 on:keydown={move |ev| {
                                     if ev.key() == "Enter" {

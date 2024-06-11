@@ -150,7 +150,9 @@ impl TimerList {
     pub fn remove_index(&self, index: usize) {
         batch(|| {
             self.vec.update(|v| {
-                v.remove(index);
+                let timer = v.remove(index);
+                // stop ongoing timers
+                timer.reset();
             });
             if self.is_empty() {
                 self.push_new();
@@ -174,8 +176,10 @@ impl TimerList {
     /// Clears the timer list and adds one new timer.
     pub fn clear(&self) {
         batch(|| {
-            self.vec.update(Vec::clear);
-            self.push_new();
+            // don't use `Vec::clear`, need to reset all timers stored
+            for i in (0..self.len()).rev() {
+                self.remove_index(i)
+            }
         });
     }
 
@@ -208,7 +212,7 @@ impl TimerList {
         self.len() == 1
             && self
                 .vec
-                .with_untracked(|v| v[0].input.get_untracked().is_empty())
+                .with_untracked(|v| v[0].input().get_untracked().is_empty())
     }
 }
 

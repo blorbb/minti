@@ -6,7 +6,7 @@ use time::ext::NumericalDuration;
 
 use crate::utils::{contexts::TimerList, time::timestamp};
 
-use super::Timer;
+use super::{RawTimer, Timer};
 
 /// A short, JSON representation of a timer.
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,8 +29,8 @@ struct TimerJson {
     title: String,
 }
 
-impl From<Timer> for TimerJson {
-    fn from(value: Timer) -> Self {
+impl From<&RawTimer> for TimerJson {
+    fn from(value: &RawTimer) -> Self {
         Self {
             duration: value
                 .duration
@@ -57,7 +57,10 @@ impl From<Timer> for TimerJson {
 
 /// Transforms a `TimerList` into a JSON string.
 pub fn stringify_timers(timers: TimerList) -> String {
-    let timers: Vec<TimerJson> = timers.into_iter().map(Into::into).collect();
+    let timers: Vec<TimerJson> = timers
+        .into_iter()
+        .map(|timer| timer.0.with_value(|t| TimerJson::from(t)))
+        .collect();
     serde_json::to_string(&timers).expect("Failed to convert timers to JSON")
 }
 
@@ -84,23 +87,23 @@ pub fn parse_timer_json(json: &str) -> Option<TimerList> {
             if let Some(start_time) = unparsed.start {
                 timer.start(unparsed.duration?.saturating_as::<i64>().milliseconds());
                 timer
-                    .start_time
+                    .start_time()
                     .set_untracked(Some(timestamp::from_unix_millis(start_time)));
             };
 
             if let Some(last_pause_time) = unparsed.last_pause {
                 // timer must also be started for it to be paused
-                if !timer.started.get_untracked() {
+                if !timer.started().get_untracked() {
                     return None;
                 }
 
                 timer.pause();
                 timer
-                    .last_pause_time
+                    .last_pause_time()
                     .set_untracked(Some(timestamp::from_unix_millis(last_pause_time)));
             }
 
-            timer.acc_paused_duration.set_untracked(
+            timer.acc_paused_duration().set_untracked(
                 unparsed
                     .acc_pause_duration
                     .saturating_as::<i64>()
