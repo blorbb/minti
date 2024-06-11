@@ -25,16 +25,12 @@ pub async fn popup_contextmenu() {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
     event: String,
-    payload: String,
+    pub payload: String,
 }
 
 impl Event {
     pub fn id(&self) -> &str {
         &self.event
-    }
-
-    pub fn payload(&self) -> &str {
-        &self.payload
     }
 }
 

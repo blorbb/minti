@@ -24,12 +24,23 @@
         font-size: var(--font-size-cq);
         padding: 1em;
 
+        // default: blur appearance
         // PERF: ~20% more gpu than opaque background
         background-color: f.scale-alpha(var(--clr-neutral-400), 90%);
         // PERF: ~3x more gpu and 2x cpu
         backdrop-filter: blur(10px);
         // creates new painting layer, seem to slightly improve perf
         transform: translateZ(0);
+
+        body[data-timer-face-appearance="transparent"] & {
+            background-color: f.scale-alpha(var(--clr-neutral-400), 90%);
+            backdrop-filter: none;
+        }
+
+        body[data-timer-face-appearance="opaque"] & {
+            background-color: var(--clr-neutral-400);
+            backdrop-filter: none;
+        }
 
         box-shadow: var(--shadow-1);
 

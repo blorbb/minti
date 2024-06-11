@@ -1,6 +1,7 @@
 use js_sys::Function;
 use leptos::*;
 use leptos_mview::mview;
+use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::{
     HtmlElement, IntersectionObserver, IntersectionObserverEntry, IntersectionObserverInit,
@@ -44,19 +45,18 @@ pub fn App() -> impl IntoView {
         spawn_local(popup_contextmenu())
     });
 
-    listen_event("contextmenu::add-timer", move |ev| {
-        logging::log!("{ev:?}");
-        timers.push_new();
-    });
+    // context menu settings //
 
-    listen_event("contextmenu::delete-all", move |ev| {
-        logging::log!("{ev:?}");
-        timers.clear();
-    });
+    listen_event("contextmenu::add-timer", move |_| timers.push_new());
+    listen_event("contextmenu::delete-all", move |_| timers.clear());
 
-    listen_event("contextmenu::timer-card", move |ev| {
-        logging::log!("{ev:?}");
+    let (timer_card, set_timer_card, _) =
+        use_local_storage::<String, FromToStringCodec>("timer-face");
+
+    listen_event("contextmenu::timer-face", move |ev| {
+        set_timer_card(ev.payload)
     });
+    create_effect(move |_| set_body_attribute("data-timer-face-appearance", &timer_card.get()));
 
     // contexts //
 
@@ -153,19 +153,36 @@ pub fn App() -> impl IntoView {
 ///
 /// Returns `None` if localstorage cannot be accessed or it failed to set the item.
 fn store_timers(timers: TimerList) -> Option<()> {
-    let local_storage = window().local_storage().ok()??;
     let timers_string = serialize::stringify_timers(timers);
-    local_storage.set_item("timers", &timers_string).ok()?;
-    Some(())
+    store_setting("timers", &timers_string)
 }
 
 /// Retrieves timers from localstorage and sets them in the correct state.
 ///
 /// The timers are expected to be in the key "timers".
 ///
-/// Returns `None` if localstorage cannot be accessed or the item cannot be parsed.
+/// Returns `None` if local storage cannot be accessed or the item cannot be parsed.
 fn retrieve_timers() -> Option<TimerList> {
-    let local_storage = window().local_storage().ok()??;
-    let timers_string = local_storage.get_item("timers").ok()??;
+    let timers_string = get_setting("timers")?;
     serialize::parse_timer_json(&timers_string)
+}
+
+/// Stores some key-value pair into local storage.
+fn store_setting(key: &str, value: &str) -> Option<()> {
+    let local_storage = window().local_storage().ok()??;
+    local_storage.set_item(key, value).ok()
+}
+
+/// Retrieves some key from local storage.
+///
+/// Returns `None` if local storage cannot be accessed or the key doesn't exist.
+fn get_setting(key: &str) -> Option<String> {
+    let local_storage = window().local_storage().ok()??;
+    local_storage.get_item(key).ok()?
+}
+
+fn set_body_attribute(name: &str, value: &str) {
+    document()
+        .body()
+        .map(|body| body.set_attribute(name, value));
 }

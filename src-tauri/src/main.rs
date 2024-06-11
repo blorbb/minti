@@ -56,7 +56,7 @@ impl RadioSubmenu {
             if this2.select(ev.id()) {
                 app.emit(
                     &format!("contextmenu::{}", submenu_id),
-                    ev.id.0.strip_prefix("timer-card::").unwrap(),
+                    ev.id.0.strip_prefix(&format!("{submenu_id}::")).unwrap(),
                 )
                 .unwrap();
             }
@@ -88,8 +88,8 @@ fn main() {
         .setup(|app| {
             let radio_menu = RadioSubmenu::new(
                 app,
-                "timer-card",
-                "Timer card appearance",
+                "timer-face",
+                "Timer face appearance",
                 vec![
                     ("opaque", "Opaque"),
                     ("transparent", "Transparent"),
