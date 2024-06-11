@@ -10,7 +10,7 @@ use crate::{
         RelativeTime,
     },
     contexts::TimerList,
-    parse, reactive,
+    interpreter, reactive,
     timer::Timer,
 };
 
@@ -19,7 +19,7 @@ use crate::{
 pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let (error_message, set_error_message) = create_signal(None::<String>);
 
-    let set_timer_duration = move || match parse::parse_input(&timer.input().get_untracked()) {
+    let set_timer_duration = move || match interpreter::interpret(&timer.input().get_untracked()) {
         Ok(duration) => {
             timer.restart(duration);
             set_error_message(None);

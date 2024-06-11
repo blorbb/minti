@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use time::{ext::NumericalDuration, Duration};
 
-use crate::parse::Error;
+use crate::interpreter;
 
 pub const MILLIS_IN_SEC: u64 = 1000;
 pub const SECS_IN_MIN: u64 = 60;
@@ -45,7 +45,7 @@ impl TimeUnit {
     ///
     /// The number only makes sense when used in `number_to_variant`.
     #[must_use]
-    pub const fn numeric_value(&self) -> u8 {
+    const fn numeric_value(&self) -> u8 {
         match self {
             Self::Milli => 0,
             Self::Sec => 1,
@@ -62,7 +62,7 @@ impl TimeUnit {
     /// Returns `None` if `num` does not map to one of the variants (must be
     /// in range `0..=4`).
     #[must_use]
-    pub const fn number_to_variant(num: u8) -> Option<Self> {
+    const fn number_to_variant(num: u8) -> Option<Self> {
         if num == 0 {
             Some(Self::Milli)
         } else if num == 1 {
@@ -131,7 +131,7 @@ impl TimeUnit {
 }
 
 impl FromStr for TimeUnit {
-    type Err = Error;
+    type Err = interpreter::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {

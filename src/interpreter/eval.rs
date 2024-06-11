@@ -6,17 +6,26 @@ use crate::time::{
     relative,
 };
 
-use super::{
-    structs::{Token, TokensFormat},
-    Error, Result,
-};
+use super::{parser::Token, Error, Result};
 
-/// Tries to parse a list of tokens to a duration.
+#[derive(Debug, PartialEq, Eq)]
+pub(super) enum InputFormat {
+    /// Checks that the length of a Vec<Token> is 1.
+    /// Does not check that it is a number.
+    SingleNumber,
+    /// Checks that the Vec<Token> has a separator ":",
+    /// or has am/pm.
+    Time,
+    /// If none of the other formats have been matched.
+    Units,
+}
+
+/// Tries to evaluate a list of tokens to a duration.
 ///
 /// # Errors
 /// Errors if the list does not match any known format.
 /// See `parse::parse_input` for more details on valid formats.
-pub(super) fn parse_tokens(tokens: &[Token]) -> Result<Duration> {
+pub(super) fn eval(tokens: &[Token]) -> Result<Duration> {
     log::trace!("parsing tokens");
     if tokens.is_empty() {
         log::trace!("no tokens found");
@@ -27,27 +36,27 @@ pub(super) fn parse_tokens(tokens: &[Token]) -> Result<Duration> {
     log::trace!("tokens are in {format:?} format");
 
     match format {
-        TokensFormat::SingleNumber => parse_single_number_tokens(tokens),
-        TokensFormat::Time => parse_time_tokens(tokens),
-        TokensFormat::Units => parse_unit_tokens(tokens),
+        InputFormat::SingleNumber => eval_single_number(tokens),
+        InputFormat::Time => eval_time(tokens),
+        InputFormat::Units => eval_units(tokens),
     }
 }
 
 /// Tries to find the input format of the given list of tokens.
-fn get_tokens_format(tokens: &[Token]) -> TokensFormat {
+fn get_tokens_format(tokens: &[Token]) -> InputFormat {
     if tokens.len() == 1 {
-        TokensFormat::SingleNumber
+        InputFormat::SingleNumber
     } else if tokens.contains(&Token::Separator)
         || tokens.iter().any(|t| matches!(t, Token::Meridiem(_)))
     {
-        TokensFormat::Time
+        InputFormat::Time
     } else {
-        TokensFormat::Units
+        InputFormat::Units
     }
 }
 
 /// Tries to parse a token list as a single number.
-fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration> {
+fn eval_single_number(tokens: &[Token]) -> Result<Duration> {
     let Token::Number(n) = tokens[0] else {
         log::trace!("single token is not a number");
         return Err(Error::Empty);
@@ -58,7 +67,7 @@ fn parse_single_number_tokens(tokens: &[Token]) -> Result<Duration> {
 
 /// Tries to parse a token list as a specific time,
 /// in 12h or 24h format.
-fn parse_time_tokens(tokens: &[Token]) -> Result<Duration> {
+fn eval_time(tokens: &[Token]) -> Result<Duration> {
     let mut meridiem: Option<Meridiem> = None;
     let mut time_sections: [u8; 3] = [0, 0, 0];
     // 0 = hour, 1 = min, 2 = sec
@@ -129,7 +138,7 @@ fn parse_time_tokens(tokens: &[Token]) -> Result<Duration> {
 }
 
 /// Tries to parse a token list as a duration with units.
-fn parse_unit_tokens(tokens: &[Token]) -> Result<Duration> {
+fn eval_units(tokens: &[Token]) -> Result<Duration> {
     let mut total_duration = Duration::ZERO;
     let mut current_number = 0.0;
 

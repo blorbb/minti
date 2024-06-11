@@ -1,8 +1,8 @@
-mod parse_tokens;
-mod structs;
-mod unparsed_tokens;
+mod eval;
+mod lexer;
+mod parser;
 
-use self::structs::Token;
+use std::fmt;
 use time::Duration;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -46,19 +46,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 ///     3.hours() + 20.minutes() + 10.seconds()
 /// );
 /// ```
-pub fn parse_input(input: &str) -> Result<Duration> {
+pub fn interpret(input: &str) -> Result<Duration> {
     log::debug!("parsing input {input}");
 
-    let tokens = unparsed_tokens::build_unparsed_tokens(input)?;
-    let tokens: Vec<Token> = tokens
-        .into_iter()
-        .map(Token::try_from)
-        .collect::<Result<_>>()?;
+    let groups = lexer::lex(input)?;
+    let tokens = parser::parse(groups)?;
     log::trace!("successfully mapped to parsed tokens");
 
-    parse_tokens::parse_tokens(&tokens)
+    eval::eval(&tokens)
 }
-use std::fmt;
 
 /// The error type for `parse::parse_input`.
 #[derive(Debug, PartialEq, Clone)]
@@ -115,9 +111,9 @@ mod tests {
 
     #[test]
     fn plain_int_as_mins() {
-        assert_eq!(parse_input("23").unwrap(), 23.minutes());
-        assert_eq!(parse_input("938").unwrap(), 938.minutes());
-        assert_eq!(parse_input("0").unwrap(), 0.minutes());
+        assert_eq!(interpret("23").unwrap(), 23.minutes());
+        assert_eq!(interpret("938").unwrap(), 938.minutes());
+        assert_eq!(interpret("0").unwrap(), 0.minutes());
     }
 
     mod units {
@@ -125,31 +121,31 @@ mod tests {
 
         #[test]
         fn single_units() {
-            assert_eq!(parse_input("3h").unwrap(), 3.hours());
-            assert_eq!(parse_input("10 h").unwrap(), 10.hours());
-            assert_eq!(parse_input("1.61 h").unwrap(), 1.61.hours());
-            assert_eq!(parse_input("2 hours").unwrap(), 2.hours());
+            assert_eq!(interpret("3h").unwrap(), 3.hours());
+            assert_eq!(interpret("10 h").unwrap(), 10.hours());
+            assert_eq!(interpret("1.61 h").unwrap(), 1.61.hours());
+            assert_eq!(interpret("2 hours").unwrap(), 2.hours());
 
-            assert_eq!(parse_input("3m").unwrap(), 3.minutes());
-            assert_eq!(parse_input("49ms").unwrap(), 49.milliseconds());
+            assert_eq!(interpret("3m").unwrap(), 3.minutes());
+            assert_eq!(interpret("49ms").unwrap(), 49.milliseconds());
         }
 
         #[test]
         fn multiple_units() {
-            assert_eq!(parse_input("3h21m").unwrap(), 3.hours() + 21.minutes());
+            assert_eq!(interpret("3h21m").unwrap(), 3.hours() + 21.minutes());
 
             assert_eq!(
-                parse_input("8d 23h 12m 5s 91ms").unwrap(),
+                interpret("8d 23h 12m 5s 91ms").unwrap(),
                 8.days() + 23.hours() + 12.minutes() + 5.seconds() + 91.milliseconds()
             )
         }
 
         #[test]
         fn trailing_number() {
-            assert_eq!(parse_input("3h4").unwrap(), 3.hours() + 4.minutes());
+            assert_eq!(interpret("3h4").unwrap(), 3.hours() + 4.minutes());
 
             assert_eq!(
-                parse_input("3d 23h 12.3m 2").unwrap(),
+                interpret("3d 23h 12.3m 2").unwrap(),
                 3.days() + 23.hours() + 12.3.minutes() + 2.seconds()
             )
         }
@@ -164,17 +160,17 @@ mod tests {
         #[test]
         fn specific_12h_time() {
             assert_eq!(
-                parse_input("3pm").unwrap().whole_seconds(),
+                interpret("3pm").unwrap().whole_seconds(),
                 duration_until_time(Time::from_hms(3 + 12, 0, 0).unwrap()).whole_seconds()
             );
 
             assert_eq!(
-                parse_input("3:12pm").unwrap().whole_seconds(),
+                interpret("3:12pm").unwrap().whole_seconds(),
                 duration_until_time(Time::from_hms(3 + 12, 12, 0).unwrap()).whole_seconds()
             );
 
             assert_eq!(
-                parse_input("5:12:30 am").unwrap().whole_seconds(),
+                interpret("5:12:30 am").unwrap().whole_seconds(),
                 duration_until_time(Time::from_hms(5, 12, 30).unwrap()).whole_seconds()
             );
         }
@@ -185,7 +181,7 @@ mod tests {
         fn all_errors(values: &[&str]) {
             for value in values {
                 assert!(
-                    parse_input(value).is_err(),
+                    interpret(value).is_err(),
                     "{value} should have been an Err."
                 )
             }

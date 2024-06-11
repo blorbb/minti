@@ -21,7 +21,7 @@ pub mod commands;
 pub mod components;
 pub mod contexts;
 pub mod pages;
-pub mod parse;
+pub mod interpreter;
 pub mod reactive;
 pub mod time;
 pub mod timer;

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use time::Time;
 
-use crate::parse::Error;
+use crate::interpreter;
 
 /// An enum representing either AM or PM.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -17,7 +17,7 @@ impl Meridiem {
 }
 
 impl FromStr for Meridiem {
-    type Err = Error;
+    type Err = interpreter::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
