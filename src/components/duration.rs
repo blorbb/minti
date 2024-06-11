@@ -34,20 +34,20 @@ pub fn DurationDisplay(#[prop(into)] duration: Signal<Duration>) -> impl IntoVie
 
     mview! {
         span.com-duration {
-            Show when={show_negative} fallback=[()] {
+            Show when={show_negative} {
                 span.negative { "-" }
             }
-            Show when=[days() != 0] fallback=[()] {
+            Show when=[days() != 0] {
                 span.value { {days} }
                 span.unit { "d" }
                 " "
             }
-            Show when=[hours() != 0 || days() != 0] fallback=[()] {
+            Show when=[hours() != 0 || days() != 0] {
                 span.value { {hours} }
                 span.unit { "h" }
                 " "
             }
-            Show when=[mins() != 0 || hours() != 0 || days() != 0] fallback=[()] {
+            Show when=[mins() != 0 || hours() != 0 || days() != 0] {
                 span.value { {mins} }
                 span.unit { "m" }
                 " "

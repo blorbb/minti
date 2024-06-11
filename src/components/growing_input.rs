@@ -6,17 +6,14 @@ use web_sys::HtmlInputElement;
 
 /// An input element that grows with the input size.
 #[component]
-pub fn GrowingInput<F>(
+pub fn GrowingInput(
     placeholder: &'static str,
     /// Functions cannot be optional, so one must be passed in.
     ///
     /// If you don't want to do anything, set this to `|_| ()`.
-    on_input: F,
+    on_input: impl Fn(ev::Event) + 'static,
     #[prop(optional)] initial: String,
-) -> impl IntoView
-where
-    F: Fn(ev::Event) + 'static,
-{
+) -> impl IntoView {
     // references
     // https://stackoverflow.com/a/38867270
     let size_ref = create_node_ref();
@@ -29,7 +26,7 @@ where
                 {placeholder}
                 value={initial}
                 on:input={on_input}
-                use:resize={size_ref().unwrap()};
+                use:resize={size_ref.get_untracked().unwrap()};
         }
     }
 }

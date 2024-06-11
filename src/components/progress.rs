@@ -6,7 +6,6 @@ use web_sys::HtmlDivElement;
 
 use crate::utils::{reactive, timer::Timer};
 
-#[expect(clippy::large_types_passed_by_value)]
 #[component]
 pub fn ProgressBar(timer: Timer) -> impl IntoView {
     let elapsed = create_memo(move |_| {

@@ -13,8 +13,6 @@ use crate::{
 };
 
 /// Provides controls and display for a [`Timer`].
-#[expect(clippy::too_many_lines, reason = "idk how make smaller")]
-#[expect(clippy::large_types_passed_by_value, reason = "can't be reference")]
 #[component]
 pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
@@ -126,12 +124,12 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                             initial={timer.title().get_untracked()};
                     }
 
-                    Show when=[error_message().is_some()] fallback=[()] {
+                    Show when=[error_message().is_some()] {
                         " | "
                         span.error { {error_message} }
                     }
 
-                    Show when=[(timer.end_time())().is_some()] fallback=[()] {
+                    Show when=[(timer.end_time())().is_some()] {
                         " | "
                         span.end {
                             Icon icon="ph:timer-bold";
