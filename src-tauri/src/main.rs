@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use tauri::{menu::*, App, Manager, State, Wry};
+use tauri::{menu::*, App, AppHandle, Manager, State, Wry};
 
 #[tauri::command]
 fn alert_window(window: tauri::Window) {
@@ -83,6 +83,35 @@ impl RadioSubmenu {
     }
 }
 
+fn get_nested_menu_item(app: &AppHandle, path: &str) -> Option<MenuItemKind<Wry>> {
+    let menu = app.state::<GlobalContextMenu>();
+    if !path.contains("::") {
+        return menu.inner().0.get(path);
+    };
+
+    // turn something like a::b::c into [a::b, a::b::c]
+    // does not include the first segment "a"
+    // the first segment will be stored in `curr_prefix` at the end
+    // of the loop
+    let mut path_prefixes = vec![];
+    let mut curr_prefix = path;
+    // insert longest to shortest
+    while let Some(index) = curr_prefix.rfind("::") {
+        path_prefixes.push(&path[..index + 2]);
+        curr_prefix = &curr_prefix[..index];
+    }
+    // reverse to put in order
+    path_prefixes.reverse();
+
+    let mut curr_submenu = menu.0.get(curr_prefix)?.as_submenu()?.clone();
+    // all except the last path
+    for prefix in path_prefixes.iter().take(path_prefixes.len() - 1) {
+        curr_submenu = curr_submenu.get(*prefix)?.as_submenu()?.clone();
+    }
+
+    curr_submenu.get(path)
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -102,6 +131,13 @@ fn main() {
                 .text("delete-all", "Delete all timers")
                 .separator()
                 .item(&radio_menu.submenu)
+                .item(
+                    &SubmenuBuilder::with_id(app, "heading-show", "Show in heading")
+                        .check("heading-show::title", "Title")
+                        .check("heading-show::end-time", "End time")
+                        .check("heading-show::elapsed", "Elapsed time")
+                        .build()?,
+                )
                 .build()?;
 
             app.manage(GlobalContextMenu(menu));
@@ -120,6 +156,16 @@ fn main() {
                     )
                     .unwrap();
                     println!("deleting all timers");
+                } else if let Some(option) = event.id().0.strip_prefix("heading-show::") {
+                    let menu_item = get_nested_menu_item(app, event.id().0.as_str()).unwrap();
+                    let menu_item = menu_item.as_check_menuitem_unchecked();
+
+                    println!("emitting contextmenu::heading-show with {option}={:?}", menu_item.is_checked());
+                    app.emit(
+                        "contextmenu::heading-show",
+                        format!("{}={}", option, menu_item.is_checked().unwrap()),
+                    )
+                    .unwrap();
                 }
             });
 

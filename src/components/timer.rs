@@ -1,6 +1,7 @@
 use leptos::*;
 use leptos_mview::mview;
 
+use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
 use time::Duration;
 use wasm_bindgen::JsValue;
 
@@ -104,10 +105,69 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let time_elapsed = move || {
         timer.duration().get().unwrap_or_default()
         - timer.time_remaining().get().unwrap_or_default()
-        // make the digit round down, but not -1
+        // make the digit round down, but +1ms to avoid showing -1s at the start
         - Duration::SECOND
             + Duration::MILLISECOND
     };
+
+    let (show_heading_title, _, _) =
+        use_local_storage::<bool, FromToStringCodec>("heading-show::title");
+    let (show_heading_end_time, _, _) =
+        use_local_storage::<bool, FromToStringCodec>("heading-show::end-time");
+    let (show_heading_elapsed, _, _) =
+        use_local_storage::<bool, FromToStringCodec>("heading-show::elapsed");
+
+    let heading_views = [
+        mview! {
+            span.title {
+                GrowingInput
+                    placeholder="Enter a title"
+                    on_input={move |ev| timer.set_title(event_target_value(&ev))}
+                    initial={timer.title().get_untracked()};
+            }
+        }
+        .into_view(),
+        mview! {
+            span.end {
+                Icon icon="ph:timer-bold";
+                " "
+                RelativeTime time={timer.end_time()};
+            }
+        }
+        .into_view(),
+        mview! {
+            span.elapsed {
+                DurationDisplay
+                    duration={time_elapsed};
+            }
+        }
+        .into_view(),
+        // this will only be shown with the title, if it exists
+        mview! {
+            span.error { {error_message} }
+        }
+        .into_view(),
+    ];
+
+    // filter to only show the views that have been enabled,
+    // with a " | " separator between each one
+    let heading = Memo::new(move |_| {
+        heading_views
+            .iter()
+            .enumerate()
+            .filter(move |(i, _)| {
+                [
+                    show_heading_title(),
+                    show_heading_end_time() && timer.end_time()().is_some(),
+                    show_heading_elapsed() && timer.started()() && !timer.finished()(),
+                    error_message().is_some(),
+                ][*i]
+            })
+            .map(|view| view.1)
+            .cloned()
+            .intersperse_with(|| " | ".into_view())
+            .collect_view()
+    });
 
     mview! {
         div.com-timer
@@ -121,35 +181,9 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
             div.timer-face {
                 // stuff above the input with extra info
                 div.heading {
-                    span.title {
-                        GrowingInput
-                            placeholder="Enter a title"
-                            on_input={move |ev| timer.set_title(event_target_value(&ev))}
-                            initial={timer.title().get_untracked()};
-                    }
-
-                    Show when=[error_message().is_some()] {
-                        " | "
-                        span.error { {error_message} }
-                    }
-
-                    Show when=[(timer.end_time())().is_some()] {
-                        " | "
-                        span.end {
-                            Icon icon="ph:timer-bold";
-                            " "
-                            RelativeTime time={timer.end_time()};
-                        }
-                    }
-
-                    Show when=[timer.started()() && !timer.finished()()] {
-                        " | "
-                        span.elapsed {
-                            DurationDisplay
-                                duration={time_elapsed};
-                        }
-                    }
+                    {heading}
                 }
+
                 // main timer display, showing either the countdown
                 // or the input to enter a time
                 div.duration ref={duration_display} {

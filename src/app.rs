@@ -43,18 +43,10 @@ pub fn App() -> impl IntoView {
         spawn_local(popup_contextmenu())
     });
 
-    // context menu settings //
-
     listen_event("contextmenu::add-timer", move |_| timers.push_new());
     listen_event("contextmenu::delete-all", move |_| timers.clear());
 
-    let (timer_card, set_timer_card, _) =
-        use_local_storage::<String, FromToStringCodec>("timer-face");
-
-    listen_event("contextmenu::timer-face", move |ev| {
-        set_timer_card(ev.payload)
-    });
-    create_effect(move |_| set_body_attribute("data-timer-face-appearance", &timer_card.get()));
+    contextmenu_local_storage_sync();
 
     // contexts //
 
@@ -145,6 +137,39 @@ pub fn App() -> impl IntoView {
     }
 }
 
+fn contextmenu_local_storage_sync() {
+    set_if_empty("heading-show::title", "true");
+    set_if_empty("heading-show::end-time", "true");
+    set_if_empty("heading-show::elapsed", "false");
+    set_if_empty("timer-face", "blur");
+
+    let (timer_card, set_timer_card, _) =
+        use_local_storage::<String, FromToStringCodec>("timer-face");
+
+    listen_event("contextmenu::timer-face", move |ev| {
+        set_timer_card(ev.payload)
+    });
+    create_effect(move |_| set_body_attribute("data-timer-face-appearance", &timer_card.get()));
+
+    let (_, set_heading_title, _) =
+        use_local_storage::<bool, FromToStringCodec>("heading-show::title");
+    let (_, set_heading_end_time, _) =
+        use_local_storage::<bool, FromToStringCodec>("heading-show::end-time");
+    let (_, set_heading_elapsed, _) =
+        use_local_storage::<bool, FromToStringCodec>("heading-show::elapsed");
+
+    listen_event("contextmenu::heading-show", move |ev| {
+        let (name, enabled) = ev.payload.split_once("=").unwrap();
+        let enabled = enabled == "true";
+        match name {
+            "title" => set_heading_title(enabled),
+            "end-time" => set_heading_end_time(enabled),
+            "elapsed" => set_heading_elapsed(enabled),
+            name => log::error!("invalid heading-show option emitted: {name}={enabled}"),
+        }
+    });
+}
+
 /// Stores a `TimerList` into localstorage.
 ///
 /// The timers will be stored using the key "timers".
@@ -163,6 +188,15 @@ fn store_timers(timers: TimerList) -> Option<()> {
 fn retrieve_timers() -> Option<TimerList> {
     let timers_string = get_setting("timers")?;
     serialize::parse_timer_json(&timers_string)
+}
+
+fn set_if_empty(key: &str, value: &str) -> Option<()> {
+    let local_storage = window().local_storage().ok()??;
+    let existing = local_storage.get_item(key).ok()?;
+    if existing.is_none() {
+        local_storage.set_item(key, value).ok()?;
+    }
+    Some(())
 }
 
 /// Stores some key-value pair into local storage.
