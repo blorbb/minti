@@ -16,7 +16,7 @@ pub fn GrowingInput(
 ) -> impl IntoView {
     // references
     // https://stackoverflow.com/a/38867270
-    let size_ref = create_node_ref();
+    let size_ref = NodeRef::new();
 
     mview! {
         span.com-growing-input {
@@ -34,14 +34,19 @@ pub fn GrowingInput(
 fn resize(input: HtmlElement<html::AnyElement>, size_ref: HtmlElement<html::Span>) {
     let input = input.dyn_ref::<HtmlInputElement>().unwrap().clone();
     resize_to_fit(&input, &size_ref);
-    _ = use_event_listener(input.clone(), ev::keydown, |ev| {
-        if ev.code() == "Enter" || ev.code() == "Escape" {
-            event_target::<HtmlInputElement>(&ev).blur().unwrap();
+    _ = use_event_listener(input.clone(), ev::keydown, {
+        let input = input.clone();
+        move |ev| {
+            if ev.code() == "Enter" || ev.code() == "Escape" {
+                input.blur().unwrap();
+            }
         }
     });
-    _ = use_event_listener(input.clone(), ev::input, move |ev| {
-        resize_to_fit(&event_target::<HtmlInputElement>(&ev), &size_ref)
+    _ = use_event_listener(input.clone(), ev::input, {
+        let (input, size_ref) = (input.clone(), size_ref.clone());
+        move |_| resize_to_fit(&input, &size_ref)
     });
+    _ = size_ref.on_mount(move |size_ref| resize_to_fit(&input, &size_ref));
 }
 
 fn resize_to_fit(input: &HtmlInputElement, size_ref: &HtmlElement<html::Span>) {
@@ -72,6 +77,10 @@ fn set_input_size(input: &HtmlInputElement, size_ref: &HtmlElement<html::Span>) 
         .unwrap()
         .get_property_value("font-size")
         .unwrap();
+    // if this component is not mounted, font size will be nothing
+    if font_size == "" {
+        return;
+    };
     // remove last 2 characters "px"
     let font_size = font_size[0..font_size.len() - 2]
         .parse::<f64>()
