@@ -1,4 +1,4 @@
-#![feature(duration_constants, let_chains, lint_reasons, iter_intersperse)]
+#![feature(duration_constants, let_chains, lint_reasons, iter_intersperse, future_join)]
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(
     // pedantic

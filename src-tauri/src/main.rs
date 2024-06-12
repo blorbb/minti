@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use tauri::{menu::*, App, AppHandle, Manager, State, Wry};
+use tauri::{menu::*, App, Manager, State, Wry};
 
 #[tauri::command]
 fn alert_window(window: tauri::Window) {
@@ -15,6 +15,13 @@ fn alert_window(window: tauri::Window) {
 #[tauri::command]
 fn contextmenu(window: tauri::Window, ctx: State<GlobalContextMenu>) {
     ctx.0.popup(window).unwrap();
+}
+
+#[tauri::command]
+fn set_contextmenu_checkitem(ctx: State<GlobalContextMenu>, path: String, checked: bool) {
+    println!("received {path} {checked}");
+    let menu_item = get_nested_menu_item(ctx.inner(), &path).expect("invalid menu item path provided");
+    menu_item.as_check_menuitem_unchecked().set_checked(checked).unwrap();
 }
 
 struct GlobalContextMenu(Menu<Wry>);
@@ -83,10 +90,9 @@ impl RadioSubmenu {
     }
 }
 
-fn get_nested_menu_item(app: &AppHandle, path: &str) -> Option<MenuItemKind<Wry>> {
-    let menu = app.state::<GlobalContextMenu>();
+fn get_nested_menu_item(menu: &GlobalContextMenu, path: &str) -> Option<MenuItemKind<Wry>> {
     if !path.contains("::") {
-        return menu.inner().0.get(path);
+        return menu.0.get(path);
     };
 
     // turn something like a::b::c into [a::b, a::b::c]
@@ -144,6 +150,7 @@ fn main() {
 
             app.on_menu_event(|app, event| {
                 println!("received event {event:?}");
+                let menu = app.state::<GlobalContextMenu>().inner();
 
                 if event.id() == "add-timer" {
                     app.emit("contextmenu::add-timer", String::from("added timer"))
@@ -157,7 +164,7 @@ fn main() {
                     .unwrap();
                     println!("deleting all timers");
                 } else if let Some(option) = event.id().0.strip_prefix("heading-show::") {
-                    let menu_item = get_nested_menu_item(app, event.id().0.as_str()).unwrap();
+                    let menu_item = get_nested_menu_item(menu, event.id().0.as_str()).unwrap();
                     let menu_item = menu_item.as_check_menuitem_unchecked();
 
                     println!("emitting contextmenu::heading-show with {option}={:?}", menu_item.is_checked());
@@ -172,7 +179,7 @@ fn main() {
             Ok(())
         })
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![alert_window, contextmenu])
+        .invoke_handler(tauri::generate_handler![alert_window, contextmenu, set_contextmenu_checkitem])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

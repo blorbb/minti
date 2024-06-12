@@ -8,7 +8,7 @@ use web_sys::{
 };
 
 use crate::{
-    commands::{listen_event, popup_contextmenu},
+    commands::{listen_event, popup_contextmenu, set_contextmenu_checkitem},
     contexts::{FullscreenElement, Icons, TimerList},
     pages::HomePage,
     timer::serialize,
@@ -151,12 +151,33 @@ fn contextmenu_local_storage_sync() {
     });
     create_effect(move |_| set_body_attribute("data-timer-face-appearance", &timer_card.get()));
 
-    let (_, set_heading_title, _) =
+    let (heading_title, set_heading_title, _) =
         use_local_storage::<bool, FromToStringCodec>("heading-show::title");
-    let (_, set_heading_end_time, _) =
+    let (heading_end_time, set_heading_end_time, _) =
         use_local_storage::<bool, FromToStringCodec>("heading-show::end-time");
-    let (_, set_heading_elapsed, _) =
+    let (heading_elapsed, set_heading_elapsed, _) =
         use_local_storage::<bool, FromToStringCodec>("heading-show::elapsed");
+
+    spawn_local(async move {
+        let selected_appearance = match timer_card.get_untracked().as_str() {
+            "opaque" => 0,
+            "transparent" => 1,
+            "blur" => 2,
+            other => {
+                log::error!("unknown timer face appearance {other}, setting to blur");
+                2
+            }
+        };
+        std::future::join!(
+            set_contextmenu_checkitem("heading-show::title", heading_title.get_untracked()),
+            set_contextmenu_checkitem("heading-show::end-time", heading_end_time.get_untracked()),
+            set_contextmenu_checkitem("heading-show::elapsed", heading_elapsed.get_untracked()),
+            set_contextmenu_checkitem("timer-face::opaque", selected_appearance == 0),
+            set_contextmenu_checkitem("timer-face::transparent", selected_appearance == 1),
+            set_contextmenu_checkitem("timer-face::blur", selected_appearance == 2),
+        )
+        .await;
+    });
 
     listen_event("contextmenu::heading-show", move |ev| {
         let (name, enabled) = ev.payload.split_once("=").unwrap();
