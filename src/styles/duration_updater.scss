@@ -1,14 +1,12 @@
 @use "mixins.scss";
 
 .com-duration-button {
-    --_button-border: 1px solid var(--clr-neutral-50);
-
     display: flex;
     // border radius is also set by parent already
     height: var(--control-height);
     border-radius: var(--control-height);
     overflow: hidden;
-    border: var(--_button-border);
+    border: var(--light-button-border);
 
     > button {
         padding-inline: 0.75em;
@@ -26,7 +24,7 @@
     backdrop-filter: blur(1rem);
     z-index: 2;
     gap: 0.5rem;
-    
+
     // transition the background out with opacity
     transition: opacity var(--time-transition);
     
@@ -34,7 +32,7 @@
         width: 4em;
         height: var(--control-height);
         border-radius: var(--control-height);
-        border: var(--_button-border);
+        border: var(--light-button-border);
     }
 
     @at-root .hiding > & {
