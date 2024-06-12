@@ -70,7 +70,7 @@ button {
 
 ::-webkit-scrollbar-thumb {
     background: var(--clr-neutral-200);
-    border-radius: var(--scrollbar-size);
+    // border-radius: var(--scrollbar-size);
 
     transition: background-color var(--time-transition-short);
 
