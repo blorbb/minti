@@ -23,7 +23,7 @@ pub fn Icon(
         create_local_resource(icon, move |icon| async move {
             if let Some(body) = stored_icons.get(icon) {
                 // TODO: probably should sanitise the body just in case
-                log::debug!("found icon {} in localstorage", icon);
+                log::trace!("found icon {} in localstorage", icon);
                 return Some(body);
             };
 
