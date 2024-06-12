@@ -10,7 +10,10 @@ use crate::{reactive, timer::Timer};
 pub fn ProgressBar(timer: Timer) -> impl IntoView {
     let elapsed = create_memo(move |_| {
         timer.started().track();
-        // timer.finished.track();
+        // also track finished so that adding duration will restart this
+        // since `started` is immediately set to false then true in a
+        // single batch
+        timer.finished().track();
         timer.get_time_elapsed()
     });
 

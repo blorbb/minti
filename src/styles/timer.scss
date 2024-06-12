@@ -98,22 +98,20 @@
     }
 
     .controls {
+        --control-height: 2em;
+
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 1em;
 
-        button {
-            height: 2em;
-            border-radius: 2em;
+        > button {
+            height: var(--control-height);
+            border-radius: var(--control-height);
         }
 
         button.primary {
             aspect-ratio: 3;
-        }
-
-        button.light {
-            aspect-ratio: 2;
         }
     }
 

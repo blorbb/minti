@@ -65,13 +65,8 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let controls_running = move || {
         mview! {
             DurationUpdateButton
-                button_class="light mix-btn-transp-neutral"
-                on_click={update_timer_duration}
-                add;
-            DurationUpdateButton
-                button_class="light mix-btn-transp-neutral"
-                on_click={update_timer_duration}
-                add=false;
+                button_class="mix-btn-transp-neutral"
+                on_click={update_timer_duration};
 
             {pause_button}
 
@@ -84,9 +79,9 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let controls_finished = move || {
         mview! {
             DurationUpdateButton
-                button_class="primary mix-btn-scale-green"
+                button_class="mix-btn-transp-neutral"
                 on_click={update_timer_duration}
-                add;
+                add-only;
 
             button.primary.mix-btn-scale-green on:click={move |_| timer.reset()} {
                 Icon icon="ph:clock-counter-clockwise-bold";
