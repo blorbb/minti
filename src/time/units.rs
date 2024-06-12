@@ -45,7 +45,7 @@ impl TimeUnit {
     ///
     /// The number only makes sense when used in `number_to_variant`.
     #[must_use]
-    const fn numeric_value(&self) -> u8 {
+    const fn numeric_value(self) -> u8 {
         match self {
             Self::Milli => 0,
             Self::Sec => 1,

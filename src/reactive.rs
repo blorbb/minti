@@ -19,7 +19,6 @@ pub fn repeat_while(
 
     // needs double Option as the outer one is None on first run,
     // but needs to be None if when() is false.
-    #[expect(clippy::option_option, reason = "required")]
     create_effect(move |prev_handle: Option<Option<IntervalHandle>>| {
         // cancel the previous handle if it exists
         if let Some(prev_handle) = prev_handle.flatten() {

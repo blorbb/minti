@@ -30,7 +30,7 @@ pub fn Icon(
             log::debug!("fetching icon {}", icon);
             let (prefix, name) = icon.split_once(':')?;
 
-            let body = Request::get(&format!("{}/{}/{}.svg", BASE_URL, prefix, name))
+            let body = Request::get(&format!("{BASE_URL}/{prefix}/{name}.svg"))
                 .send()
                 .await
                 .ok()?

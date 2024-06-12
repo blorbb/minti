@@ -23,13 +23,13 @@ pub fn FullscreenButton(target: NodeRef<html::Div>, class: &'static str) -> impl
     move || {
         if is_fullscreen() {
             mview! {
-                button class={format!("com-fullscreen-button {}", class)} on:click={disable_fullscreen} {
+                button class=f["com-fullscreen-button {class}"] on:click={disable_fullscreen} {
                     Icon icon="ph:corners-in";
                 }
             }
         } else {
             mview! {
-                button class={format!("com-fullscreen-button {}", class)} on:click={enable_fullscreen} {
+                button class=f["com-fullscreen-button {class}"] on:click={enable_fullscreen} {
                     Icon icon="ph:corners-out";
                 }
             }

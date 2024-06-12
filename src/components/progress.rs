@@ -20,7 +20,9 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
     let progress_element = create_node_ref::<html::Div>();
 
     create_effect(move |_| {
-        if !(timer.finished())() && let Some(progress_element) = progress_element() {
+        if !(timer.finished())()
+            && let Some(progress_element) = progress_element()
+        {
             reset_animation(progress_element.dyn_ref::<HtmlDivElement>().unwrap());
         }
     });

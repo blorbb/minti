@@ -178,7 +178,7 @@ impl TimerList {
         batch(|| {
             // don't use `Vec::clear`, need to reset all timers stored
             for i in (0..self.len()).rev() {
-                self.remove_index(i)
+                self.remove_index(i);
             }
         });
     }

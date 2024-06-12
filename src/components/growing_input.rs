@@ -31,6 +31,7 @@ pub fn GrowingInput(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn resize(input: HtmlElement<html::AnyElement>, size_ref: HtmlElement<html::Span>) {
     let input = input.dyn_ref::<HtmlInputElement>().unwrap().clone();
     resize_to_fit(&input, &size_ref);
@@ -50,8 +51,8 @@ fn resize(input: HtmlElement<html::AnyElement>, size_ref: HtmlElement<html::Span
 }
 
 fn resize_to_fit(input: &HtmlInputElement, size_ref: &HtmlElement<html::Span>) {
-    set_size_ref(input, &size_ref);
-    set_input_size(input, &size_ref);
+    set_size_ref(input, size_ref);
+    set_input_size(input, size_ref);
 }
 
 fn set_size_ref(input: &HtmlInputElement, size_ref: &HtmlElement<html::Span>) {
@@ -72,13 +73,13 @@ fn set_input_size(input: &HtmlInputElement, size_ref: &HtmlElement<html::Span>) 
     let width = size_ref.get_bounding_client_rect().width();
     // as a string like "123px"
     let font_size = window()
-        .get_computed_style(&input)
+        .get_computed_style(input)
         .unwrap()
         .unwrap()
         .get_property_value("font-size")
         .unwrap();
     // if this component is not mounted, font size will be nothing
-    if font_size == "" {
+    if font_size.is_empty() {
         return;
     };
     // remove last 2 characters "px"

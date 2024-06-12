@@ -27,11 +27,7 @@ pub async fn set_contextmenu_checkitem(path: &str, checked: bool) {
     let obj = js_sys::Object::new();
     js_sys::Reflect::set(&obj, &"path".into(), &path.into()).unwrap();
     js_sys::Reflect::set(&obj, &"checked".into(), &checked.into()).unwrap();
-    invoke(
-        "set_contextmenu_checkitem",
-        obj.into()
-    )
-    .await;
+    invoke("set_contextmenu_checkitem", obj.into()).await;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,7 +46,7 @@ pub fn listen_event(event: &str, callback: impl Fn(Event) + 'static) {
     let handler = Closure::<dyn Fn(JsValue) + 'static>::new(Box::new(move |payload: JsValue| {
         log::info!("running in closure");
         let payload: Event = serde_wasm_bindgen::from_value(payload).unwrap();
-        callback(payload)
+        callback(payload);
     }) as Box<dyn Fn(JsValue)>);
     listen(event, handler.as_ref().unchecked_ref());
     handler.forget();

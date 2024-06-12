@@ -20,8 +20,12 @@ fn contextmenu(window: tauri::Window, ctx: State<GlobalContextMenu>) {
 #[tauri::command]
 fn set_contextmenu_checkitem(ctx: State<GlobalContextMenu>, path: String, checked: bool) {
     println!("received {path} {checked}");
-    let menu_item = get_nested_menu_item(ctx.inner(), &path).expect("invalid menu item path provided");
-    menu_item.as_check_menuitem_unchecked().set_checked(checked).unwrap();
+    let menu_item =
+        get_nested_menu_item(ctx.inner(), &path).expect("invalid menu item path provided");
+    menu_item
+        .as_check_menuitem_unchecked()
+        .set_checked(checked)
+        .unwrap();
 }
 
 struct GlobalContextMenu(Menu<Wry>);
@@ -167,7 +171,10 @@ fn main() {
                     let menu_item = get_nested_menu_item(menu, event.id().0.as_str()).unwrap();
                     let menu_item = menu_item.as_check_menuitem_unchecked();
 
-                    println!("emitting contextmenu::heading-show with {option}={:?}", menu_item.is_checked());
+                    println!(
+                        "emitting contextmenu::heading-show with {option}={:?}",
+                        menu_item.is_checked()
+                    );
                     app.emit(
                         "contextmenu::heading-show",
                         format!("{}={}", option, menu_item.is_checked().unwrap()),
@@ -179,7 +186,11 @@ fn main() {
             Ok(())
         })
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![alert_window, contextmenu, set_contextmenu_checkitem])
+        .invoke_handler(tauri::generate_handler![
+            alert_window,
+            contextmenu,
+            set_contextmenu_checkitem
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

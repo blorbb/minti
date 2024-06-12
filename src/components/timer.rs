@@ -34,7 +34,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     let duration_display = create_node_ref::<html::Div>();
 
     let update_timer_duration =
-        move |duration: Duration| update_and_bump(duration, duration_display, &timer);
+        move |duration: Duration| update_and_bump(duration, duration_display, timer);
 
     // sub-components //
 
@@ -211,7 +211,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
                 div.controls { {controls} }
 
-                button.delete.mix-btn-transp-red on:click={move |_| remove_self(&timer)} {
+                button.delete.mix-btn-transp-red on:click={move |_| remove_self(timer)} {
                     Icon icon="ph:x-bold";
                 }
                 FullscreenButton class="mix-btn-transp-neutral" target={component};
@@ -220,7 +220,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     }
 }
 
-fn remove_self(timer: &Timer) {
+fn remove_self(timer: Timer) {
     let timers = expect_context::<TimerList>();
     timers.remove_id(timer.id());
 }
@@ -233,7 +233,7 @@ fn js_obj_1(key: &str, value: &str) -> js_sys::Object {
 }
 
 /// Updates the timer's duration and bumps the element up/down
-fn update_and_bump(duration: Duration, element: NodeRef<html::Div>, timer: &Timer) {
+fn update_and_bump(duration: Duration, element: NodeRef<html::Div>, timer: Timer) {
     let mut anim_options = web_sys::KeyframeAnimationOptions::new();
     anim_options.duration(&JsValue::from_f64(100.0));
     anim_options.easing("ease-out");

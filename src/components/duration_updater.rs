@@ -77,18 +77,18 @@ where
     let update_button = move || {
         mview! {
             div.com-duration-button class:{add-only} {
-                button 
+                button
                     class={button_class}
                     on:click={move |_| on_click(selected_duration().duration)}
                 ("+")
 
                 button
                     class={button_class}
-                    on:click={show_duration_menu} 
+                    on:click={show_duration_menu}
                 ( {selected_duration().label} )
 
                 Show when=[!add_only] {
-                    button 
+                    button
                         class={button_class}
                         on:click={move |_| on_click(-1 * selected_duration().duration)}
                     ("-")
@@ -117,9 +117,6 @@ struct LabelledDuration {
 
 impl LabelledDuration {
     pub const fn new(duration: Duration, label: &'static str) -> Self {
-        Self {
-            duration,
-            label,
-        }
+        Self { duration, label }
     }
 }

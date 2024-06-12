@@ -111,11 +111,17 @@ impl Timer {
     }
 }
 
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A timer that counts down.
 ///
 /// Most of the inner components are reactive: subscribe to these properties
 /// for reactivity.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct RawTimer {
     /// The total duration of the timer.
     ///
@@ -219,7 +225,7 @@ impl RawTimer {
             log::trace!("state changed");
         });
 
-        let timer = Self {
+        Self {
             duration,
             set_duration,
             started,
@@ -239,8 +245,7 @@ impl RawTimer {
             acc_paused_duration,
             state_change,
             id: Uuid::new_v4(),
-        };
-        timer
+        }
     }
 
     /// Calculates the time elapsed as of now.
@@ -458,11 +463,5 @@ impl RawTimer {
     pub fn set_title(&self, title: String) {
         log::trace!("setting title to {:?}", title);
         (self.set_title)(title);
-    }
-}
-
-impl Default for Timer {
-    fn default() -> Self {
-        Self::new()
     }
 }

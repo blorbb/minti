@@ -40,7 +40,7 @@ pub fn App() -> impl IntoView {
 
     window_event_listener(ev::contextmenu, |ev| {
         ev.prevent_default();
-        spawn_local(popup_contextmenu())
+        spawn_local(popup_contextmenu());
     });
 
     listen_event("contextmenu::add-timer", move |_| timers.push_new());
@@ -147,7 +147,7 @@ fn contextmenu_local_storage_sync() {
         use_local_storage::<String, FromToStringCodec>("timer-face");
 
     listen_event("contextmenu::timer-face", move |ev| {
-        set_timer_card(ev.payload)
+        set_timer_card(ev.payload);
     });
     create_effect(move |_| set_body_attribute("data-timer-face-appearance", &timer_card.get()));
 
@@ -180,7 +180,7 @@ fn contextmenu_local_storage_sync() {
     });
 
     listen_event("contextmenu::heading-show", move |ev| {
-        let (name, enabled) = ev.payload.split_once("=").unwrap();
+        let (name, enabled) = ev.payload.split_once('=').unwrap();
         let enabled = enabled == "true";
         match name {
             "title" => set_heading_title(enabled),

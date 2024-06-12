@@ -1,6 +1,14 @@
-#![feature(duration_constants, let_chains, lint_reasons, iter_intersperse, future_join)]
+#![feature(
+    duration_constants,
+    let_chains,
+    lint_reasons,
+    iter_intersperse,
+    future_join
+)]
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(
+    // style
+    clippy::new_without_default,
     // pedantic
     clippy::wildcard_imports,
     clippy::module_name_repetitions,
@@ -11,6 +19,8 @@
     clippy::bool_to_int_with_if,
     clippy::similar_names,
     clippy::missing_panics_doc,
+    clippy::no_effect_underscore_binding,
+    clippy::too_many_lines,
     // nursery
     clippy::option_if_let_else,
     clippy::future_not_send,
@@ -20,8 +30,8 @@ pub mod app;
 pub mod commands;
 pub mod components;
 pub mod contexts;
-pub mod pages;
 pub mod interpreter;
+pub mod pages;
 pub mod reactive;
 pub mod time;
 pub mod timer;
