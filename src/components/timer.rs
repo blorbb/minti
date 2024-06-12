@@ -101,6 +101,14 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
         }
     };
 
+    let time_elapsed = move || {
+        timer.duration().get().unwrap_or_default()
+        - timer.time_remaining().get().unwrap_or_default()
+        // make the digit round down, but not -1
+        - Duration::SECOND
+            + Duration::MILLISECOND
+    };
+
     mview! {
         div.com-timer
             data-started={reactive::as_attr(timer.started())}
@@ -133,15 +141,23 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                             RelativeTime time={timer.end_time()};
                         }
                     }
+
+                    Show when=[timer.started()() && !timer.finished()()] {
+                        " | "
+                        span.elapsed {
+                            DurationDisplay
+                                duration={time_elapsed};
+                        }
+                    }
                 }
                 // main timer display, showing either the countdown
                 // or the input to enter a time
                 div.duration ref={duration_display} {
                     [if (timer.started())() {
                         mview! {
-                            DurationDisplay duration={
-                                Signal::derive(move || (timer.time_remaining())().unwrap_or_default())
-                            };
+                            DurationDisplay duration=[
+                                (timer.time_remaining())().unwrap_or_default()
+                            ];
                         }.into_view()
                     } else {
                         mview! {

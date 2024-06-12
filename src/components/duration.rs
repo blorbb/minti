@@ -9,7 +9,7 @@ use crate::time::units;
 ///
 /// Supports negative durations as well.
 #[component]
-pub fn DurationDisplay(#[prop(into)] duration: Signal<Duration>) -> impl IntoView {
+pub fn DurationDisplay(duration: impl Fn() -> Duration + Copy + 'static) -> impl IntoView {
     // need to exclude the millisecond unit, so the durations are slightly adjusted
     // to be displayed better.
     let ms = create_memo(move |_| duration().subsec_milliseconds().abs());
