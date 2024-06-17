@@ -3,7 +3,9 @@
     let_chains,
     lint_reasons,
     iter_intersperse,
-    future_join
+    future_join,
+    vec_pop_if,
+    iter_repeat_n
 )]
 #![warn(clippy::pedantic, clippy::nursery)]
 #![allow(
