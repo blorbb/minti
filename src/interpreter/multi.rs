@@ -77,6 +77,15 @@ fn eval(sexpr: SExpr) -> Result<DurationsOrInt> {
 
 fn parse(input: &str) -> Result<SExpr> {
     let mut lexer = Lexer::new(input);
+
+    // check that every Value::Duration is a valid duration expression too
+    for token in &lexer.tokens {
+        match token {
+            Token::Value(Value::Duration(str)) => _ = super::interpret_single(&str)?,
+            _ => (),
+        }
+    }
+
     let result = expr_bp(&mut lexer, 0)?;
     if lexer.peek() != Token::Eof {
         Err(Error::UnbalancedParens)
@@ -452,5 +461,16 @@ mod tests {
         assert_eq!(inps.next(), Some(Arc::from("45")));
         assert_eq!(inps.next(), Some(Arc::from("15m")));
         assert_eq!(inps.next(), Some(Arc::from("45")));
+    }
+
+    #[test]
+    fn invalid_durations() {
+        let inps = interpret_multi("2h + 4a + 3d");
+        assert_eq!(inps.err(), Some(Error::InvalidUnit("a".to_string())));
+        let inps = interpret_multi("(3h + 4 + (2ms 3)*2)*2");
+        assert_eq!(inps.err(), Some(Error::SmallerThanMilli(3.0)));
+
+        let inps = interpret_multi("3h * 2am");
+        assert_eq!(inps.err(), Some(Error::MulDurations));
     }
 }
