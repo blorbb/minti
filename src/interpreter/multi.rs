@@ -12,19 +12,131 @@ use super::{Error, Result};
 // pratt parser based on
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Value {
-    Duration(Arc<str>),
-    Int(u64),
+pub fn interpret_multi(input: &str) -> Result<InputIter> {
+    let expr = parse(input)?;
+    Ok(InputIter::from(eval(expr)?))
 }
 
-impl fmt::Display for Value {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Duration(e) => write!(f, "{e}"),
-            Self::Int(i) => write!(f, "{i}"),
+pub struct InputIter {
+    iter: Peekable<Box<dyn ClonableIterator<Item = Arc<str>>>>,
+}
+
+impl InputIter {
+    pub fn next(&mut self) -> Option<Arc<str>> {
+        self.iter.next()
+    }
+
+    pub fn peek(&mut self) -> Option<Arc<str>> {
+        self.iter.peek().cloned()
+    }
+}
+
+impl From<DurationsOrInt> for InputIter {
+    fn from(value: DurationsOrInt) -> Self {
+        let iter = match value {
+            DurationsOrInt::Durations(durations) => durations,
+            DurationsOrInt::Int(int) => Box::new(iter::once(Arc::from(int.to_string()))),
+        };
+        Self {
+            iter: iter.peekable(),
         }
     }
+}
+
+fn eval(sexpr: SExpr) -> Result<DurationsOrInt> {
+    match sexpr {
+        SExpr::Atom(value) => Ok(DurationsOrInt::from(value)),
+        SExpr::Cons(op, exprs) => {
+            let [left, right] = *exprs;
+            let (left, right) = (eval(left)?, eval(right)?);
+            match op {
+                Op::Add => Ok(left.join(right)),
+                Op::Mul => match (left, right) {
+                    (DurationsOrInt::Durations(_), DurationsOrInt::Durations(_)) => {
+                        Err(Error::Unknown)
+                    }
+                    (DurationsOrInt::Durations(d), DurationsOrInt::Int(int))
+                    | (DurationsOrInt::Int(int), DurationsOrInt::Durations(d)) => {
+                        Ok(DurationsOrInt::durations(
+                            iter::repeat_n(d, int.saturating_as::<usize>()).flatten(),
+                        ))
+                    }
+                    (DurationsOrInt::Int(l), DurationsOrInt::Int(r)) => {
+                        let l = Arc::from(l.to_string());
+                        Ok(DurationsOrInt::durations(iter::repeat_n(
+                            l,
+                            r.saturating_as::<usize>(),
+                        )))
+                    }
+                },
+                Op::LParen | Op::RParen => unreachable!(),
+            }
+        }
+    }
+}
+
+fn parse(input: &str) -> Result<SExpr> {
+    let mut lexer = Lexer::new(input);
+    let result = expr_bp(&mut lexer, 0)?;
+    if lexer.peek() != Token::Eof {
+        Err(Error::UnbalancedParens)
+    } else {
+        Ok(result)
+    }
+}
+
+fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Result<SExpr> {
+    let mut lhs = match lexer.next() {
+        Token::Op(Op::LParen) => {
+            let lhs = expr_bp(lexer, 0)?;
+            let next = lexer.next();
+            if next != Token::RPAREN {
+                return Err(Error::UnbalancedParens);
+            }
+            lhs
+        }
+        Token::Value(val) => SExpr::Atom(val),
+        Token::Op(op) => return Err(Error::Other(format!("Invalid operator position for {op}"))),
+        Token::Eof => return Err(Error::Empty),
+    };
+
+    loop {
+        let op = match lexer.peek() {
+            Token::Eof => break,
+            Token::Op(op) => op,
+            t => return Err(Error::Other(format!("Invalid value position for {t}"))),
+        };
+
+        if let Some((l_bp, r_bp)) = infix_binding_power(op) {
+            if l_bp < min_bp {
+                break;
+            }
+
+            lexer.next();
+            let rhs = match expr_bp(lexer, r_bp) {
+                Ok(rhs) => rhs,
+                Err(Error::Empty) => {
+                    return Err(Error::Other(format!("Invalid operator position for {op}")))
+                }
+                Err(e) => return Err(e),
+            };
+            lhs = SExpr::Cons(op, Box::new([lhs, rhs]));
+
+            continue;
+        }
+
+        break;
+    }
+
+    Ok(lhs)
+}
+
+fn infix_binding_power(op: Op) -> Option<(u8, u8)> {
+    Some(match op {
+        Op::Add => (1, 2),
+        Op::Mul => (3, 4),
+        _ => return None,
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,6 +183,21 @@ impl Token {
     #[must_use]
     fn is_value(&self) -> bool {
         matches!(self, Self::Value(..))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Value {
+    Duration(Arc<str>),
+    Int(u64),
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Duration(e) => write!(f, "{e}"),
+            Self::Int(i) => write!(f, "{i}"),
+        }
     }
 }
 
@@ -166,133 +293,6 @@ impl fmt::Display for SExpr {
     }
 }
 
-fn expr(input: &str) -> Result<SExpr> {
-    let mut lexer = Lexer::new(input);
-    let result = expr_bp(&mut lexer, 0)?;
-    if lexer.peek() != Token::Eof {
-        Err(Error::UnbalancedParens)
-    } else {
-        Ok(result)
-    }
-}
-
-fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Result<SExpr> {
-    let mut lhs = match lexer.next() {
-        Token::Op(Op::LParen) => {
-            let lhs = expr_bp(lexer, 0)?;
-            let next = lexer.next();
-            if next != Token::RPAREN {
-                return Err(Error::UnbalancedParens);
-            }
-            lhs
-        }
-        Token::Value(val) => SExpr::Atom(val),
-        Token::Op(op) => return Err(Error::Other(format!("Invalid operator position for {op}"))),
-        Token::Eof => return Err(Error::Empty),
-    };
-
-    loop {
-        let op = match lexer.peek() {
-            Token::Eof => break,
-            Token::Op(op) => op,
-            t => return Err(Error::Other(format!("Invalid value position for {t}"))),
-        };
-
-        if let Some((l_bp, r_bp)) = infix_binding_power(op) {
-            if l_bp < min_bp {
-                break;
-            }
-
-            lexer.next();
-            let rhs = match expr_bp(lexer, r_bp) {
-                Ok(rhs) => rhs,
-                Err(Error::Empty) => {
-                    return Err(Error::Other(format!("Invalid operator position for {op}")))
-                }
-                Err(e) => return Err(e),
-            };
-            lhs = SExpr::Cons(op, Box::new([lhs, rhs]));
-
-            continue;
-        }
-
-        break;
-    }
-
-    Ok(lhs)
-}
-
-fn infix_binding_power(op: Op) -> Option<(u8, u8)> {
-    Some(match op {
-        Op::Add => (1, 2),
-        Op::Mul => (3, 4),
-        _ => return None,
-    })
-}
-
-pub fn interpret_multi(input: &str) -> Result<InputIter> {
-    let expr = expr(input)?;
-    Ok(InputIter::from(eval(expr)?))
-}
-
-fn eval(sexpr: SExpr) -> Result<DurationsOrInt> {
-    match sexpr {
-        SExpr::Atom(value) => Ok(DurationsOrInt::from(value)),
-        SExpr::Cons(op, exprs) => {
-            let [left, right] = *exprs;
-            let (left, right) = (eval(left)?, eval(right)?);
-            match op {
-                Op::Add => Ok(left.join(right)),
-                Op::Mul => match (left, right) {
-                    (DurationsOrInt::Durations(_), DurationsOrInt::Durations(_)) => {
-                        Err(Error::Unknown)
-                    }
-                    (DurationsOrInt::Durations(d), DurationsOrInt::Int(int))
-                    | (DurationsOrInt::Int(int), DurationsOrInt::Durations(d)) => {
-                        Ok(DurationsOrInt::durations(
-                            iter::repeat_n(d, int.saturating_as::<usize>()).flatten(),
-                        ))
-                    }
-                    (DurationsOrInt::Int(l), DurationsOrInt::Int(r)) => {
-                        let l = Arc::from(l.to_string());
-                        Ok(DurationsOrInt::durations(iter::repeat_n(
-                            l,
-                            r.saturating_as::<usize>(),
-                        )))
-                    }
-                },
-                Op::LParen | Op::RParen => unreachable!(),
-            }
-        }
-    }
-}
-
-pub struct InputIter {
-    iter: Peekable<Box<dyn ClonableIterator<Item = Arc<str>>>>,
-}
-
-impl InputIter {
-    pub fn next(&mut self) -> Option<Arc<str>> {
-        self.iter.next()
-    }
-
-    pub fn peek(&mut self) -> Option<Arc<str>> {
-        self.iter.peek().cloned()
-    }
-}
-
-impl From<DurationsOrInt> for InputIter {
-    fn from(value: DurationsOrInt) -> Self {
-        let iter = match value {
-            DurationsOrInt::Durations(durations) => durations,
-            DurationsOrInt::Int(int) => Box::new(iter::once(Arc::from(int.to_string()))),
-        };
-        Self {
-            iter: iter.peekable(),
-        }
-    }
-}
-
 trait ClonableIterator: DynClone + Iterator {}
 impl<T> ClonableIterator for T where T: DynClone + Iterator {}
 dyn_clone::clone_trait_object!(<T> ClonableIterator<Item = T>);
@@ -346,65 +346,65 @@ mod tests {
 
     #[test]
     fn parse_valid() {
-        assert_eq!(expr("1 + 2 * 3").unwrap().to_string(), "(+ 1 (* 2 3))");
-        assert_eq!(expr("1").unwrap().to_string(), "1");
+        assert_eq!(parse("1 + 2 * 3").unwrap().to_string(), "(+ 1 (* 2 3))");
+        assert_eq!(parse("1").unwrap().to_string(), "1");
         assert_eq!(
-            expr("a + b * c * d + e").unwrap().to_string(),
+            parse("a + b * c * d + e").unwrap().to_string(),
             "(+ (+ a (* (* b c) d)) e)"
         );
         assert_eq!(
-            expr("a + b*").unwrap().to_string(),
+            parse("a + b*").unwrap().to_string(),
             format!("(+ a (* b {}))", u64::MAX)
         );
-        assert_eq!(expr("2 + (3 + 4)").unwrap().to_string(), "(+ 2 (+ 3 4))");
+        assert_eq!(parse("2 + (3 + 4)").unwrap().to_string(), "(+ 2 (+ 3 4))");
         assert_eq!(
-            expr("2h + (15m + 45)*3").unwrap().to_string(),
+            parse("2h + (15m + 45)*3").unwrap().to_string(),
             "(+ 2h (* (+ 15m 45) 3))"
         );
         assert_eq!(
-            expr("2h + 3*(15m + 45)").unwrap().to_string(),
+            parse("2h + 3*(15m + 45)").unwrap().to_string(),
             "(+ 2h (* 3 (+ 15m 45)))"
         );
         assert_eq!(
-            expr("2h + 3(15m + 45)").unwrap().to_string(),
+            parse("2h + 3(15m + 45)").unwrap().to_string(),
             "(+ 2h (* 3 (+ 15m 45)))"
         );
         assert_eq!(
-            expr("2h + (15m + 45)*").unwrap().to_string(),
+            parse("2h + (15m + 45)*").unwrap().to_string(),
             format!("(+ 2h (* (+ 15m 45) {}))", u64::MAX)
         );
         assert_eq!(
-            expr("2h+2(15+45m)2+3h").unwrap().to_string(),
+            parse("2h+2(15+45m)2+3h").unwrap().to_string(),
             "(+ (+ 2h (* (* 2 (+ 15 45m)) 2)) 3h)"
         );
         assert_eq!(
-            expr("(15*2m)*3+14d").unwrap().to_string(),
+            parse("(15*2m)*3+14d").unwrap().to_string(),
             "(+ (* (* 15 2m) 3) 14d)"
         );
     }
 
     #[test]
     fn parse_invalid() {
-        assert_eq!(expr("1h)").err(), Some(Error::UnbalancedParens));
-        assert_eq!(expr("(1h").err(), Some(Error::UnbalancedParens));
+        assert_eq!(parse("1h)").err(), Some(Error::UnbalancedParens));
+        assert_eq!(parse("(1h").err(), Some(Error::UnbalancedParens));
         assert_eq!(
-            expr("+30d").err(),
+            parse("+30d").err(),
             Some(Error::Other("Invalid operator position for +".to_string()))
         );
         assert_eq!(
-            expr("30d+").err(),
+            parse("30d+").err(),
             Some(Error::Other("Invalid operator position for +".to_string()))
         );
         assert_eq!(
-            expr("12m+34d ++ 2h").err(),
+            parse("12m+34d ++ 2h").err(),
             Some(Error::Other("Invalid operator position for +".to_string()))
         );
         assert_eq!(
-            expr("12m+34d +* 2h").err(),
+            parse("12m+34d +* 2h").err(),
             Some(Error::Other("Invalid operator position for *".to_string()))
         );
         assert_eq!(
-            expr("1d+20(2+)").err(),
+            parse("1d+20(2+)").err(),
             Some(Error::Other("Invalid operator position for )".to_string()))
         );
     }
