@@ -53,7 +53,7 @@ fn eval(sexpr: SExpr) -> Result<DurationsOrInt> {
                 Op::Add => Ok(left.join(right)),
                 Op::Mul => match (left, right) {
                     (DurationsOrInt::Durations(_), DurationsOrInt::Durations(_)) => {
-                        Err(Error::Unknown)
+                        Err(Error::MulDurations)
                     }
                     (DurationsOrInt::Durations(d), DurationsOrInt::Int(int))
                     | (DurationsOrInt::Int(int), DurationsOrInt::Durations(d)) => {
@@ -96,7 +96,7 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Result<SExpr> {
             lhs
         }
         Token::Value(val) => SExpr::Atom(val),
-        Token::Op(op) => return Err(Error::Other(format!("Invalid operator position for {op}"))),
+        Token::Op(op) => return Err(Error::InvalidOp(op.to_string())),
         Token::Eof => return Err(Error::Empty),
     };
 
@@ -104,7 +104,7 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Result<SExpr> {
         let op = match lexer.peek() {
             Token::Eof => break,
             Token::Op(op) => op,
-            t => return Err(Error::Other(format!("Invalid value position for {t}"))),
+            t => return Err(Error::InvalidValue(t.to_string())),
         };
 
         if let Some((l_bp, r_bp)) = infix_binding_power(op) {
@@ -115,9 +115,7 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Result<SExpr> {
             lexer.next();
             let rhs = match expr_bp(lexer, r_bp) {
                 Ok(rhs) => rhs,
-                Err(Error::Empty) => {
-                    return Err(Error::Other(format!("Invalid operator position for {op}")))
-                }
+                Err(Error::Empty) => return Err(Error::InvalidOp(op.to_string())),
                 Err(e) => return Err(e),
             };
             lhs = SExpr::Cons(op, Box::new([lhs, rhs]));
@@ -156,7 +154,7 @@ impl From<&str> for Token {
             "\0" => Self::Eof,
             string => Self::Value(match string.parse::<u64>() {
                 Ok(int) => Value::Int(int),
-                Err(_) => Value::Duration(Arc::from(string.to_string())),
+                Err(_) => Value::Duration(Arc::from(string)),
             }),
         }
     }
@@ -387,25 +385,19 @@ mod tests {
     fn parse_invalid() {
         assert_eq!(parse("1h)").err(), Some(Error::UnbalancedParens));
         assert_eq!(parse("(1h").err(), Some(Error::UnbalancedParens));
-        assert_eq!(
-            parse("+30d").err(),
-            Some(Error::Other("Invalid operator position for +".to_string()))
-        );
-        assert_eq!(
-            parse("30d+").err(),
-            Some(Error::Other("Invalid operator position for +".to_string()))
-        );
+        assert_eq!(parse("+30d").err(), Some(Error::InvalidOp("+".to_string())));
+        assert_eq!(parse("30d+").err(), Some(Error::InvalidOp("+".to_string())));
         assert_eq!(
             parse("12m+34d ++ 2h").err(),
-            Some(Error::Other("Invalid operator position for +".to_string()))
+            Some(Error::InvalidOp("+".to_string()))
         );
         assert_eq!(
             parse("12m+34d +* 2h").err(),
-            Some(Error::Other("Invalid operator position for *".to_string()))
+            Some(Error::InvalidOp("*".to_string()))
         );
         assert_eq!(
             parse("1d+20(2+)").err(),
-            Some(Error::Other("Invalid operator position for )".to_string()))
+            Some(Error::InvalidOp(")".to_string()))
         );
     }
 

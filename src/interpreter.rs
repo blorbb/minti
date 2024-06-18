@@ -82,6 +82,12 @@ pub enum Error {
     Unknown,
     #[error("Unbalanced parentheses")]
     UnbalancedParens,
+    #[error("Cannot multiply two durations")]
+    MulDurations,
+    #[error("Invalid operator position for {0}")]
+    InvalidOp(String),
+    #[error("Invalid value position for {0}")]
+    InvalidValue(String),
     #[error("{0}")]
     Other(String),
 }
