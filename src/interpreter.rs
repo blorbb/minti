@@ -82,6 +82,8 @@ pub enum Error {
     Unknown,
     #[error("Unbalanced parentheses")]
     UnbalancedParens,
+    #[error("{0}")]
+    Other(String),
 }
 
 #[cfg(test)]
