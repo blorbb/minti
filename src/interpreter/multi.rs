@@ -1,395 +1,360 @@
+use az::SaturatingAs;
 use dyn_clone::DynClone;
-use itertools::Itertools;
+use itertools::{chain, Either, Itertools};
 use std::{
+    fmt::{self, Write},
     iter::{self, Peekable},
     ops::Range,
+    sync::Arc,
 };
 
 use super::{Error, Result};
 
-pub fn interpret_multi(input: &str) -> Result<MultiInput> {
-    let (input, mut rpn) = to_rpn(input)?;
-    rpn.reverse();
+// pratt parser based on
+// https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
-    let mut exprs = Vec::<ExprsOrInt>::new();
-    while let Some(seg) = rpn.pop() {
-        match seg {
-            Segment::Expr(e) => exprs.push(ExprsOrInt::new_exprs(iter::once(e))),
-            Segment::Int(i) => exprs.push(ExprsOrInt::Int(i)),
-            Segment::Inf => todo!(),
-            Segment::Plus => {
-                let (Some(right), Some(left)) = (exprs.pop(), exprs.pop()) else {
-                    return Err(Error::Unknown);
-                };
-                exprs.push(ExprsOrInt::new_exprs(left.into_iter().chain(right)))
-            }
-            Segment::Star => {
-                let (Some(right), Some(left)) = (exprs.pop(), exprs.pop()) else {
-                    return Err(Error::Unknown);
-                };
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Value {
+    Duration(Arc<str>),
+    Int(u64),
+}
 
-                // figure out which is an int and which is the expression to be multiplied
-                let new_iter: Box<dyn ClonableIterator<Item = Range<usize>>> = match (left, right) {
-                    (ExprsOrInt::Exprs(_), ExprsOrInt::Exprs(_)) => return Err(Error::Unknown),
-                    (ExprsOrInt::Exprs(e), ExprsOrInt::Int(i))
-                    | (ExprsOrInt::Int(i), ExprsOrInt::Exprs(e)) => {
-                        Box::new(iter::repeat_n(e, input[i].parse().unwrap()).flatten())
-                    }
-                    (ExprsOrInt::Int(l), ExprsOrInt::Int(r)) => {
-                        // assume that l is the time, r is the repetitions
-                        Box::new(iter::repeat_n(l, input[r].parse().unwrap()))
-                    }
-                };
-
-                exprs.push(ExprsOrInt::Exprs(new_iter))
-            }
-            Segment::LParen | Segment::RParen | Segment::Eof => unreachable!(),
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Duration(e) => write!(f, "{e}"),
+            Self::Int(i) => write!(f, "{i}"),
         }
     }
-    debug_assert_eq!(exprs.len(), 1);
-    let iter = exprs.remove(0);
-
-    Ok(MultiInput::new(input, iter.into_iter()))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Segment {
-    Expr(Range<usize>),
-    Int(Range<usize>),
-    Plus,
-    Star,
-    Inf,
-    LParen,
-    RParen,
+enum Token {
+    Value(Value),
+    Op(Op),
     Eof,
 }
 
-impl Segment {
-    const OP_CHARS: [char; 4] = ['+', '*', '(', ')'];
-
-    pub fn is_empty(&self) -> bool {
-        matches!(
-            self,
-            Self::Expr(e) | Self::Int(e) if e.is_empty()
-        )
-    }
-
-    pub fn is_expr_or_int(&self) -> bool {
-        matches!(self, Self::Expr(..) | Self::Int(..) | Self::Inf)
-    }
-
-    /// Whether self is a binary operator, i.e. + or *
-    pub fn is_bin_op(&self) -> bool {
-        matches!(self, Self::Plus | Self::Star)
-    }
-
-    pub fn from_range(s: &str, range: Range<usize>) -> Self {
-        match &s[range.clone()] {
-            "+" => Self::Plus,
-            "*" => Self::Star,
-            "(" => Self::LParen,
-            ")" => Self::RParen,
+impl From<&str> for Token {
+    fn from(value: &str) -> Self {
+        match value {
+            "+" => Self::Op(Op::Add),
+            "*" => Self::Op(Op::Mul),
+            "(" => Self::Op(Op::LParen),
+            ")" => Self::Op(Op::RParen),
             "\0" => Self::Eof,
-            s if s.chars().all(|c| c.is_ascii_digit()) => Self::Int(range),
-            _ => Self::Expr(range),
-        }
-    }
-
-    #[cfg(test)]
-    fn to_str<'s>(&self, s: &'s str) -> &'s str {
-        match self {
-            Self::Expr(range) | Self::Int(range) => &s[range.clone()],
-            Self::Plus => "+",
-            Self::Star => "*",
-            Self::Inf => "inf",
-            Self::LParen => "(",
-            Self::RParen => ")",
-            Self::Eof => "eof",
+            string => Self::Value(match string.parse::<u64>() {
+                Ok(int) => Value::Int(int),
+                Err(_) => Value::Duration(Arc::from(string.to_string())),
+            }),
         }
     }
 }
 
-fn to_rpn(input: &str) -> Result<(String, Vec<Segment>)> {
-    let mut input = input.replace(' ', "");
-    if input.is_empty() {
-        return Err(Error::Empty);
-    }
-
-    // extra character makes it easier to correctly parse the end
-    input.push('\0');
-
-    // split input by operators
-    let mut segments = Vec::<Segment>::new();
-    let mut prev_i = 0;
-    for (curr_i, curr_char) in input.char_indices() {
-        if Segment::OP_CHARS.contains(&curr_char) || curr_char == '\0' {
-            let prev_segment = Segment::from_range(&input, prev_i..curr_i);
-            // character at curr_i is an operator, must be a single ascii char
-            // so +1 is safe
-            let curr_segment = Segment::from_range(&input, curr_i..curr_i + 1);
-
-            // two operators in a row, e.g. "1+(2+3)"
-            // don't add the empty string as an expression
-            if !prev_segment.is_empty() {
-                segments.push(prev_segment.clone());
-            }
-
-            // push current operator
-            segments.push(curr_segment);
-            // set to next expression
-            prev_i = curr_i + 1;
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Value(v) => write!(f, "{v}"),
+            Self::Op(op) => write!(f, "{op}"),
+            Self::Eof => write!(f, "eof"),
         }
     }
+}
 
-    // insert the implicit multiplication between bracket and int/expr
-    let segments = segments
-        .into_iter()
-        .tuple_windows()
-        .flat_map(|(curr, next)| {
-            if curr == Segment::RParen && next.is_expr_or_int()
-                || curr.is_expr_or_int() && next == Segment::LParen
-            {
-                itertools::Either::Left([curr, Segment::Star].into_iter())
-            } else {
-                itertools::Either::Right([curr].into_iter())
-            }
-        })
-        // curr never reaches the last element, so re-insert the EOF
-        .chain(iter::once(Segment::Eof))
-        .collect_vec();
+impl Token {
+    const ADD: Self = Token::Op(Op::Add);
+    const MUL: Self = Token::Op(Op::Mul);
+    const LPAREN: Self = Token::Op(Op::LParen);
+    const RPAREN: Self = Token::Op(Op::RParen);
 
-    // input validation: checking consecutive elements.
-    // also converting stars to postfix stars if possible.
-    let mut parens: u32 = 0;
-
-    let segments = segments
-        .into_iter()
-        .tuple_windows()
-        .map(|(curr, next)| match curr {
-            // no consecutive exprs/ints (should not be possible to
-            // construct this anyways)
-            Segment::Expr(_) | Segment::Int(_) if next.is_expr_or_int() => Err(Error::Unknown),
-            // segment after plus should be expr/int/(
-            Segment::Plus if !(next.is_expr_or_int() || next == Segment::LParen) => {
-                Err(Error::Unknown)
-            }
-            // figure out if its multiplying two things, or the postfix star for infinite loop
-            Segment::Star => {
-                if next.is_expr_or_int() || next == Segment::LParen {
-                    // binary multiply
-                    Ok(itertools::Either::Left(iter::once(Segment::Star)))
-                } else {
-                    // postfix multiply
-                    Ok(itertools::Either::Right(
-                        [Segment::Star, Segment::Inf].into_iter(),
-                    ))
-                }
-            }
-            Segment::LParen if next.is_bin_op() => Err(Error::Unknown),
-            Segment::LParen => {
-                parens += 1;
-                Ok(itertools::Either::Left(iter::once(curr)))
-            }
-            Segment::RParen => {
-                parens = parens.checked_sub(1).ok_or(Error::UnbalancedParens)?;
-                Ok(itertools::Either::Left(iter::once(curr)))
-            }
-            Segment::Eof => unreachable!("curr can never be eof"),
-            Segment::Inf => unreachable!("infinities have not been constructed yet"),
-            _ => Ok(itertools::Either::Left(iter::once(curr))),
-        })
-        .collect::<Result<Vec<_>>>()?
-        .into_iter()
-        .flatten()
-        .collect_vec();
-
-    if parens != 0 {
-        return Err(Error::UnbalancedParens);
+    /// Returns `true` if the token is [`Value`].
+    ///
+    /// [`Value`]: Token::Value
+    #[must_use]
+    fn is_value(&self) -> bool {
+        matches!(self, Self::Value(..))
     }
+}
 
-    // convert to RPN
-    // using the Shunting yard algorithm
-    // https://en.wikipedia.org/wiki/Shunting_yard_algorithm
-    let mut output = Vec::<Segment>::new();
-    // must never contain an expr or int variant
-    let mut op_stack = Vec::<Segment>::new();
-    for segment in segments {
-        match segment {
-            Segment::Expr(_) | Segment::Int(_) | Segment::Inf => output.push(segment),
-            Segment::Plus => {
-                while let Some(op) = op_stack.pop_if(|op| *op != Segment::LParen) {
-                    output.push(op)
-                }
-                op_stack.push(segment)
-            }
-            Segment::Star => {
-                while let Some(op) =
-                    op_stack.pop_if(|op| *op != Segment::LParen && *op != Segment::Plus)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Op {
+    Add,
+    Mul,
+    LParen,
+    RParen,
+}
+
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Op::Add => f.write_char('+'),
+            Op::Mul => f.write_char('*'),
+            Op::LParen => f.write_char('('),
+            Op::RParen => f.write_char(')'),
+        }
+    }
+}
+
+struct Lexer {
+    /// Stored in reverse order
+    tokens: Vec<Token>,
+}
+
+impl fmt::Debug for Lexer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_char('"')?;
+        f.write_str(&self.tokens.iter().rev().join(" "))?;
+        f.write_char('"')
+    }
+}
+
+impl Lexer {
+    pub fn new(input: &str) -> Self {
+        // end with eof, makes some stuff easier
+        let mut tokens = format!("{input}\0")
+            .split_inclusive(&['+', '*', '(', ')', '\0'])
+            .flat_map(|segment| <[&str; 2]>::from(segment.split_at(segment.len() - 1)))
+            .map(|s| s.trim())
+            .filter_map(|s| (!s.is_empty()).then(|| Token::from(s)))
+            // normalize input
+            .tuple_windows()
+            .flat_map(|(curr, next)| {
+                // insert implicit multiply
+                if (curr == Token::RPAREN && next.is_value())
+                    || (curr.is_value() && next == Token::LPAREN)
                 {
-                    output.push(op)
+                    Either::Left([curr, Token::Op(Op::Mul)].into_iter())
+                } else if curr == Token::MUL && !(next == Token::LPAREN || next.is_value()) {
+                    // postfix multiply
+                    Either::Left([curr, Token::Value(Value::Int(u64::MAX))].into_iter())
+                } else {
+                    Either::Right(iter::once(curr))
                 }
-                op_stack.push(segment)
-            }
-            Segment::LParen => op_stack.push(segment),
-            Segment::RParen => {
-                while let Some(op) = op_stack.pop_if(|op| *op != Segment::LParen) {
-                    output.push(op)
+            })
+            .collect_vec();
+
+        tokens.reverse();
+        Self { tokens }
+    }
+
+    pub fn next(&mut self) -> Token {
+        self.tokens.pop().unwrap_or(Token::Eof)
+    }
+
+    pub fn peek(&mut self) -> Token {
+        self.tokens.last().cloned().unwrap_or(Token::Eof)
+    }
+}
+
+/// An S-expression
+#[derive(Debug)]
+enum SExpr {
+    Atom(Value),
+    Cons(Op, Box<[SExpr; 2]>),
+}
+
+impl fmt::Display for SExpr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SExpr::Atom(t) => write!(f, "{t}"),
+            SExpr::Cons(head, rest) => {
+                write!(f, "({head}")?;
+                for s in rest.iter() {
+                    write!(f, " {s}")?
                 }
-                op_stack.pop().expect("parens are balanced, there must be a left paren remaining in the operator stack");
+                write!(f, ")")
             }
-            Segment::Eof => unreachable!("eof should have been removed"),
         }
     }
-    // push the rest of the operators onto the output
-    op_stack.reverse();
-    output.extend(op_stack);
+}
 
-    Ok((input, output))
+fn expr(input: &str) -> SExpr {
+    let mut lexer = Lexer::new(input);
+    expr_bp(&mut lexer, 0)
+}
+
+fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> SExpr {
+    let mut lhs = match lexer.next() {
+        Token::Op(Op::LParen) => {
+            let lhs = expr_bp(lexer, 0);
+            assert_eq!(lexer.next(), Token::RPAREN);
+            lhs
+        }
+        Token::Value(val) => SExpr::Atom(val),
+        Token::Op(op) => panic!("bad token, op {op}"),
+        Token::Eof => panic!("bad token, reached eof"),
+    };
+
+    loop {
+        let op = match lexer.peek() {
+            Token::Eof => break,
+            Token::Op(op) => op,
+            t => panic!("bad token {t}"),
+        };
+
+        if let Some((l_bp, r_bp)) = infix_binding_power(op) {
+            if l_bp < min_bp {
+                break;
+            }
+
+            lexer.next();
+            let rhs = expr_bp(lexer, r_bp);
+            lhs = SExpr::Cons(op, Box::new([lhs, rhs]));
+
+            continue;
+        }
+
+        break;
+    }
+
+    lhs
+}
+
+fn infix_binding_power(op: Op) -> Option<(u8, u8)> {
+    Some(match op {
+        Op::Add => (1, 2),
+        Op::Mul => (3, 4),
+        _ => return None,
+    })
+}
+
+pub fn interpret_multi(input: &str) -> Result<InputIter> {
+    let expr = expr(input);
+    Ok(InputIter::from(eval(expr)?))
+}
+
+fn eval(sexpr: SExpr) -> Result<DurationsOrInt> {
+    match sexpr {
+        SExpr::Atom(value) => Ok(DurationsOrInt::from(value)),
+        SExpr::Cons(op, exprs) => {
+            let [left, right] = *exprs;
+            let (left, right) = (eval(left)?, eval(right)?);
+            match op {
+                Op::Add => Ok(left.join(right)),
+                Op::Mul => match (left, right) {
+                    (DurationsOrInt::Durations(_), DurationsOrInt::Durations(_)) => {
+                        Err(Error::Unknown)
+                    }
+                    (DurationsOrInt::Durations(d), DurationsOrInt::Int(int))
+                    | (DurationsOrInt::Int(int), DurationsOrInt::Durations(d)) => {
+                        Ok(DurationsOrInt::durations(
+                            iter::repeat_n(d, int.saturating_as::<usize>()).flatten(),
+                        ))
+                    }
+                    (DurationsOrInt::Int(l), DurationsOrInt::Int(r)) => {
+                        let l = Arc::from(l.to_string());
+                        Ok(DurationsOrInt::durations(iter::repeat_n(
+                            l,
+                            r.saturating_as::<usize>(),
+                        )))
+                    }
+                },
+                Op::LParen | Op::RParen => unreachable!(),
+            }
+        }
+    }
+}
+
+pub struct InputIter {
+    iter: Peekable<Box<dyn ClonableIterator<Item = Arc<str>>>>,
+}
+
+impl From<DurationsOrInt> for InputIter {
+    fn from(value: DurationsOrInt) -> Self {
+        let iter = match value {
+            DurationsOrInt::Durations(durations) => durations,
+            DurationsOrInt::Int(int) => Box::new(iter::once(Arc::from(int.to_string()))),
+        };
+        Self {
+            iter: iter.peekable(),
+        }
+    }
 }
 
 trait ClonableIterator: DynClone + Iterator {}
 impl<T> ClonableIterator for T where T: DynClone + Iterator {}
-dyn_clone::clone_trait_object!(ClonableIterator<Item = Range<usize>>);
+dyn_clone::clone_trait_object!(<T> ClonableIterator<Item = T>);
 
+/// An evaluated duration expression.
+///
+/// Any expressions that may still be interpreted as an integer will be the [`Int`]
+/// variant. Only when it must be interpreted as a duration will the integer become
+/// a [`Durations`] variant. All other values that cannot be interpreted as an
+/// integer will also be the [`Durations`] variant.
+///
+/// [`Durations`]: DurationsOrInt::Durations
+/// [`Int`]: DurationsOrInt::Int
 #[derive(Clone)]
-enum ExprsOrInt {
-    Exprs(Box<dyn ClonableIterator<Item = Range<usize>>>),
-    Int(Range<usize>),
+enum DurationsOrInt {
+    Durations(Box<dyn ClonableIterator<Item = Arc<str>>>),
+    Int(u64),
 }
 
-impl ExprsOrInt {
-    pub fn new_exprs(exprs: impl ClonableIterator<Item = Range<usize>> + 'static) -> Self {
-        Self::Exprs(Box::new(exprs))
+impl DurationsOrInt {
+    pub fn durations(
+        it: impl IntoIterator<IntoIter: ClonableIterator, Item = Arc<str>> + 'static,
+    ) -> Self {
+        Self::Durations(Box::new(it.into_iter()))
     }
-}
 
-impl IntoIterator for ExprsOrInt {
-    type Item = Range<usize>;
-
-    type IntoIter = Box<dyn ClonableIterator<Item = Self::Item>>;
-
-    fn into_iter(self) -> Self::IntoIter {
+    pub fn into_durations(self) -> Box<dyn ClonableIterator<Item = Arc<str>>> {
         match self {
-            ExprsOrInt::Exprs(e) => e,
-            ExprsOrInt::Int(i) => Box::new(iter::once(i)),
+            DurationsOrInt::Durations(d) => d,
+            DurationsOrInt::Int(int) => Box::new(iter::once(Arc::from(int.to_string()))),
         }
+    }
+
+    pub fn join(self, other: Self) -> Self {
+        Self::durations(self.into_durations().chain(other.into_durations()))
     }
 }
 
-pub struct MultiInput {
-    input: String,
-    ranges: Peekable<Box<dyn ClonableIterator<Item = Range<usize>>>>,
-}
-
-impl MultiInput {
-    fn new(input: String, ranges: Box<dyn ClonableIterator<Item = Range<usize>>>) -> Self {
-        Self {
-            input,
-            ranges: ranges.peekable(),
+impl From<Value> for DurationsOrInt {
+    fn from(value: Value) -> Self {
+        match value {
+            Value::Duration(d) => DurationsOrInt::durations(iter::once(d)),
+            Value::Int(int) => DurationsOrInt::Int(int),
         }
-    }
-
-    pub fn next(&mut self) -> Option<&str> {
-        self.ranges.next().map(|range| &self.input[range])
-    }
-
-    pub fn peek(&mut self) -> Option<&str> {
-        self.ranges.peek().map(|range| &self.input[range.clone()])
-    }
-
-    #[cfg(test)]
-    fn collect(&mut self) -> Vec<&str> {
-        let mut vec = Vec::new();
-        // needs to be manual because
-        while let Some(range) = self.ranges.next() {
-            vec.push(&self.input[range])
-        }
-        vec
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use itertools::Itertools;
-
-    use crate::interpreter::Error;
-
-    use super::interpret_multi;
-
-    use super::to_rpn;
-
-    #[track_caller]
-    fn validate_rpn(input: &str, expected: &[&str]) {
-        let (input, segments) = to_rpn(input)
-            .unwrap_or_else(|e| panic!("input could not be converted to rpn: got error {e}"));
-        let rpn = segments
-            .into_iter()
-            .map(|seg| seg.to_str(&input))
-            .collect_vec();
-        assert_eq!(rpn, expected)
-    }
+    use super::*;
 
     #[test]
-    fn convert_to_rpn() {
-        // validate input: ei = expression or int
-        // - must have balanced parentheses
-        // - expressions/ints must be separated by operators (i.e. no `expr int`)
-        // - plus must be  ei+ei    | )+ei     | ei+(  | )+(
-        // - star must be  expr*int | int*expr | )*int | int*( | ei* | )*
-        // - paren must be int(ei   | ei)int   | +(ei  | *(ei  |
-
-        validate_rpn("3*2m", &["3", "2m", "*"]);
-        validate_rpn("1+1", &["1", "1", "+"]);
-        validate_rpn("1+(3*2)", &["1", "3", "2", "*", "+"]);
-        validate_rpn("(15+45m)*", &["15", "45m", "+", "*inf"]);
-        validate_rpn("3(40h)", &["3", "40h", "*"]);
-        validate_rpn("(1+3)4", &["1", "3", "+", "4", "*"]);
-        validate_rpn("4*(1+3)", &["4", "1", "3", "+", "*"]);
-        validate_rpn(
-            "7+8+(1+3+2)*4+5+6*2",
-            &[
-                "7", "8", "+", "1", "3", "+", "2", "+", "4", "*", "+", "5", "+", "6", "2", "*", "+",
-            ],
+    fn parse_valid() {
+        assert_eq!(expr("1 + 2 * 3").to_string(), "(+ 1 (* 2 3))");
+        assert_eq!(expr("1").to_string(), "1");
+        assert_eq!(
+            expr("a + b * c * d + e").to_string(),
+            "(+ (+ a (* (* b c) d)) e)"
         );
-        // TODO: this needs to be figured out, disambiguate as unary *
-        validate_rpn("2m+3*", &["2m", "3", "*inf", "+"])
-    }
-
-    #[test]
-    fn multi_with_next() {
-        let mut iter = interpret_multi("7h+8+(1+3)*2+5s+6*2").unwrap();
-        assert_eq!(iter.next(), Some("7h"));
-        assert_eq!(iter.next(), Some("8"));
-        assert_eq!(iter.next(), Some("1"));
-        assert_eq!(iter.next(), Some("3"));
-        assert_eq!(iter.next(), Some("1"));
-        assert_eq!(iter.next(), Some("3"));
-        assert_eq!(iter.next(), Some("5s"));
-        assert_eq!(iter.next(), Some("6"));
-        assert_eq!(iter.next(), Some("6"));
-        assert_eq!(iter.next(), None);
-    }
-
-    #[track_caller]
-    fn validate_multi(input: &str, expected: &[&str]) {
-        let mut iter = interpret_multi(input).unwrap();
-        assert_eq!(iter.collect(), expected);
-    }
-
-    #[test]
-    fn more_multi_input() {
-        validate_multi("(10m+45)*3", &["10m", "45", "10m", "45", "10m", "45"]);
-        validate_multi("(10m+45)3", &["10m", "45", "10m", "45", "10m", "45"]);
-        validate_multi("3(10m+45)", &["10m", "45", "10m", "45", "10m", "45"]);
-        validate_multi("3*10m + 45", &["10m", "10m", "10m", "45"]);
-        validate_multi("3*2m", &["2m", "2m", "2m"]);
-        validate_multi("1+1", &["1", "1"]);
-        validate_multi("1+(3*2)", &["1", "3", "3"]);
-        validate_multi("(15+45m)", &["15", "45m"]);
-        validate_multi("3(40h)", &["40h", "40h", "40h"]);
-        validate_multi("(1+3)4", &["1", "3", "1", "3", "1", "3", "1", "3"]);
-        validate_multi("4*(1+3)", &["1", "3", "1", "3", "1", "3", "1", "3"]);
-        assert_eq!(interpret_multi("(1+3)*").err(), Some(Error::Unknown));
-        assert_eq!(interpret_multi("2m+3*").err(), Some(Error::Unknown));
+        assert_eq!(
+            expr("a + b*").to_string(),
+            format!("(+ a (* b {}))", u64::MAX)
+        );
+        assert_eq!(expr("2 + (3 + 4)").to_string(), "(+ 2 (+ 3 4))");
+        assert_eq!(
+            expr("2h + (15m + 45)*3").to_string(),
+            "(+ 2h (* (+ 15m 45) 3))"
+        );
+        assert_eq!(
+            expr("2h + 3*(15m + 45)").to_string(),
+            "(+ 2h (* 3 (+ 15m 45)))"
+        );
+        assert_eq!(
+            expr("2h + 3(15m + 45)").to_string(),
+            "(+ 2h (* 3 (+ 15m 45)))"
+        );
+        assert_eq!(
+            expr("2h + (15m + 45)*").to_string(),
+            format!("(+ 2h (* (+ 15m 45) {}))", u64::MAX)
+        );
+        assert_eq!(
+            expr("2h+2(15+45m)2+3h").to_string(),
+            "(+ (+ 2h (* (* 2 (+ 15 45m)) 2)) 3h)"
+        );
+        assert_eq!(expr("(15*2m)*3+14d").to_string(), "(+ (* (* 15 2m) 3) 14d)");
     }
 }
