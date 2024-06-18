@@ -16,6 +16,7 @@ pub fn interpret_multi(input: &str) -> Result<MultiInput> {
         match seg {
             Segment::Expr(e) => exprs.push(ExprsOrInt::new_exprs(iter::once(e))),
             Segment::Int(i) => exprs.push(ExprsOrInt::Int(i)),
+            Segment::Inf => todo!(),
             Segment::Plus => {
                 let (Some(right), Some(left)) = (exprs.pop(), exprs.pop()) else {
                     return Err(Error::Unknown);
@@ -42,7 +43,7 @@ pub fn interpret_multi(input: &str) -> Result<MultiInput> {
 
                 exprs.push(ExprsOrInt::Exprs(new_iter))
             }
-            Segment::LParen | Segment::RParen => unreachable!(),
+            Segment::LParen | Segment::RParen | Segment::Eof => unreachable!(),
         }
     }
     debug_assert_eq!(exprs.len(), 1);
@@ -57,8 +58,10 @@ enum Segment {
     Int(Range<usize>),
     Plus,
     Star,
+    Inf,
     LParen,
     RParen,
+    Eof,
 }
 
 impl Segment {
@@ -72,12 +75,7 @@ impl Segment {
     }
 
     pub fn is_expr_or_int(&self) -> bool {
-        matches!(self, Self::Expr(..) | Self::Int(..))
-    }
-
-    /// Whether self is any of the operator chars
-    pub fn is_op(&self) -> bool {
-        !self.is_expr_or_int()
+        matches!(self, Self::Expr(..) | Self::Int(..) | Self::Inf)
     }
 
     /// Whether self is a binary operator, i.e. + or *
@@ -91,6 +89,7 @@ impl Segment {
             "*" => Self::Star,
             "(" => Self::LParen,
             ")" => Self::RParen,
+            "\0" => Self::Eof,
             s if s.chars().all(|c| c.is_ascii_digit()) => Self::Int(range),
             _ => Self::Expr(range),
         }
@@ -102,23 +101,28 @@ impl Segment {
             Self::Expr(range) | Self::Int(range) => &s[range.clone()],
             Self::Plus => "+",
             Self::Star => "*",
+            Self::Inf => "inf",
             Self::LParen => "(",
             Self::RParen => ")",
+            Self::Eof => "eof",
         }
     }
 }
 
 fn to_rpn(input: &str) -> Result<(String, Vec<Segment>)> {
-    let input = input.replace(' ', "");
+    let mut input = input.replace(' ', "");
     if input.is_empty() {
         return Err(Error::Empty);
     }
+
+    // extra character makes it easier to correctly parse the end
+    input.push('\0');
 
     // split input by operators
     let mut segments = Vec::<Segment>::new();
     let mut prev_i = 0;
     for (curr_i, curr_char) in input.char_indices() {
-        if Segment::OP_CHARS.contains(&curr_char) {
+        if Segment::OP_CHARS.contains(&curr_char) || curr_char == '\0' {
             let prev_segment = Segment::from_range(&input, prev_i..curr_i);
             // character at curr_i is an operator, must be a single ascii char
             // so +1 is safe
@@ -128,60 +132,77 @@ fn to_rpn(input: &str) -> Result<(String, Vec<Segment>)> {
             // don't add the empty string as an expression
             if !prev_segment.is_empty() {
                 segments.push(prev_segment.clone());
-
-                // if the input is like 3(...) or (...)4, insert a * for
-                // implicit multiplication
-                if (prev_segment.is_expr_or_int() && curr_segment == Segment::LParen)
-                    || (prev_segment == Segment::RParen && curr_segment.is_expr_or_int())
-                {
-                    segments.push(Segment::Star)
-                }
             }
 
             // push current operator
-            segments.push(Segment::from_range(&input, curr_i..curr_i + 1));
+            segments.push(curr_segment);
             // set to next expression
             prev_i = curr_i + 1;
         }
     }
 
-    // insert the last segment unless the input ends with an operator,
-    // don't add an empty expression
-    if prev_i != input.len() {
-        // check for implicit multiplication
-        let prev_segment = segments.last().expect("input should not be empty");
-        let curr_segment = Segment::from_range(&input, prev_i..input.len());
-        if prev_segment == &Segment::RParen && curr_segment.is_expr_or_int() {
-            segments.push(Segment::Star)
-        }
-        segments.push(curr_segment);
-    }
+    // insert the implicit multiplication between bracket and int/expr
+    let segments = segments
+        .into_iter()
+        .tuple_windows()
+        .flat_map(|(curr, next)| {
+            if curr == Segment::RParen && next.is_expr_or_int()
+                || curr.is_expr_or_int() && next == Segment::LParen
+            {
+                itertools::Either::Left([curr, Segment::Star].into_iter())
+            } else {
+                itertools::Either::Right([curr].into_iter())
+            }
+        })
+        // curr never reaches the last element, so re-insert the EOF
+        .chain(iter::once(Segment::Eof))
+        .collect_vec();
 
-    // simple input validation: checking consecutive elements, just enough
-    // to construct a syntax tree.
-    // track current number of nested parens
+    // input validation: checking consecutive elements.
+    // also converting stars to postfix stars if possible.
     let mut parens: u32 = 0;
-    if segments[0] == Segment::LParen {
-        parens += 1;
-    }
 
-    for (prev, curr) in segments.iter().tuple_windows() {
-        // TODO: use better error variants
-        match curr {
-            Segment::Expr(_) | Segment::Int(_) => {
-                if !prev.is_op() {
-                    return Err(Error::Unknown);
+    let segments = segments
+        .into_iter()
+        .tuple_windows()
+        .map(|(curr, next)| match curr {
+            // no consecutive exprs/ints (should not be possible to
+            // construct this anyways)
+            Segment::Expr(_) | Segment::Int(_) if next.is_expr_or_int() => Err(Error::Unknown),
+            // segment after plus should be expr/int/(
+            Segment::Plus if !(next.is_expr_or_int() || next == Segment::LParen) => {
+                Err(Error::Unknown)
+            }
+            // figure out if its multiplying two things, or the postfix star for infinite loop
+            Segment::Star => {
+                if next.is_expr_or_int() || next == Segment::LParen {
+                    // binary multiply
+                    Ok(itertools::Either::Left(iter::once(Segment::Star)))
+                } else {
+                    // postfix multiply
+                    Ok(itertools::Either::Right(
+                        [Segment::Star, Segment::Inf].into_iter(),
+                    ))
                 }
             }
-            Segment::Plus | Segment::Star => {
-                if prev.is_bin_op() {
-                    return Err(Error::Unknown);
-                }
+            Segment::LParen if next.is_bin_op() => Err(Error::Unknown),
+            Segment::LParen => {
+                parens += 1;
+                Ok(itertools::Either::Left(iter::once(curr)))
             }
-            Segment::LParen => parens += 1,
-            Segment::RParen => parens = parens.checked_sub(1).ok_or(Error::UnbalancedParens)?,
-        }
-    }
+            Segment::RParen => {
+                parens = parens.checked_sub(1).ok_or(Error::UnbalancedParens)?;
+                Ok(itertools::Either::Left(iter::once(curr)))
+            }
+            Segment::Eof => unreachable!("curr can never be eof"),
+            Segment::Inf => unreachable!("infinities have not been constructed yet"),
+            _ => Ok(itertools::Either::Left(iter::once(curr))),
+        })
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect_vec();
+
     if parens != 0 {
         return Err(Error::UnbalancedParens);
     }
@@ -194,7 +215,7 @@ fn to_rpn(input: &str) -> Result<(String, Vec<Segment>)> {
     let mut op_stack = Vec::<Segment>::new();
     for segment in segments {
         match segment {
-            Segment::Expr(_) | Segment::Int(_) => output.push(segment),
+            Segment::Expr(_) | Segment::Int(_) | Segment::Inf => output.push(segment),
             Segment::Plus => {
                 while let Some(op) = op_stack.pop_if(|op| *op != Segment::LParen) {
                     output.push(op)
@@ -216,6 +237,7 @@ fn to_rpn(input: &str) -> Result<(String, Vec<Segment>)> {
                 }
                 op_stack.pop().expect("parens are balanced, there must be a left paren remaining in the operator stack");
             }
+            Segment::Eof => unreachable!("eof should have been removed"),
         }
     }
     // push the rest of the operators onto the output
@@ -290,6 +312,8 @@ impl MultiInput {
 mod tests {
     use itertools::Itertools;
 
+    use crate::interpreter::Error;
+
     use super::interpret_multi;
 
     use super::to_rpn;
@@ -317,7 +341,7 @@ mod tests {
         validate_rpn("3*2m", &["3", "2m", "*"]);
         validate_rpn("1+1", &["1", "1", "+"]);
         validate_rpn("1+(3*2)", &["1", "3", "2", "*", "+"]);
-        validate_rpn("(15+45m)*", &["15", "45m", "+", "*"]);
+        validate_rpn("(15+45m)*", &["15", "45m", "+", "*inf"]);
         validate_rpn("3(40h)", &["3", "40h", "*"]);
         validate_rpn("(1+3)4", &["1", "3", "+", "4", "*"]);
         validate_rpn("4*(1+3)", &["4", "1", "3", "+", "*"]);
@@ -327,6 +351,8 @@ mod tests {
                 "7", "8", "+", "1", "3", "+", "2", "+", "4", "*", "+", "5", "+", "6", "2", "*", "+",
             ],
         );
+        // TODO: this needs to be figured out, disambiguate as unary *
+        validate_rpn("2m+3*", &["2m", "3", "*inf", "+"])
     }
 
     #[test]
@@ -363,5 +389,7 @@ mod tests {
         validate_multi("3(40h)", &["40h", "40h", "40h"]);
         validate_multi("(1+3)4", &["1", "3", "1", "3", "1", "3", "1", "3"]);
         validate_multi("4*(1+3)", &["1", "3", "1", "3", "1", "3", "1", "3"]);
+        assert_eq!(interpret_multi("(1+3)*").err(), Some(Error::Unknown));
+        assert_eq!(interpret_multi("2m+3*").err(), Some(Error::Unknown));
     }
 }
