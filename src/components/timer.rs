@@ -20,21 +20,18 @@ use crate::{
 pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
     let (error_message, set_error_message) = create_signal(None::<String>);
 
-    let set_timer_duration = move || match interpreter::interpret_multi(&timer.input().get_untracked()) {
-        Ok(duration) => {
-            timer.restart(duration);
-            set_error_message(None);
-        }
-        Err(e) => {
-            set_error_message(Some(e.to_string()));
-        }
-    };
+    let set_timer_duration =
+        move || match interpreter::interpret_multi(&timer.input().get_untracked()) {
+            Ok(duration) => {
+                timer.restart(duration);
+                set_error_message(None);
+            }
+            Err(e) => {
+                set_error_message(Some(e.to_string()));
+            }
+        };
 
-    Effect::new(move |_| {
-        if timer.current().finished()() {
-            timer.next()
-        }
-    });
+    timer.current().set_after_finish(move || timer.next());
 
     let component = create_node_ref::<html::Div>();
     let duration_display = create_node_ref::<html::Div>();
@@ -165,7 +162,9 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
                 [
                     show_heading_title(),
                     show_heading_end_time() && timer.current().end_time()().is_some(),
-                    show_heading_elapsed() && timer.current().started()() && !timer.current().finished()(),
+                    show_heading_elapsed()
+                        && timer.current().started()()
+                        && !timer.current().finished()(),
                     error_message().is_some(),
                 ][*i]
             })

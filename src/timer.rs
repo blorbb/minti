@@ -2,6 +2,7 @@ pub mod serialize;
 
 use leptos::*;
 use std::cell::RefCell;
+use std::rc::Rc;
 use std::time::Duration as StdDuration;
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
@@ -64,7 +65,8 @@ impl MultiTimer {
     pub fn reset(&self) {
         self.current().reset();
         self.0.update_value(|t| t.consumed = 0);
-        self.0.with_value(|t| *t.iter.borrow_mut() = InputIter::empty());
+        self.0
+            .with_value(|t| *t.iter.borrow_mut() = InputIter::empty());
     }
 
     /// This must be called with consumed set to 0
@@ -74,16 +76,19 @@ impl MultiTimer {
     }
 
     pub fn next(&self) {
-        let current = self.current();
-        let Some(next) = self.0.with_value(|t| t.iter.borrow_mut().next()) else {
-            return;
-        };
-        self.0.update_value(|timer| {
-            timer.consumed += 1;
-            log::info!("consumed, timer.consumed = {}", timer.consumed);
-        });
-        current
-            .start(interpreter::interpret_single(&next).expect("input has already been validated"));
+        batch(|| {
+            let Some(next) = self.0.with_value(|t| t.iter.borrow_mut().next()) else {
+                return;
+            };
+            self.0.update_value(|timer| {
+                timer.consumed += 1;
+                log::info!("consumed, timer.consumed = {}", timer.consumed);
+            });
+
+            self.current().restart(
+                interpreter::interpret_single(&next).expect("input has already been validated"),
+            );
+        })
     }
 }
 
@@ -166,6 +171,10 @@ impl Timer {
     method!(resume());
     method!(add_duration(duration: Duration));
 
+    pub fn set_after_finish(&self, closure: impl Fn() + 'static) {
+        self.0.update_value(|t| t.set_after_finish(closure));
+    }
+
     pub fn new() -> Self {
         let timer = Self(StoredValue::new(RawTimer::new()));
 
@@ -219,7 +228,6 @@ impl Default for Timer {
 ///
 /// Most of the inner components are reactive: subscribe to these properties
 /// for reactivity.
-#[derive(Debug)]
 pub struct RawTimer {
     /// The total duration of the timer.
     ///
@@ -271,6 +279,10 @@ pub struct RawTimer {
     /// Notifies subscribers when any of the statuses (start, pause, finish)
     /// have changed. Get notified using `timer.state_change.track()`.
     pub state_change: Signal<()>,
+    /// An optional closure to run immediately after the timer finishes.
+    ///
+    /// The closure will run after signals are updated.
+    after_finish: Option<Rc<dyn Fn()>>,
 }
 
 impl RawTimer {
@@ -321,6 +333,7 @@ impl RawTimer {
             last_pause_time,
             acc_paused_duration,
             state_change,
+            after_finish: None,
         }
     }
 
@@ -359,7 +372,21 @@ impl RawTimer {
     /// **Side effects:** Only way to update the `finished` signal.
     pub fn update_time_remaining(&self) {
         // log::trace!("updating time remaining");
-        (self.set_time_remaining)(self.get_time_remaining());
+        let time_remaining = self.get_time_remaining();
+        if time_remaining.is_some_and(|dur| !dur.is_positive())
+            && !self.finished.get_untracked()
+            && let Some(after_finish) = &self.after_finish
+        {
+            (self.set_time_remaining)(self.get_time_remaining());
+            after_finish();
+            (self.set_time_remaining)(self.get_time_remaining());
+        } else {
+            (self.set_time_remaining)(time_remaining);
+        }
+    }
+
+    pub fn set_after_finish(&mut self, closure: impl Fn() + 'static) {
+        self.after_finish = Some(Rc::new(closure));
     }
 
     /// Calculates the time at which the timer will finish.
@@ -390,6 +417,10 @@ impl RawTimer {
         log::debug!("restarting timer");
         batch(|| {
             self.reset();
+            // force update the running memo
+            // so that the interval loop restarts. restart loop to avoid being
+            // highly offset from the actual time (200ms)
+            self.running.get_untracked();
             self.start(duration);
         });
     }
