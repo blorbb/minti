@@ -1,7 +1,7 @@
 use leptos::*;
 use leptos_mview::mview;
 
-use crate::{components::TimerDisplay, contexts::TimerList, timer::Timer};
+use crate::{components::TimerDisplay, contexts::TimerList, timer::MultiTimer};
 
 #[component]
 pub fn HomePage() -> impl IntoView {
@@ -11,7 +11,7 @@ pub fn HomePage() -> impl IntoView {
         div.page-home {
             For
                 each={timers.vec_signal()}
-                key={Timer::id}
+                key={MultiTimer::id}
             |timer| { TimerDisplay {timer}; }
         }
     }

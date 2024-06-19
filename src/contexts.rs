@@ -4,7 +4,7 @@ use leptos::*;
 use uuid::Uuid;
 use web_sys::Element;
 
-use super::timer::Timer;
+use crate::timer::MultiTimer;
 
 /// Reactively stores the current fullscreen element.
 ///
@@ -101,21 +101,21 @@ impl Icons {
 /// Retrieve using `expect_context::<TimerList>()`
 #[derive(Debug, Clone, Copy)]
 pub struct TimerList {
-    vec: RwSignal<Vec<Timer>>,
+    vec: RwSignal<Vec<MultiTimer>>,
 }
 
 impl TimerList {
     /// Creates a new `TimerList` with one timer.
     pub fn new() -> Self {
         Self {
-            vec: create_rw_signal(vec![Timer::new()]),
+            vec: create_rw_signal(vec![MultiTimer::new()]),
         }
     }
 
     /// Sets the stored `RwSignal` to the given list.
     ///
     /// Adds a new timer if `timers` is empty.
-    pub fn set(&self, timers: Vec<Timer>) {
+    pub fn set(&self, timers: Vec<MultiTimer>) {
         batch(|| {
             self.vec.set(timers);
 
@@ -128,7 +128,7 @@ impl TimerList {
     /// Constructs a new `TimerList` from a list of timers.
     ///
     /// If the vec is empty, a timer is created.
-    pub fn from_timers(timers: Vec<Timer>) -> Self {
+    pub fn from_timers(timers: Vec<MultiTimer>) -> Self {
         if timers.is_empty() {
             Self::new()
         } else {
@@ -140,7 +140,7 @@ impl TimerList {
 
     /// Adds a new timer to the list.
     pub fn push_new(&self) {
-        self.vec.update(|v| v.push(Timer::new()));
+        self.vec.update(|v| v.push(MultiTimer::new()));
     }
 
     /// Removes the timer at a certain index from the list.
@@ -184,11 +184,11 @@ impl TimerList {
     }
 
     /// Gets a copy of timer list.
-    pub fn to_vec(&self) -> Vec<Timer> {
+    pub fn to_vec(&self) -> Vec<MultiTimer> {
         self.vec.get_untracked()
     }
 
-    pub fn vec_signal(&self) -> ReadSignal<Vec<Timer>> {
+    pub fn vec_signal(&self) -> ReadSignal<Vec<MultiTimer>> {
         self.vec.read_only()
     }
 
@@ -217,7 +217,7 @@ impl TimerList {
 }
 
 impl IntoIterator for TimerList {
-    type Item = Timer;
+    type Item = MultiTimer;
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 

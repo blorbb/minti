@@ -1,16 +1,18 @@
 pub mod serialize;
 
 use leptos::*;
+use std::cell::RefCell;
 use std::time::Duration as StdDuration;
 use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
-use crate::{commands, reactive};
+use crate::{
+    commands,
+    interpreter::{self, InputIter},
+    reactive,
+};
 
 use super::time::relative;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct Timer(StoredValue<RawTimer>);
 
 macro_rules! prop {
     ($prop:ident: $ty:ty) => {
@@ -36,6 +38,107 @@ macro_rules! method {
     };
 }
 
+#[derive(Clone, Copy)]
+pub struct MultiTimer(StoredValue<RawMultiTimer>);
+
+impl MultiTimer {
+    prop!(current: Timer);
+    prop!(input: ReadSignal<String>);
+    prop!(title: ReadSignal<String>);
+    prop!(consumed: usize);
+    prop!(id: Uuid);
+    method!(set_input(input: String));
+    method!(set_title(title: String));
+
+    pub fn new() -> Self {
+        Self(StoredValue::new(RawMultiTimer::new()))
+    }
+
+    pub fn restart(&self, iter: InputIter) {
+        batch(|| {
+            self.reset();
+            self.start(iter);
+        });
+    }
+
+    pub fn reset(&self) {
+        self.current().reset();
+        self.0.update_value(|t| t.consumed = 0);
+        self.0.with_value(|t| *t.iter.borrow_mut() = InputIter::empty());
+    }
+
+    /// This must be called with consumed set to 0
+    fn start(&self, iter: InputIter) {
+        self.0.with_value(|t| *t.iter.borrow_mut() = iter);
+        self.next();
+    }
+
+    pub fn next(&self) {
+        let current = self.current();
+        let Some(next) = self.0.with_value(|t| t.iter.borrow_mut().next()) else {
+            return;
+        };
+        self.0.update_value(|timer| {
+            timer.consumed += 1;
+            log::info!("consumed, timer.consumed = {}", timer.consumed);
+        });
+        current
+            .start(interpreter::interpret_single(&next).expect("input has already been validated"));
+    }
+}
+
+pub struct RawMultiTimer {
+    pub current: Timer,
+    iter: RefCell<InputIter>,
+    pub input: ReadSignal<String>,
+    set_input: WriteSignal<String>,
+    pub title: ReadSignal<String>,
+    set_title: WriteSignal<String>,
+    consumed: usize,
+    id: Uuid,
+}
+
+impl RawMultiTimer {
+    pub fn new() -> Self {
+        let (input, set_input) = create_signal(String::new());
+        let (title, set_title) = create_signal(String::new());
+        Self {
+            current: Timer::new(),
+            iter: RefCell::new(InputIter::empty()),
+            input,
+            set_input,
+            title,
+            set_title,
+            consumed: 0,
+            id: Uuid::new_v4(),
+        }
+    }
+
+    /// Sets the timer's input.
+    pub fn set_input(&self, input: String) {
+        log::trace!("setting input to {:?}", input);
+        (self.set_input)(input);
+    }
+
+    // Sets the timer's title.
+    pub fn set_title(&self, title: String) {
+        log::trace!("setting title to {:?}", title);
+        (self.set_title)(title);
+    }
+
+    /// Gets the id for the timer.
+    ///
+    /// Only to be used to distingush between different timers - this id is not
+    /// stored in localstorage and will change if the timer is refetched from
+    /// localstorage.
+    pub const fn id(&self) -> Uuid {
+        self.id
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct Timer(StoredValue<RawTimer>);
+
 impl Timer {
     prop!(duration: ReadSignal<Option<Duration>>);
     prop!(started: Memo<bool>);
@@ -44,8 +147,6 @@ impl Timer {
     prop!(finished: Memo<bool>);
     prop!(time_remaining: ReadSignal<Option<Duration>>);
     prop!(end_time: ReadSignal<Option<OffsetDateTime>>);
-    prop!(input: ReadSignal<String>);
-    prop!(title: ReadSignal<String>);
     // priv_prop!(set_duration: WriteSignal<Option<Duration>>);
     // priv_prop!(set_time_remaining: WriteSignal<Option<Duration>>);
     // priv_prop!(set_end_time: WriteSignal<Option<OffsetDateTime>>);
@@ -64,9 +165,6 @@ impl Timer {
     method!(pause());
     method!(resume());
     method!(add_duration(duration: Duration));
-    method!(id() -> Uuid);
-    method!(set_input(input: String));
-    method!(set_title(title: String));
 
     pub fn new() -> Self {
         let timer = Self(StoredValue::new(RawTimer::new()));
@@ -160,17 +258,6 @@ pub struct RawTimer {
     pub end_time: ReadSignal<Option<OffsetDateTime>>,
     set_end_time: WriteSignal<Option<OffsetDateTime>>,
 
-    /// The string the user entered into this timer.
-    ///
-    /// Set using `Timer::set_input`
-    pub input: ReadSignal<String>,
-    set_input: WriteSignal<String>,
-    /// The title set for the timer (above each timer).
-    ///
-    /// Is an empty string if no title is set.
-    pub title: ReadSignal<String>,
-    set_title: WriteSignal<String>,
-
     // internal timekeeping stuff //
     /// The time at which the timer was started.
     start_time: RwSignal<Option<OffsetDateTime>>,
@@ -184,10 +271,6 @@ pub struct RawTimer {
     /// Notifies subscribers when any of the statuses (start, pause, finish)
     /// have changed. Get notified using `timer.state_change.track()`.
     pub state_change: Signal<()>,
-    /// An id for the timer. Only to be used to distingush between different
-    /// timers - this id is not stored in localstorage and will change if
-    /// the timer is refetched from localstorage.
-    id: Uuid,
 }
 
 impl RawTimer {
@@ -207,8 +290,6 @@ impl RawTimer {
 
         let (time_remaining, set_time_remaining) = create_signal(None::<Duration>);
         let (end_time, set_end_time) = create_signal(None);
-        let (input, set_input) = create_signal(String::new());
-        let (title, set_title) = create_signal(String::new());
 
         let started = create_memo(move |_| start_time().is_some());
         let paused = create_memo(move |_| started() && last_pause_time().is_some());
@@ -236,15 +317,10 @@ impl RawTimer {
             set_time_remaining,
             end_time,
             set_end_time,
-            input,
-            set_input,
-            title,
-            set_title,
             start_time,
             last_pause_time,
             acc_paused_duration,
             state_change,
-            id: Uuid::new_v4(),
         }
     }
 
@@ -442,26 +518,5 @@ impl RawTimer {
             self.update_end_time();
             self.update_time_remaining();
         });
-    }
-
-    /// Gets the id for the timer.
-    ///
-    /// Only to be used to distingush between different timers - this id is not
-    /// stored in localstorage and will change if the timer is refetched from
-    /// localstorage.
-    pub const fn id(&self) -> Uuid {
-        self.id
-    }
-
-    /// Sets the timer's input.
-    pub fn set_input(&self, input: String) {
-        log::trace!("setting input to {:?}", input);
-        (self.set_input)(input);
-    }
-
-    // Sets the timer's title.
-    pub fn set_title(&self, title: String) {
-        log::trace!("setting title to {:?}", title);
-        (self.set_title)(title);
     }
 }

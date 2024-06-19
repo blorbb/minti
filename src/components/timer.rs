@@ -12,15 +12,15 @@ use crate::{
     },
     contexts::TimerList,
     interpreter, reactive,
-    timer::Timer,
+    timer::{MultiTimer, Timer},
 };
 
 /// Provides controls and display for a [`Timer`].
 #[component]
-pub fn TimerDisplay(timer: Timer) -> impl IntoView {
+pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
     let (error_message, set_error_message) = create_signal(None::<String>);
 
-    let set_timer_duration = move || match interpreter::interpret_single(&timer.input().get_untracked()) {
+    let set_timer_duration = move || match interpreter::interpret_multi(&timer.input().get_untracked()) {
         Ok(duration) => {
             timer.restart(duration);
             set_error_message(None);
@@ -30,25 +30,31 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
         }
     };
 
+    Effect::new(move |_| {
+        if timer.current().finished()() {
+            timer.next()
+        }
+    });
+
     let component = create_node_ref::<html::Div>();
     let duration_display = create_node_ref::<html::Div>();
 
     let update_timer_duration =
-        move |duration: Duration| update_and_bump(duration, duration_display, timer);
+        move |duration: Duration| update_and_bump(duration, duration_display, timer.current());
 
     // sub-components //
 
     // switch between resume and pause button
     let pause_button = move || {
-        if (timer.paused())() {
+        if (timer.current().paused())() {
             mview! {
-                button.primary.mix-btn-scale-green on:click={move |_| timer.resume()} {
+                button.primary.mix-btn-scale-green on:click={move |_| timer.current().resume()} {
                     Icon icon="ph:play-bold";
                 }
             }
         } else {
             mview! {
-                button.primary.mix-btn-scale-green on:click={move |_| timer.pause()} {
+                button.primary.mix-btn-scale-green on:click={move |_| timer.current().pause()} {
                     Icon icon="ph:pause-bold";
                 }
             }
@@ -93,9 +99,9 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     // using <Show /> causes components to re-render for some reason
     // using `if` is fine as `started` and `finished` are memos anyways.
     let controls = move || {
-        if !(timer.started())() {
+        if !(timer.current().started())() {
             controls_start().into_view()
-        } else if !(timer.finished())() {
+        } else if !(timer.current().finished())() {
             controls_running().into_view()
         } else {
             controls_finished().into_view()
@@ -103,8 +109,8 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     };
 
     let time_elapsed = move || {
-        timer.duration().get().unwrap_or_default()
-        - timer.time_remaining().get().unwrap_or_default()
+        timer.current().duration().get().unwrap_or_default()
+        - timer.current().time_remaining().get().unwrap_or_default()
         // make the digit round down, but +1ms to avoid showing -1s at the start
         - Duration::SECOND
             + Duration::MILLISECOND
@@ -131,7 +137,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
             span.end {
                 Icon icon="ph:timer-bold";
                 " "
-                RelativeTime time={timer.end_time()};
+                RelativeTime time={timer.current().end_time()};
             }
         }
         .into_view(),
@@ -158,8 +164,8 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
             .filter(move |(i, _)| {
                 [
                     show_heading_title(),
-                    show_heading_end_time() && timer.end_time()().is_some(),
-                    show_heading_elapsed() && timer.started()() && !timer.finished()(),
+                    show_heading_end_time() && timer.current().end_time()().is_some(),
+                    show_heading_elapsed() && timer.current().started()() && !timer.current().finished()(),
                     error_message().is_some(),
                 ][*i]
             })
@@ -171,13 +177,13 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
 
     mview! {
         div.com-timer
-            data-started={reactive::as_attr(timer.started())}
-            data-paused={reactive::as_attr(timer.paused())}
-            data-running={reactive::as_attr(timer.running())}
-            data-finished={reactive::as_attr(timer.finished())}
+            data-started={reactive::as_attr(timer.current().started())}
+            data-paused={reactive::as_attr(timer.current().paused())}
+            data-running={reactive::as_attr(timer.current().running())}
+            data-finished={reactive::as_attr(timer.current().finished())}
             ref={component}
         {
-            ProgressBar {timer};
+            ProgressBar timer={timer.current()};
             div.timer-face {
                 // stuff above the input with extra info
                 div.heading {
@@ -187,10 +193,10 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
                 // main timer display, showing either the countdown
                 // or the input to enter a time
                 div.duration ref={duration_display} {
-                    [if (timer.started())() {
+                    [if timer.current().started()() {
                         mview! {
                             DurationDisplay duration=[
-                                (timer.time_remaining())().unwrap_or_default()
+                                timer.current().time_remaining()().unwrap_or_default()
                             ];
                         }.into_view()
                     } else {
@@ -220,7 +226,7 @@ pub fn TimerDisplay(timer: Timer) -> impl IntoView {
     }
 }
 
-fn remove_self(timer: Timer) {
+fn remove_self(timer: MultiTimer) {
     let timers = expect_context::<TimerList>();
     timers.remove_id(timer.id());
 }

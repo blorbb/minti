@@ -8,7 +8,7 @@ use time::Duration;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub use multi::interpret_multi;
+pub use multi::{interpret_multi, InputIter};
 
 /// Tries to parse a user inputted string as a duration.
 ///

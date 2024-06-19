@@ -22,6 +22,13 @@ pub struct InputIter {
 }
 
 impl InputIter {
+    pub fn empty() -> Self {
+        let iter: Box<dyn ClonableIterator<Item = Arc<str>>> = Box::new(iter::empty()); 
+        Self {
+            iter: iter.peekable()
+        }
+    }
+
     pub fn next(&mut self) -> Option<Arc<str>> {
         self.iter.next()
     }
