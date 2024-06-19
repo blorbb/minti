@@ -135,6 +135,11 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
         use_local_storage::<bool, FromToStringCodec>("heading-show::end-time");
     let (show_heading_elapsed, _, _) =
         use_local_storage::<bool, FromToStringCodec>("heading-show::elapsed");
+    let show_heading_end_time =
+        Memo::new(move |_| show_heading_end_time() && timer.current().end_time()().is_some());
+    let show_heading_elapsed = Memo::new(move |_| {
+        show_heading_elapsed() && timer.current().started()() && !timer.current().finished()()
+    });
 
     let heading_views = [
         mview! {
@@ -177,10 +182,8 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
             .filter(move |(i, _)| {
                 [
                     show_heading_title(),
-                    show_heading_end_time() && timer.current().end_time()().is_some(),
-                    show_heading_elapsed()
-                        && timer.current().started()()
-                        && !timer.current().finished()(),
+                    show_heading_end_time(),
+                    show_heading_elapsed(),
                     error_message().is_some(),
                 ][*i]
             })
