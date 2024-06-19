@@ -23,9 +23,9 @@ pub struct InputIter {
 
 impl InputIter {
     pub fn empty() -> Self {
-        let iter: Box<dyn ClonableIterator<Item = Arc<str>>> = Box::new(iter::empty()); 
+        let iter: Box<dyn ClonableIterator<Item = Arc<str>>> = Box::new(iter::empty());
         Self {
-            iter: iter.peekable()
+            iter: iter.peekable(),
         }
     }
 

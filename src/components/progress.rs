@@ -46,6 +46,7 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
 
 // https://css-tricks.com/restart-css-animation/#aa-update-another-javascript-method-to-restart-a-css-animation
 fn reset_animation(element: &HtmlDivElement) {
+    log::debug!("resetting element animation");
     let previous_animation = element
         .style()
         .get_property_value("animation-name")
