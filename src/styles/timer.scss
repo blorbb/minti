@@ -91,6 +91,28 @@
         }
     }
 
+    .middle {
+        position: relative;
+    }
+
+    .next-timer {
+        position: absolute;
+        display: grid;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 0;
+        line-height: 1.2;
+        color: var(--clr-text-secondary);
+        text-align: right;
+
+        span {
+            max-width: 15vw;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+    }
+
     button {
         animation: scale-in var(--time-transition-short) ease-out;
         // scales size via font-size

@@ -1,7 +1,7 @@
 pub mod serialize;
 
 use leptos::*;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 use std::rc::Rc;
 use std::time::Duration as StdDuration;
 use time::{Duration, OffsetDateTime};
@@ -89,6 +89,10 @@ impl MultiTimer {
                 interpreter::interpret_single(&next).expect("input has already been validated"),
             );
         })
+    }
+
+    pub fn peek(&self) -> Option<Arc<str>> {
+        self.0.with_value(|t| t.iter.borrow_mut().peek())
     }
 }
 

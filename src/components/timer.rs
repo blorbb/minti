@@ -20,18 +20,23 @@ use crate::{
 pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
     let (error_message, set_error_message) = create_signal(None::<String>);
 
+    let peek = RwSignal::new(timer.peek());
     let set_timer_duration =
         move || match interpreter::interpret_multi(&timer.input().get_untracked()) {
             Ok(duration) => {
                 timer.restart(duration);
                 set_error_message(None);
+                peek.set(timer.peek());
             }
             Err(e) => {
                 set_error_message(Some(e.to_string()));
             }
         };
 
-    timer.current().set_after_finish(move || timer.next());
+    timer.current().set_after_finish(move || {
+        timer.next();
+        peek.set(timer.peek());
+    });
 
     let component = create_node_ref::<html::Div>();
     let duration_display = create_node_ref::<html::Div>();
@@ -40,6 +45,17 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
         move |duration: Duration| update_and_bump(duration, duration_display, timer.current());
 
     // sub-components //
+
+    let next_time = move || {
+        mview! {
+            Show when=[peek().is_some() && timer.current().started()()] {
+                div.next-timer {
+                   span("next:")
+                   span({peek().map(|s| s.to_string())})
+                }
+            }
+        }
+    };
 
     // switch between resume and pause button
     let pause_button = move || {
@@ -191,30 +207,35 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
 
                 // main timer display, showing either the countdown
                 // or the input to enter a time
-                div.duration ref={duration_display} {
-                    [if timer.current().started()() {
-                        mview! {
-                            DurationDisplay duration=[
-                                timer.current().time_remaining()().unwrap_or_default()
-                            ];
-                        }.into_view()
-                    } else {
-                        mview! {
-                            input
-                                type="text"
-                                // set old value when reset timer
-                                prop:value={timer.input()}
-                                on:input={move |ev| timer.set_input(event_target_value(&ev))}
-                                on:keydown={move |ev| {
-                                    if ev.key() == "Enter" {
-                                        set_timer_duration();
-                                    }
-                                }};
-                        }.into_view()
-                    }]
+                div.middle {
+                    div.duration ref={duration_display} {
+                        [if timer.current().started()() {
+                            mview! {
+                                DurationDisplay duration=[
+                                    timer.current().time_remaining()().unwrap_or_default()
+                                ];
+                            }.into_view()
+                        } else {
+                            mview! {
+                                input
+                                    type="text"
+                                    // set old value when reset timer
+                                    prop:value={timer.input()}
+                                    on:input={move |ev| timer.set_input(event_target_value(&ev))}
+                                    on:keydown={move |ev| {
+                                        if ev.key() == "Enter" {
+                                            set_timer_duration();
+                                        }
+                                    }};
+                            }.into_view()
+                        }]
+                    }
+
+                    {next_time}
                 }
 
                 div.controls { {controls} }
+
 
                 button.delete.mix-btn-transp-red on:click={move |_| remove_self(timer)} {
                     Icon icon="ph:x-bold";
