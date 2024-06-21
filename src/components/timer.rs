@@ -2,17 +2,20 @@ use leptos::*;
 use leptos_mview::mview;
 
 use leptos_use::{storage::use_local_storage, utils::FromToStringCodec};
+use std::time::Duration as StdDuration;
 use time::Duration;
 use wasm_bindgen::JsValue;
 
 use crate::{
+    commands,
     components::{
         DurationDisplay, DurationUpdateButton, FullscreenButton, GrowingInput, Icon, ProgressBar,
         RelativeTime,
     },
     contexts::TimerList,
-    interpreter, reactive,
-    timer::{MultiTimer, Timer},
+    reactive,
+    time::relative,
+    timer::MultiTimer,
 };
 
 /// Provides controls and display for a [`Timer`].
@@ -20,37 +23,80 @@ use crate::{
 pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
     let (error_message, set_error_message) = create_signal(None::<String>);
 
-    let peek = RwSignal::new(timer.peek());
-    let set_timer_duration =
-        move || match interpreter::interpret_multi(&timer.input().get_untracked()) {
-            Ok(duration) => {
-                timer.restart(duration);
-                set_error_message(None);
-                peek.set(timer.peek());
-            }
-            Err(e) => {
-                set_error_message(Some(e.to_string()));
-            }
-        };
+    let update_time_elapsed = Trigger::new();
+    let time_elapsed = Memo::new(move |_| {
+        update_time_elapsed.track();
+        timer.time_elapsed()
+    });
+    let time_remaining =
+        Memo::new(move |_| timer.current_total_duration()().map(|t| t - time_elapsed()));
+    let finished = Memo::new(move |_| time_remaining().is_some_and(|t| !t.is_positive()));
 
-    let component = create_node_ref::<html::Div>();
-    let duration_display = create_node_ref::<html::Div>();
+    // another signal instead of a memo to avoid highly frequent updates
+    let update_end_time = Trigger::new();
+    let end_time = Memo::new(move |_| time_remaining().map(|t| relative::now() + t));
 
-    timer.current().set_after_finish(move || {
-        timer.next();
-        peek.set(timer.peek());
-        flash(duration_display);
+    reactive::repeat_while(
+        timer.running(),
+        move || update_time_elapsed.notify(),
+        StdDuration::from_millis(200),
+    );
+    reactive::repeat_while(
+        timer.paused(),
+        move || update_end_time.notify(),
+        StdDuration::SECOND,
+    );
+    Effect::new(move |_| {
+        timer.status_update().track();
+        update_time_elapsed.notify();
+        update_end_time.notify();
     });
 
+    Effect::new(move |_| {
+        // also check that it is close to finish so that already expired timers
+        // retrieved from localstorage don't alert
+        if finished()
+            && time_remaining
+                .get_untracked()
+                .expect("timer is finished => should have started")
+                .abs()
+                < Duration::SECOND
+        {
+            spawn_local(commands::alert_window());
+        };
+    });
+
+    let peek = RwSignal::new(timer.peek());
+
+    let component = NodeRef::<html::Div>::new();
+    let duration_display = NodeRef::<html::Div>::new();
+
+    Effect::new(move |_| {
+        if finished() {
+            timer.next();
+            peek.set(timer.peek());
+            flash(duration_display)
+        }
+    });
+
+    let start = move || match timer.start() {
+        Ok(_) => {
+            set_error_message(None);
+            peek.set(timer.peek());
+        }
+        Err(e) => {
+            set_error_message(Some(e.to_string()));
+        }
+    };
 
     let update_timer_duration =
-        move |duration: Duration| update_and_bump(duration, duration_display, timer.current());
+        move |duration: Duration| update_and_bump(duration, duration_display, timer);
 
     // sub-components //
 
     let next_time = move || {
         mview! {
-            Show when=[peek().is_some() && timer.current().started()()] {
+            Show when=[peek().is_some() && timer.started()()] {
                 div.next-timer {
                    span("next:")
                    span({peek().map(|s| s.to_string())})
@@ -61,15 +107,15 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
 
     // switch between resume and pause button
     let pause_button = move || {
-        if (timer.current().paused())() {
+        if timer.paused()() {
             mview! {
-                button.primary.mix-btn-scale-green on:click={move |_| timer.current().resume()} {
+                button.primary.mix-btn-scale-green on:click={move |_| timer.resume()} {
                     Icon icon="ph:play-bold";
                 }
             }
         } else {
             mview! {
-                button.primary.mix-btn-scale-green on:click={move |_| timer.current().pause()} {
+                button.primary.mix-btn-scale-green on:click={move |_| timer.pause()} {
                     Icon icon="ph:pause-bold";
                 }
             }
@@ -78,7 +124,7 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
 
     let controls_start = move || {
         mview! {
-            button.primary.mix-btn-scale-green on:click={move |_| set_timer_duration()} {
+            button.primary.mix-btn-scale-green on:click={move |_| start()} {
                 Icon icon="ph:play-fill";
             }
         }
@@ -114,9 +160,9 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
     // using <Show /> causes components to re-render for some reason
     // using `if` is fine as `started` and `finished` are memos anyways.
     let controls = move || {
-        if !(timer.current().started())() {
+        if !timer.started()() {
             controls_start().into_view()
-        } else if !(timer.current().finished())() {
+        } else if !finished() {
             controls_running().into_view()
         } else {
             controls_finished().into_view()
@@ -124,8 +170,8 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
     };
 
     let time_elapsed = move || {
-        timer.current().duration().get().unwrap_or_default()
-        - timer.current().time_remaining().get().unwrap_or_default()
+        timer.current_total_duration()().unwrap_or_default()
+        - time_remaining().unwrap_or_default()
         // make the digit round down, but +1ms to avoid showing -1s at the start
         - Duration::SECOND
             + Duration::MILLISECOND
@@ -137,18 +183,16 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
         use_local_storage::<bool, FromToStringCodec>("heading-show::end-time");
     let (show_heading_elapsed, _, _) =
         use_local_storage::<bool, FromToStringCodec>("heading-show::elapsed");
-    let show_heading_end_time =
-        Memo::new(move |_| show_heading_end_time() && timer.current().end_time()().is_some());
-    let show_heading_elapsed = Memo::new(move |_| {
-        show_heading_elapsed() && timer.current().started()() && !timer.current().finished()()
-    });
+    let show_heading_end_time = Memo::new(move |_| show_heading_end_time() && end_time().is_some());
+    let show_heading_elapsed =
+        Memo::new(move |_| show_heading_elapsed() && timer.started()() && !finished());
 
     let heading_views = [
         mview! {
             span.title {
                 GrowingInput
                     placeholder="Enter a title"
-                    on_input={move |ev| timer.set_title(event_target_value(&ev))}
+                    on_input={move |ev| timer.title().set(event_target_value(&ev))}
                     initial={timer.title().get_untracked()};
             }
         }
@@ -157,7 +201,7 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
             span.end {
                 Icon icon="ph:timer-bold";
                 " "
-                RelativeTime time={timer.current().end_time()};
+                RelativeTime time={end_time};
             }
         }
         .into_view(),
@@ -197,13 +241,13 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
 
     mview! {
         div.com-timer
-            data-started={reactive::as_attr(timer.current().started())}
-            data-paused={reactive::as_attr(timer.current().paused())}
-            data-running={reactive::as_attr(timer.current().running())}
-            data-finished={reactive::as_attr(timer.current().finished())}
+            data-started={reactive::as_attr(timer.started())}
+            data-paused={reactive::as_attr(timer.paused())}
+            data-running={reactive::as_attr(timer.running())}
+            data-finished={reactive::as_attr(finished)}
             ref={component}
         {
-            ProgressBar timer={timer.current()};
+            ProgressBar {timer} {finished};
             div.timer-face {
                 // stuff above the input with extra info
                 div.heading {
@@ -214,10 +258,10 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
                 // or the input to enter a time
                 div.middle {
                     div.duration ref={duration_display} {
-                        [if timer.current().started()() {
+                        [if timer.started()() {
                             mview! {
                                 DurationDisplay duration=[
-                                    timer.current().time_remaining()().unwrap_or_default()
+                                    time_remaining().unwrap_or_default()
                                 ];
                             }.into_view()
                         } else {
@@ -226,10 +270,10 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
                                     type="text"
                                     // set old value when reset timer
                                     prop:value={timer.input()}
-                                    on:input={move |ev| timer.set_input(event_target_value(&ev))}
+                                    on:input={move |ev| timer.input().set(event_target_value(&ev))}
                                     on:keydown={move |ev| {
                                         if ev.key() == "Enter" {
-                                            set_timer_duration();
+                                            start();
                                         }
                                     }};
                             }.into_view()
@@ -264,7 +308,7 @@ fn js_obj_1(key: &str, value: &str) -> js_sys::Object {
 }
 
 /// Updates the timer's duration and bumps the element up/down
-fn update_and_bump(duration: Duration, element: NodeRef<html::Div>, timer: Timer) {
+fn update_and_bump(duration: Duration, element: NodeRef<html::Div>, timer: MultiTimer) {
     let mut anim_options = web_sys::KeyframeAnimationOptions::new();
     anim_options.duration(&JsValue::from_f64(100.0));
     anim_options.easing("ease-out");

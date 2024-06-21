@@ -4,7 +4,7 @@ use leptos::{SignalGetUntracked, SignalSetUntracked};
 use serde::{Deserialize, Serialize};
 use time::ext::NumericalDuration;
 
-use crate::{contexts::TimerList, interpreter, time::timestamp};
+use crate::{contexts::TimerList, time::timestamp};
 
 use super::{MultiTimer, RawMultiTimer};
 
@@ -35,24 +35,19 @@ impl From<&RawMultiTimer> for TimerJson {
     fn from(value: &RawMultiTimer) -> Self {
         Self {
             duration: value
-                .current
-                .duration()
+                .current_total_duration
                 .get_untracked()
                 .map(|d| d.whole_milliseconds().saturating_as::<u64>()),
             start: value
-                .current
-                .start_time()
+                .start_time
                 .get_untracked()
                 .map(timestamp::to_unix_millis),
             last_pause: value
-                .current
-                .last_pause_time()
+                .last_pause_time
                 .get_untracked()
                 .map(timestamp::to_unix_millis),
             acc_pause_duration: value
-                .current
-                .acc_paused_duration()
-                .get_untracked()
+                .acc_paused_duration
                 .whole_milliseconds()
                 .saturating_as::<u64>(),
             duration_input: value.input.get_untracked(),
@@ -84,62 +79,53 @@ pub fn parse_timer_json(json: &str) -> Option<TimerList> {
     let timers: Vec<MultiTimer> = timers
         .into_iter()
         .filter_map(|unparsed| {
-            let timer = MultiTimer::new();
-            let iter = interpreter::interpret_multi(&unparsed.duration_input).ok()?;
-            timer.set_input(unparsed.duration_input);
-            timer.set_title(unparsed.title);
+            let mut timer = RawMultiTimer::new();
+            timer.input.set_untracked(unparsed.duration_input);
+            timer.title.set_untracked(unparsed.title);
 
             if unparsed.consumed != 0 {
-                timer.start(iter);
+                timer.start().ok()?;
                 // from 1 because start already advances the iterator
-                (1..unparsed.consumed).for_each(|_| timer.next());
-            }
-            if unparsed.consumed != timer.0.with_value(|t| t.consumed) {
-                log::warn!(
-                    "stored {} consumed, only managed to consume {}",
-                    unparsed.consumed,
-                    timer.0.with_value(|t| t.consumed)
-                );
-                return None;
+                (1..unparsed.consumed).for_each(|_| _ = timer.next());
+
+                if unparsed.consumed != timer.consumed {
+                    log::warn!(
+                        "stored {} consumed, only managed to consume {}",
+                        unparsed.consumed,
+                        timer.consumed,
+                    );
+                    return None;
+                }
             }
 
             // timer control methods (start, pause) set their respective properties to now.
             // must override the times after calling these methods.
+            if let Some(duration) = unparsed.duration {
+                timer
+                    .set_current_total_duration
+                    .set_untracked(Some(duration.saturating_as::<i64>().milliseconds()));
+            }
 
             if let Some(start_time) = unparsed.start {
-                timer
-                    .current()
-                    .start(unparsed.duration?.saturating_as::<i64>().milliseconds());
-                timer
-                    .current()
-                    .start_time()
-                    .set_untracked(Some(timestamp::from_unix_millis(start_time)));
+                timer.start_time.set_untracked(Some(timestamp::from_unix_millis(start_time)));
             };
 
             if let Some(last_pause_time) = unparsed.last_pause {
                 // timer must also be started for it to be paused
-                if !timer.current().started().get_untracked() {
+                if !timer.started.get_untracked() {
                     return None;
                 }
 
-                timer.current().pause();
-                timer
-                    .current()
-                    .last_pause_time()
-                    .set_untracked(Some(timestamp::from_unix_millis(last_pause_time)));
+                timer.pause();
+                timer.last_pause_time.set_untracked(Some(timestamp::from_unix_millis(last_pause_time)));
             }
 
-            timer.current().acc_paused_duration().set_untracked(
-                unparsed
-                    .acc_pause_duration
-                    .saturating_as::<i64>()
-                    .milliseconds(),
-            );
+            timer.acc_paused_duration = unparsed
+                .acc_pause_duration
+                .saturating_as::<i64>()
+                .milliseconds();
 
-            timer.current().update_time_remaining();
-            timer.current().update_end_time();
-
-            Some(timer)
+            Some(MultiTimer(leptos::StoredValue::new(timer)))
         })
         .collect();
 

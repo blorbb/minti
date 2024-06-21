@@ -1,29 +1,25 @@
 use leptos::*;
 use leptos_mview::mview;
 use time::Duration;
-use wasm_bindgen::JsCast;
 use web_sys::HtmlDivElement;
 
-use crate::{reactive, timer::Timer};
+use crate::{reactive, timer::MultiTimer};
 
 #[component]
-pub fn ProgressBar(timer: Timer) -> impl IntoView {
+pub fn ProgressBar(timer: MultiTimer, finished: Memo<bool>) -> impl IntoView {
     let elapsed = create_memo(move |_| {
         timer.started().track();
-        // also track finished so that adding duration will restart this
-        // since `started` is immediately set to false then true in a
-        // single batch
-        timer.finished().track();
-        timer.get_time_elapsed()
+        finished.track();
+        timer.time_elapsed()
     });
 
-    let progress_element = create_node_ref::<html::Div>();
+    let progress_element = NodeRef::<html::Div>::new();
 
     create_effect(move |_| {
-        if !(timer.finished())()
+        if !finished()
             && let Some(progress_element) = progress_element()
         {
-            reset_animation(progress_element.dyn_ref::<HtmlDivElement>().unwrap());
+            reset_animation(progress_element.as_ref());
         }
     });
 
@@ -32,14 +28,15 @@ pub fn ProgressBar(timer: Timer) -> impl IntoView {
             role="progressbar"
             data-started={reactive::as_attr(timer.started())}
             data-paused={reactive::as_attr(timer.paused())}
-            data-finished={reactive::as_attr(timer.finished())}
+            data-finished={reactive::as_attr(finished)}
         {
             div.progress-value
                 ref={progress_element}
-                style:animation-duration=[
-                    format!("{:.3}s", (timer.duration())().unwrap_or(Duration::MAX).as_seconds_f64())
+                style:animation-duration=f[
+                    "{:.3}s",
+                    timer.current_total_duration()().unwrap_or(Duration::MAX).as_seconds_f64()
                 ]
-                style:animation-delay=[format!("{:.3}s", -elapsed().as_seconds_f64())];
+                style:animation-delay=f["{:.3}s", -elapsed().as_seconds_f64()];
         }
     }
 }

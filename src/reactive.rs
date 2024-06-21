@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use leptos::{
     create_effect, create_rw_signal, leptos_dom::helpers::IntervalHandle, on_cleanup,
-    set_interval_with_handle, MaybeSignal, SignalSet,
+    set_interval_with_handle, Signal, SignalSet,
 };
 
 /// Runs a callback and repeats it while `when` is true.
@@ -51,7 +51,7 @@ pub fn repeat_while(
 ///     <div data-started=reactive::as_attr(started)></div>
 /// };
 /// ```
-pub fn as_attr(bool_signal: impl Into<MaybeSignal<bool>>) -> impl Fn() -> String {
-    let bool_signal: MaybeSignal<bool> = bool_signal.into();
+pub fn as_attr(bool_signal: impl Into<Signal<bool>>) -> impl Fn() -> String {
+    let bool_signal: Signal<bool> = bool_signal.into();
     move || bool_signal().to_string()
 }
