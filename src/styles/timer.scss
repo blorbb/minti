@@ -82,7 +82,8 @@
         }
 
         @include f.on-outer-most('[data-finished="true"]') {
-            animation: flash 400ms steps(1, end) forwards;
+            // flash animation is done in wasm
+            color: var(--clr-red-400);
         }
 
         input {
@@ -162,18 +163,5 @@
 
     to {
         scale: 1;
-    }
-}
-
-@keyframes flash {
-    0%,
-    50%,
-    100% {
-        color: var(--clr-red-400);
-    }
-
-    25%,
-    75% {
-        color: var(--clr-text);
     }
 }

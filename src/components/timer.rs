@@ -33,13 +33,15 @@ pub fn TimerDisplay(timer: MultiTimer) -> impl IntoView {
             }
         };
 
+    let component = create_node_ref::<html::Div>();
+    let duration_display = create_node_ref::<html::Div>();
+
     timer.current().set_after_finish(move || {
         timer.next();
         peek.set(timer.peek());
+        flash(duration_display);
     });
 
-    let component = create_node_ref::<html::Div>();
-    let duration_display = create_node_ref::<html::Div>();
 
     let update_timer_duration =
         move |duration: Duration| update_and_bump(duration, duration_display, timer.current());
@@ -292,4 +294,27 @@ fn update_and_bump(duration: Duration, element: NodeRef<html::Div>, timer: Timer
                 .animate_with_keyframe_animation_options(Some(&anim_down_keyframes), &anim_options);
         };
     };
+}
+
+fn flash(element: NodeRef<html::Div>) {
+    let Some(display) = element.get_untracked() else {
+        return;
+    };
+
+    let mut anim_options = web_sys::KeyframeAnimationOptions::new();
+    anim_options.duration(&JsValue::from_f64(480.0));
+    anim_options.easing("steps(5, end)");
+
+    // makes 3 red flashes whether it ends white or ends red
+    let anim_up_keyframes: js_sys::Array = [
+        js_obj_1("color", "var(--clr-red-400)"),
+        js_obj_1("color", "var(--clr-text)"),
+        js_obj_1("color", "var(--clr-red-400)"),
+        js_obj_1("color", "var(--clr-text)"),
+        js_obj_1("color", "var(--clr-red-400)"),
+        js_obj_1("color", "var(--clr-text)"),
+    ]
+    .into_iter()
+    .collect();
+    display.animate_with_keyframe_animation_options(Some(&anim_up_keyframes), &anim_options);
 }
